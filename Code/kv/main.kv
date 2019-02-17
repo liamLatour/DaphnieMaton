@@ -1,0 +1,49 @@
+<Parametrage>
+    orientation:"vertical"
+    ActionBar:
+        pos_hint: {'top':1}
+        app_icon: 'logogo.png'
+        ActionView:
+            use_separator: True
+            ActionPrevious:
+                title: 'Action Bar'
+                with_previous: False
+            ActionButton:
+                important: True
+                text: 'Important'
+            ActionButton:
+                text: "Help"
+                #icon: 'assets/img/icons/help.png'
+                #on_press: app.help()
+
+    BoxLayout:
+        Splitter:
+            sizable_from: 'right'
+            BoxLayout:
+                orientation: 'vertical'
+                BoxLayout:
+                    orientation: 'horizontal'
+                    Label:
+                        text: 'label'
+                    TextInput:
+                        text: 'Entry'
+                BoxLayout:
+                    orientation: 'horizontal'
+                    Label:
+                        text: 'label'
+                    TextInput:
+                        text: 'Entry'
+                BoxLayout:
+                    orientation: 'horizontal'
+                    Label:
+                        text: 'label'
+                    TextInput:
+                        text: 'Entry'
+                BoxLayout:
+                    orientation: 'horizontal'
+                    Label:
+                        text: 'label'
+                    TextInput:
+                        text: 'Entry'
+        Label:
+            text: 'empty area'

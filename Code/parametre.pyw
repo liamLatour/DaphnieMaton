@@ -1,14 +1,14 @@
 from tkinter import filedialog
-from tkinter import *
-import serial
+import tkinter
 import json
+#import serial
 
 #http://apprendre-python.com/page-tkinter-interface-graphique-python-tutoriel
 
 
-class HoverButton(Button):
+class HoverButton(tkinter.Button):
     def __init__(self, master, **kw):
-        Button.__init__(self,master=master,**kw)
+        tkinter.Button.__init__(self,master=master,**kw)
         self.defaultBackground = self["background"]
         self.bind("<Enter>", self.on_enter)
         self.bind("<Leave>", self.on_leave)
@@ -21,16 +21,16 @@ class HoverButton(Button):
 
 class InputNumber:
     def __init__(self, master, name, bind=None, default="0", **kw):
-        var = StringVar(master)
+        var = tkinter.StringVar(master)
         var.set(default)
 
         number = len(inputList)
 
         self.name = name
-        self.label = Label(master, text=name)
-        self.label.grid(row=number, sticky=W, padx=10)
-        self.spinBox = Spinbox(master, from_=1, to=50, command=bind, textvariable=var, **kw)
-        self.spinBox.grid(row=number, column=1, sticky=E, padx=10)
+        self.label = tkinter.Label(master, text=name)
+        self.label.grid(row=number, sticky=tkinter.W, padx=10)
+        self.spinBox = tkinter.Spinbox(master, from_=1, to=50, command=bind, textvariable=var, **kw)
+        self.spinBox.grid(row=number, column=1, sticky=tkinter.E, padx=10)
         
     def value(self):
         try:
@@ -61,6 +61,9 @@ def intToTime(intTime):
 def saveJson():
     path = filedialog.asksaveasfilename(initialdir = "/",title = "Select file",filetypes = (("json files","*.json"),("all files","*.*")))
 
+    if path == "":
+        return 
+
     data = {}
     data['dimensions'] = []
     data['dimensions'].append({  
@@ -75,15 +78,18 @@ def saveJson():
 
 def loadJson():
     path = filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("json files","*.json"),("all files","*.*")))
+
+    if path == "":
+        return 
     
-    with open(path) as json_file:  
+    with open(path) as json_file:
         data = json.load(json_file)
-        inputList[0].spinBox.delete(0, END)
-        inputList[1].spinBox.delete(0, END)
-        inputList[2].spinBox.delete(0, END)
-        inputList[0].spinBox.insert(END, str(data['dimensions'][0]['pNumber']))
-        inputList[1].spinBox.insert(END, str(data['dimensions'][0]['pSize']))
-        inputList[2].spinBox.insert(END, str(data['dimensions'][0]['pTime']))
+        inputList[0].spinBox.delete(0, tkinter.END)
+        inputList[1].spinBox.delete(0, tkinter.END)
+        inputList[2].spinBox.delete(0, tkinter.END)
+        inputList[0].spinBox.insert(tkinter.END, str(data['dimensions'][0]['pNumber']))
+        inputList[1].spinBox.insert(tkinter.END, str(data['dimensions'][0]['pSize']))
+        inputList[2].spinBox.insert(tkinter.END, str(data['dimensions'][0]['pTime']))
 
 
 # Check wether it is imported or not, if not then run this
@@ -94,19 +100,19 @@ if __name__ == '__main__':
     width = 100
     height = 100
 
-    app = Tk()
+    app = tkinter.Tk()
     app.title('DaphnieMaton')
     app.geometry("640x360")
     app.minsize(640, 360)
     app.iconbitmap('C:\\Users\\Administrateur\\Desktop\\DaphniMaton\\Images\\logo.ico')
 
     # Declare frames
-    Inputs = Frame(app)
-    Drawing = Frame(app)
-    Bottom = Frame(app)
+    Inputs = tkinter.Frame(app)
+    Drawing = tkinter.Frame(app)
+    Bottom = tkinter.Frame(app)
 
     #region Menu
-    menubar = Menu(app)
+    menubar = tkinter.Menu(app)
     menubar.add_command(label="Sauvegarder", command=saveJson)
     menubar.add_command(label="Ouvrir", command=loadJson)
 
@@ -150,7 +156,7 @@ if __name__ == '__main__':
 
 
     
-    canvas = Canvas(Drawing, width=width, height=height, background='yellow')
+    canvas = tkinter.Canvas(Drawing, width=width, height=height, background='yellow')
     canvas.bind("<Configure>", onResize)
     
     #endregion
@@ -164,8 +170,8 @@ if __name__ == '__main__':
     inputList.append(InputNumber(Inputs, "Temps pour un tuyeau (sec)", bind=drawPipes, default="10"))
 
     # To auto-extend the cells on the Y axes
-    Grid.columnconfigure(Inputs, 0, weight=1)
-    Grid.columnconfigure(Inputs, 1, weight=1)
+    tkinter.Grid.columnconfigure(Inputs, 0, weight=1)
+    tkinter.Grid.columnconfigure(Inputs, 1, weight=1)
 
     #endregion
 
@@ -177,16 +183,16 @@ if __name__ == '__main__':
     def flash():
         print("not implemented yet")
 
-    HoverButton(Bottom, text="UPDATE", relief=FLAT, activebackground='grey', command=update).pack(side=RIGHT, padx=10, pady=10)
-    HoverButton(Bottom, text="FLASH", relief=FLAT, activebackground='grey', command=flash).pack(side=LEFT, padx=10, pady=10)
+    HoverButton(Bottom, text="UPDATE", relief=tkinter.FLAT, activebackground='grey', command=update).pack(side=tkinter.RIGHT, padx=10, pady=10)
+    HoverButton(Bottom, text="FLASH", relief=tkinter.FLAT, activebackground='grey', command=flash).pack(side=tkinter.LEFT, padx=10, pady=10)
     #endregion
 
     # Pack everything
-    canvas.pack(fill=BOTH, expand=True)
+    canvas.pack(fill=tkinter.BOTH, expand=True)
 
-    Bottom.pack(side=BOTTOM, fill=X)
-    Inputs.pack(expand=NO, fill=X)
-    Drawing.pack(expand=YES, fill=BOTH)
+    Bottom.pack(side=tkinter.BOTTOM, fill=tkinter.X)
+    Inputs.pack(expand=tkinter.NO, fill=tkinter.X)
+    Drawing.pack(expand=tkinter.YES, fill=tkinter.BOTH)
 
     # Update canvas for none handled events (manually changing a spinbox)
     def lateUpdateCanvas():
