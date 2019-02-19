@@ -44,6 +44,12 @@
                 text: "Save"
                 on_release: root.save(filechooser.path, text_input.text)
 
+<PenDropDown>:
+    Button:
+        text: 'Aucun port'
+        height: 48
+        size_hint_y : None
+
 <Parametrage>:
     orientation:"vertical"
     ActionBar:
@@ -61,6 +67,11 @@
                 important: True
                 text: 'Ouvrir'
                 on_release: root.show_load()
+            ActionButton:
+                important: True
+                id: port_button
+                text: 'Port'
+                on_release: root.show_port()
             ActionButton:
                 text: "Aide"
                 on_release: root.help()
@@ -141,6 +152,8 @@
                     spacing: 10
                     orientation: 'horizontal'
                     Button:
-                        text: 'Flash'
-                    Button:
                         text: 'Update'
+                        on_release: root.update()
+                    Button:
+                        text: 'Flash'
+                        on_release: root.flash()

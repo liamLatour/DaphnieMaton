@@ -6,15 +6,19 @@ from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.properties import ObjectProperty
 
+from kivy.uix.actionbar import ActionDropDown
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
+from kivy.uix.button import Button
 from kivy.uix.label import Label
 
 from kivy.graphics import Rectangle
 from kivy.graphics import Color
 
+import serial.tools.list_ports
 import json
+import re
 import os
 
 Config.set('kivy','window_icon','kv/logo.ico')
@@ -25,6 +29,16 @@ for kv in os.listdir(kv_path):
         Builder.load_file(kv_path+kv)
 
 
+def getPorts():
+    ports = list(serial.tools.list_ports.comports())
+    arduinoPorts = {}
+    for p in ports:
+        match = re.search('COM(\d+)', str(p))
+        if match:
+            arduinoPorts[str(p)] = int(match.group(1))
+
+    return arduinoPorts
+
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
     cancel = ObjectProperty(None)
@@ -33,6 +47,9 @@ class SaveDialog(FloatLayout):
     save = ObjectProperty(None)
     text_input = ObjectProperty(None)
     cancel = ObjectProperty(None)
+
+class PenDropDown(ActionDropDown):
+    pass
 
 class Parametrage(BoxLayout):
     def __init__(self, *args, **kwargs):
@@ -43,19 +60,47 @@ class Parametrage(BoxLayout):
             "timePipe" : 10,
             "photoPipe" : 0.5
         }
+        self.port = -1
+        self.osPath = "ArduinoRamps1.4\\OS.hex"
+        self.pen_drop_down = PenDropDown()
         Clock.schedule_once(self.binding)
 
     def binding(self, *args):
         self.ids.pipeDrawing.bind(pos=self.update_rect, size=self.update_rect)
         self.update_rect()
 
+    def poplb_update(self, *args):
+        self.poplb.text_size = self.popup.size
+
     def help(self, *args):
-        popup = Popup(title='Aide', content=Label(text='Hello world'), size_hint=(0.7, 0.7))
-        popup.open()
+        self.popup = Popup(title='Aide', size_hint=(0.7, 0.7))
+        self.popbox = BoxLayout()
+        self.poplb = Label(text='[u][size=20]Comment utiliser[/size][/u]\n\n \
+                            1) Regler les [b]paramètres[/b] afin qu\'ils correspondent au système réel\n \
+                            2) Connectez le système à l\'[b]ordinateur[/b]\n \
+                            3) Si le système n\'a pas la dernière version de l\'OS clickez sur [b]Flasher[/b]\n \
+                            4) Vous pouvez maintenant clicker sur [b]Update[/b]\n \
+                            5) Finalement apuyez sur le bouton de [b]démarrage[/b] pour commencer l\'aquisition',
+                            text_size=self.popup.size,
+                            strip=True,
+                            valign='top',
+                            padding= (15, 35),
+                            markup = True)
+        self.popup.bind(size=self.poplb_update)
+
+        self.popbox.add_widget(self.poplb)
+        self.popup.content = self.popbox
+        self.popup.open()
     
     # Saving and loading system
     def dismiss_popup(self):
         self._popup.dismiss()
+
+    def show_port(self):
+        self.pen_drop_down.open(self.ids.port_button)
+        arduinoPorts = getPorts()
+        for port in arduinoPorts:
+            self.pen_drop_down.add_widget(Button(text=str(arduinoPorts[port]), height=48, size_hint_y= None, on_release=lambda a:self.changePort(arduinoPorts[port])))
 
     def show_load(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
@@ -68,12 +113,23 @@ class Parametrage(BoxLayout):
         self._popup = Popup(title="Save file", content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()
+    
+    def changePort(self, nb):
+        self.port = nb
+        if nb>= 0:
+            self.ids.port_button.text = "Port " + str(nb)
+        else:
+            self.ids.port_button.text = "Port"
+        self.pen_drop_down.dismiss()
 
     def load(self, path, filename):
         
         with open(os.path.join(path, filename[0])) as stream:
             self.params = json.load(stream)
-            print(self.params)
+            self.ids.nbPipe.text = str(self.params["nbPipe"])
+            self.ids.lenPipe.text = str(self.params["lenPipe"])
+            self.ids.timePipe.text = str(self.params["timePipe"])
+            self.ids.photoPipe.text = str(self.params["photoPipe"]*100)
 
         self.update_rect()
         self.dismiss_popup()
@@ -84,13 +140,21 @@ class Parametrage(BoxLayout):
 
         self.dismiss_popup()
 
+
+    def update(self, *args):
+        print(self.params)
+
+    def flash(self, *args):
+        os.system('arduino-1.8.8\\hardware\\tools\\avr\\bin\\avrdude -Carduino-1.8.8\\hardware\\tools\\avr/etc/avrdude.conf -v -patmega2560 -cwiring -PCOM'+str(self.port)+' -b115200 -D -Uflash:w:'+self.osPath+':i')
+
+
     # Drawing on canvas
     def update_rect(self, *args):
         self.params = {
             "nbPipe": max(int(self.ids.nbPipe.text), 1),
             "lenPipe" : float(self.ids.lenPipe.text),
             "timePipe" : float(self.ids.timePipe.text),
-            "photoPipe" : float(self.ids.photoPipe.text)/100
+            "photoPipe" : float(self.ids.photoPipe.text)/100,
         }
 
         self.ids.pipeDrawing.canvas.before.clear()
