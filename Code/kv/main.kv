@@ -60,15 +60,12 @@
                 title: 'Action Bar'
                 with_previous: False
             ActionButton:
-                important: True
                 text: 'Sauvegarder'
                 on_release: root.show_save()
             ActionButton:
-                important: True
                 text: 'Ouvrir'
                 on_release: root.show_load()
             ActionButton:
-                important: True
                 id: port_button
                 text: 'Port'
                 on_release: root.show_port()
@@ -148,7 +145,7 @@
                         text: "Temps totale: 5\nNombre photo: 100"
                 BoxLayout:
                     size_hint: (1, None)
-                    size: (200, 30)
+                    size: (200, 50)
                     spacing: 10
                     orientation: 'horizontal'
                     Button:

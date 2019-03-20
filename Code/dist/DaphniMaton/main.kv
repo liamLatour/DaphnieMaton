@@ -1,0 +1,156 @@
+<LoadDialog>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+
+            Button:
+                text: "Load"
+                on_release: root.load(filechooser.path, filechooser.selection)
+
+<SaveDialog>:
+    text_input: text_input
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            on_selection: text_input.text = self.selection and self.selection[0] or ''
+
+        TextInput:
+            id: text_input
+            size_hint_y: None
+            height: 30
+            multiline: False
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+
+            Button:
+                text: "Save"
+                on_release: root.save(filechooser.path, text_input.text)
+
+<PenDropDown>:
+    Button:
+        text: 'Aucun port'
+        height: 48
+        size_hint_y : None
+
+<Parametrage>:
+    orientation:"vertical"
+    ActionBar:
+        pos_hint: {'top':1}
+        ActionView:
+            use_separator: True
+            ActionPrevious:
+                title: 'Action Bar'
+                with_previous: False
+            ActionButton:
+                text: 'Sauvegarder'
+                on_release: root.show_save()
+            ActionButton:
+                text: 'Ouvrir'
+                on_release: root.show_load()
+            ActionButton:
+                id: port_button
+                text: 'Port'
+                on_release: root.show_port()
+            ActionButton:
+                text: "Aide"
+                on_release: root.help()
+
+    BoxLayout:
+        BoxLayout:
+            orientation: 'vertical'
+            spacing: 5
+            BoxLayout:
+                size_hint: (1, None)
+                size: (200, 30)
+                orientation: 'horizontal'
+                Label:
+                    text: 'Nombre de tuyeau'
+                TextInput:
+                    input_filter: 'float'
+                    text: '2'
+                    id: nbPipe
+                    multiline: False
+                    on_text_validate: root.update_rect()
+            BoxLayout:
+                size_hint: (1, None)
+                size: (200, 30)
+                orientation: 'horizontal'
+                Label:
+                    text: 'Taille des tuyeaux (m)'
+                TextInput:
+                    input_filter: 'float'
+                    text: '1.5'
+                    id: lenPipe
+                    multiline: False
+                    on_text_validate: root.update_rect()
+            BoxLayout:
+                size_hint: (1, None)
+                size: (200, 30)
+                orientation: 'horizontal'
+                Label:
+                    text: 'Temps pour un tuyeau (sec)'
+                TextInput:
+                    input_filter: 'float'
+                    text: '10'
+                    id: timePipe
+                    multiline: False
+                    on_text_validate: root.update_rect()
+            BoxLayout:
+                size_hint: (1, None)
+                size: (200, 30)
+                orientation: 'horizontal'
+                Label:
+                    text: u'Centim\u00e9tre par photo'
+                TextInput:
+                    input_filter: 'float'
+                    text: '0.5'
+                    id: photoPipe
+                    multiline: False
+                    on_text_validate: root.update_rect()
+            Widget:
+        Splitter:
+            sizable_from: 'left'
+            strip_size: '5pt'
+            id: canvasSplitter
+            BoxLayout:
+                orientation: 'vertical'
+                Widget:
+                    id: pipeDrawing
+                    canvas.before:
+                    Label:
+                        id: infoLabel
+                        halign: 'left'
+                        valign: 'top'
+                        size: (200, 150)
+                        padding: (5, 5)
+                        text_size: self.size
+                        text: "Temps totale: 5\nNombre photo: 100"
+                BoxLayout:
+                    size_hint: (1, None)
+                    size: (200, 50)
+                    spacing: 10
+                    orientation: 'horizontal'
+                    Button:
+                        text: 'Update'
+                        on_release: root.update()
+                    Button:
+                        text: 'Flash'
+                        on_release: root.flash()
