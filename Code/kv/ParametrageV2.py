@@ -59,7 +59,7 @@ class Parametrage(BoxLayout):
             "photoPipe" : 0.5
         }
         self.port = -1
-        self.osPath = "test.hex"
+        self.osPath = "ArduinoRamps1.4\\OS.hex"
         self.pen_drop_down = PenDropDown()
         Clock.schedule_once(self.binding)
 
