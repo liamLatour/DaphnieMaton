@@ -1,4 +1,4 @@
-![logo](https://upload.wikimedia.org/wikipedia/commons/d/d5/Daphnia_magna-female_adult.jpg)
+![logo](https://github.com/liamLatour/DaphnieMaton/blob/master/Images/logoV2.svg)
 # DaphnieMaton
 
 The DaphnieMaton is a two-axis system to film continously and in a pre-created custom path.
