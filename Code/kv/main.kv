@@ -83,12 +83,15 @@
                 text: 'Port'
                 on_release: root.show_port()
             ActionButton:
+                text: "Option"
+                on_release: app.open_settings()
+            ActionButton:
                 text: "Aide"
                 on_release: root.help()
 
     TabbedPanel:
         do_default_tab: False
-        id: lol
+        id: tabbedPanel
         TabbedPanelItem:
             text: 'Tuyeau'
             BoxLayout:
@@ -105,20 +108,12 @@
                 Splitter:
                     sizable_from: 'left'
                     strip_size: '5pt'
-                    id: canvasSplitter
+                    id: pipeSplitter
                     BoxLayout:
                         orientation: 'vertical'
                         Widget:
                             id: pipeDrawing
                             canvas.before:
-                            Label:
-                                id: infoLabel
-                                halign: 'left'
-                                valign: 'top'
-                                size: (200, 150)
-                                padding: (5, 5)
-                                text_size: self.size
-                                text: "Temps totale: 5\nNombre photo: 100"
                             Widget:
                                 id: directDrawing
                         BoxLayout:
@@ -144,23 +139,15 @@
                 Splitter:
                     sizable_from: 'left'
                     strip_size: '5pt'
-                    id: canvasSplitter
+                    id: libreSplitter
                     BoxLayout:
                         orientation: 'vertical'
                         Widget:
-                            id: pipeDrawing
+                            id: libreDrawing
                             on_touch_down: root.clickedDown(args[1])
                             on_touch_up: root.clickedUp(args[1])
                             on_touch_move: root.clickedMove(args[1])
                             canvas.before:
-                            Label:
-                                id: infoLabel
-                                halign: 'left'
-                                valign: 'top'
-                                size: (200, 150)
-                                padding: (5, 5)
-                                text_size: self.size
-                                text: "Temps totale: 5\nNombre photo: 100"
                             Widget:
                                 id: directDrawing
                         BoxLayout:
@@ -186,20 +173,12 @@
                 Splitter:
                     sizable_from: 'left'
                     strip_size: '5pt'
-                    id: canvasSplitter
+                    id: directSplitter
                     BoxLayout:
                         orientation: 'vertical'
                         Widget:
-                            id: pipeDrawing
+                            id: directDrawing
                             canvas.before:
-                            Label:
-                                id: infoLabel
-                                halign: 'left'
-                                valign: 'top'
-                                size: (200, 150)
-                                padding: (5, 5)
-                                text_size: self.size
-                                text: "Temps totale: 5\nNombre photo: 100"
                             Widget:
                                 id: directDrawing
                         BoxLayout:
@@ -210,5 +189,3 @@
                             Button:
                                 text: 'Update'
                                 on_release: root.update()
-        TabbedPanelItem:
-            text: 'Settings'

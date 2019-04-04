@@ -21,11 +21,14 @@ from kivy.uix.image import AsyncImage
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from scipy.spatial import distance
-from kivy.uix.settings import Settings # Sidebar
+from kivy.uix.settings import SettingsWithSidebar
 
 from libraries.classes import (Input, LoadDialog, ModeDropDown, PenDropDown,
                                SaveDialog, getPorts, hitLine, urlOpen)
 from libraries.createFile import generateFile
+
+
+from settingsjson import settings_json
 
 #TODO: add https://kivy.org/doc/stable/api-kivy.uix.settings.html
 
@@ -52,10 +55,6 @@ class Parametrage(BoxLayout):
         self.osPath = "ArduinoRamps1.4\\OS.hex"
         self.pen_drop_down = PenDropDown()
         self.mode_drop_down = ModeDropDown()
-        self.config = ConfigParser()
-
-        #self.setting = Settings()
-        #self.setting.add_json_panel('My custom panel', self.config, 'config.json')
 
         self.tuyeau_panel = self.ids.tuyeauInputs
         self.libre_panel = self.ids.libreInputs
@@ -79,14 +78,14 @@ class Parametrage(BoxLayout):
         self.hasGoodProgram = False
 
         self.tuyeauMode()
-        self.directMode()
         self.libreMode()
         Clock.schedule_once(self.binding)
         keyboard.on_release_key('shift', self.update_rect)
 
     def binding(self, *args):
         self.ids.pipeDrawing.bind(pos=self.update_rect, size=self.update_rect)
-        self.tuyeauMode()
+        self.ids.directDrawing.bind(pos=self.update_rect, size=self.update_rect)
+        self.ids.libreDrawing.bind(pos=self.update_rect, size=self.update_rect)
         self.update_rect()
 
     def poplb_update(self, *args):
@@ -220,17 +219,21 @@ class Parametrage(BoxLayout):
 
     # Drawing on canvas
     def update_rect(self, *args):
-        self.mode = self.ids.lol.current_tab.text
+        self.mode = self.ids.tabbedPanel.current_tab.text
 
+        if self.mode == "Tuyeau":
+            self.ids.pipeSplitter.max_size = self.size[0] - 400
+            self.zoomClamp()
+            middle = (self.ids.pipeDrawing.center_x, self.ids.pipeDrawing.center_y)
+            self.ids.pipeDrawing.canvas.before.clear()
+            self.ids.pipeDrawing.canvas.after.clear()
 
-        self.ids.canvasSplitter.max_size = self.size[0] - 400
-        self.zoomClamp()
-        middle = (self.ids.pipeDrawing.center_x, self.ids.pipeDrawing.center_y)
-        self.ids.directDrawing.clear_widgets()
-        self.ids.pipeDrawing.canvas.before.clear()
-        self.ids.pipeDrawing.canvas.after.clear()
+            # Retablie les variable pour le mode direct et libre
+            if self.clock != -1:
+                self.clock.cancel()
+                self.clock = -1
+            self.zoom = float('inf')
 
-        if "nbPipe" in self.inputs and self.mode == "Tuyeau":
             gapsValue = []
             if bool(self.inputs["sameGap"].input.active):
                 gapsValue = np.ones(max(int(self.inputs["nbPipe"].input.text), 1)-1) * float(self.inputs["gaps"][0].input.text)
@@ -251,18 +254,23 @@ class Parametrage(BoxLayout):
             shift = (self.params["nbPipe"] * 10 + np.sum(self.params["gaps"]))
 
             try:
-                self.ids.canvasSplitter.min_size = max(int(round(shift+50)), 200)
+                self.ids.pipeSplitter.min_size = max(int(round(shift+50)), 200)
             except:
-                self.ids.canvasSplitter.min_size = round(self.size[0] - 400)
+                self.ids.pipeSplitter.min_size = round(self.size[0] - 400)
 
             with self.ids.pipeDrawing.canvas.before:
-                self.ids.infoLabel.pos = (self.size[0]-200, self.size[1] - 200)
-                self.ids.infoLabel.text = "Temps totale: " + str(self.params["timePipe"]*self.params["nbPipe"]) + " sec" + \
+                text = "Temps totale: " + str(self.params["timePipe"]*self.params["nbPipe"]) + " sec" + \
                                         "\nNombre photo: " + str( round((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100))) + \
                                         "\nPhoto toutes les " + str( round( ((self.params["timePipe"]*self.params["nbPipe"]) / ((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100)))*10 )/10 ) + " sec"
 
                 Color(1,1,1, .2)
-                Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +50)), size = (200, 70))
+                Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +95)), size = (200, 70))
+
+                label = CoreLabel(text=text, font_size=30, halign='left', valign='top', padding=(5, 5))
+                label.refresh()
+                text = label.texture
+                Color(1, 1, 1, 1)
+                Rectangle(pos=(self.size[0]-200, self.size[1] - (70 +95)), size=(200, 70), texture=text)
 
                 height = max(100, self.size[1]/2)
                 Color(1,1,1)
@@ -275,62 +283,21 @@ class Parametrage(BoxLayout):
                     curX += 10+self.params["gaps"][x]
                     Rectangle(pos = (curX, middle[1]-height/2), size = (10, height))
 
-        elif self.mode == "Direct":
-            self.ids.infoLabel.text = ""
-            buttonSize = min(self.ids.canvasSplitter.size[0]/4, self.ids.canvasSplitter.size[1]/4)
-            fontSize = min(self.ids.canvasSplitter.size[0]/20, self.ids.canvasSplitter.size[1]/20)
-
-            raz = Button(text='RAZ', font_size=fontSize, pos = (middle[0]-buttonSize/2, middle[1]-buttonSize/2), size = (buttonSize, buttonSize))
-
-            right = Button(text=u'\u23E9', font_size=fontSize, font_name=self.font, pos = (middle[0]+buttonSize+5-buttonSize/2, middle[1]-buttonSize/2), size = (buttonSize, buttonSize))
-            left = Button(text=u'\u23EA', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize-5-buttonSize/2, middle[1]-buttonSize/2), size = (buttonSize, buttonSize))
-            up = Button(text=u'\u23EB', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize/2, middle[1]+buttonSize+5-buttonSize/2), size = (buttonSize, buttonSize))
-            down = Button(text=u'\u23EC', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize/2, middle[1]-buttonSize-5-buttonSize/2), size = (buttonSize, buttonSize))
-
-            raz.bind(on_press=partial(self.moveDirect, bytes([0])))
-            raz.bind(on_release=partial(self.moveDirect, bytes([10])))
-
-            right.bind(on_press=partial(self.moveDirect, bytes([1])))
-            right.bind(on_release=partial(self.moveDirect, bytes([5])))
-            left.bind(on_press=partial(self.moveDirect, bytes([2])))
-            left.bind(on_release=partial(self.moveDirect, bytes([6])))
-            up.bind(on_press=partial(self.moveDirect, bytes([3])))
-            up.bind(on_release=partial(self.moveDirect, bytes([7])))
-            down.bind(on_press=partial(self.moveDirect, bytes([4])))
-            down.bind(on_release=partial(self.moveDirect, bytes([8])))
-
-            self.ids.directDrawing.add_widget(raz)
-
-            self.ids.directDrawing.add_widget(right)
-            self.ids.directDrawing.add_widget(left)
-            self.ids.directDrawing.add_widget(up)
-            self.ids.directDrawing.add_widget(down)
-
-            with self.ids.pipeDrawing.canvas.before:
-                self.ids.infoLabel.pos = (self.size[0]-200, self.size[1] - 200)
-                self.ids.infoLabel.text = "X: " + str(self.position[0]) + " step" + \
-                                        "\nY: " + str(self.position[1]) + " step"
-
-                Color(1,1,1, .2)
-                Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +50)), size = (200, 70))
-
-            if not self.hasGoodProgram:
-                with self.ids.pipeDrawing.canvas.after:
-                    dimensionX = self.ids.canvasSplitter.size[0]
-                    dimensionY = self.ids.canvasSplitter.size[1] - 50
-                    Color(1, 1, 1, 0.5)
-                    Rectangle(pos=(middle[0]-dimensionX/2, middle[1]-dimensionY/2), size=(dimensionX, dimensionY))
-                    label = CoreLabel(text="Clicker sur 'Update' avant", font_size=100, halign='middle', valign='middle', padding=(12, 12))
-                    label.refresh()
-                    text = label.texture
-                    Color(0, 0, 0, 1)
-                    Rectangle(pos=(middle[0]-dimensionX/2, middle[1]-(dimensionX*(3/16))/2), size=(dimensionX, dimensionX*(3/16)), texture=text)
-
         elif self.mode == "Libre":
-            self.ids.canvasSplitter.min_size = int(round(self.size[0]/2))
+            self.ids.libreSplitter.max_size = self.size[0] - 400
+            self.zoomClamp()
+            middle = (self.ids.libreDrawing.center_x, self.ids.libreDrawing.center_y)
+            self.ids.libreDrawing.canvas.before.clear()
+            self.ids.libreDrawing.canvas.after.clear()
+
+            if self.clock != -1:
+                self.clock.cancel()
+                self.clock = -1
+
+            self.ids.libreSplitter.min_size = int(round(self.size[0]/2))
             zoomedTrace = np.multiply(self.params["trace"], self.zoom).tolist()
 
-            with self.ids.pipeDrawing.canvas.before:
+            with self.ids.libreDrawing.canvas.before:
                 width = 200 * self.zoom
                 Rectangle(source='.\\assets\\topDownView.png', pos = (middle[0]-width/2, middle[1]-width/2), size = (width, width))
 
@@ -367,10 +334,76 @@ class Parametrage(BoxLayout):
                         Color(0, 0, 0, 1)
                         Ellipse(pos=(zoomedTrace[i*2]+middle[0]-self.diametre/2, zoomedTrace[i*2+1]+middle[1]-self.diametre/2), size=(self.diametre, self.diametre), texture=text)
 
-                self.ids.infoLabel.text = ""
-                Color(1, 1, 1, 0.2)
-                Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +50)),
-                                                        size = (200, 70))
+                text = ""
+
+                Color(1,1,1, .2)
+                Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +95)), size = (200, 70))
+
+                label = CoreLabel(text=text, font_size=30, halign='left', valign='top', padding=(5, 5))
+                label.refresh()
+                text = label.texture
+                Color(1, 1, 1, 1)
+                Rectangle(pos=(self.size[0]-200, self.size[1] - (70 +95)), size=(200, 70), texture=text)
+
+        elif self.mode == "Direct":
+            self.ids.directSplitter.max_size = self.size[0] - 400
+            self.zoomClamp()
+            middle = (self.ids.directDrawing.center_x, self.ids.directDrawing.center_y)
+            self.ids.directDrawing.clear_widgets()
+            self.ids.directDrawing.canvas.before.clear()
+            self.ids.directDrawing.canvas.after.clear()
+
+            self.zoom = float('inf')
+
+            self.ids.infoLabel.text = ""
+            buttonSize = min(self.ids.directSplitter.size[0]/4, self.ids.directSplitter.size[1]/4)
+            fontSize = min(self.ids.directSplitter.size[0]/20, self.ids.directSplitter.size[1]/20)
+
+            raz = Button(text='RAZ', font_size=fontSize, pos = (middle[0]-buttonSize/2, middle[1]-buttonSize/2), size = (buttonSize, buttonSize))
+
+            right = Button(text=u'\u23E9', font_size=fontSize, font_name=self.font, pos = (middle[0]+buttonSize+5-buttonSize/2, middle[1]-buttonSize/2), size = (buttonSize, buttonSize))
+            left = Button(text=u'\u23EA', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize-5-buttonSize/2, middle[1]-buttonSize/2), size = (buttonSize, buttonSize))
+            up = Button(text=u'\u23EB', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize/2, middle[1]+buttonSize+5-buttonSize/2), size = (buttonSize, buttonSize))
+            down = Button(text=u'\u23EC', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize/2, middle[1]-buttonSize-5-buttonSize/2), size = (buttonSize, buttonSize))
+
+            raz.bind(on_press=partial(self.moveDirect, bytes([0])))
+            raz.bind(on_release=partial(self.moveDirect, bytes([10])))
+
+            right.bind(on_press=partial(self.moveDirect, bytes([1])))
+            right.bind(on_release=partial(self.moveDirect, bytes([5])))
+            left.bind(on_press=partial(self.moveDirect, bytes([2])))
+            left.bind(on_release=partial(self.moveDirect, bytes([6])))
+            up.bind(on_press=partial(self.moveDirect, bytes([3])))
+            up.bind(on_release=partial(self.moveDirect, bytes([7])))
+            down.bind(on_press=partial(self.moveDirect, bytes([4])))
+            down.bind(on_release=partial(self.moveDirect, bytes([8])))
+
+            self.ids.directDrawing.add_widget(raz)
+
+            self.ids.directDrawing.add_widget(right)
+            self.ids.directDrawing.add_widget(left)
+            self.ids.directDrawing.add_widget(up)
+            self.ids.directDrawing.add_widget(down)
+
+            with self.ids.directDrawing.canvas.before:
+                self.ids.infoLabel.pos = (self.size[0]-200, self.size[1] - 200)
+                self.ids.infoLabel.text = "X: " + str(self.position[0]) + " step" + \
+                                        "\nY: " + str(self.position[1]) + " step"
+
+                Color(1,1,1, .2)
+                Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +50)), size = (200, 70))
+
+            if not self.hasGoodProgram:
+                with self.ids.directDrawing.canvas.after:
+                    dimensionX = self.ids.directSplitter.size[0]
+                    dimensionY = self.ids.directSplitter.size[1] - 50
+                    Color(1, 1, 1, 0.5)
+                    Rectangle(pos=(middle[0]-dimensionX/2, middle[1]-dimensionY/2), size=(dimensionX, dimensionY))
+                    label = CoreLabel(text="Clicker sur 'Update' avant", font_size=100, halign='middle', valign='middle', padding=(12, 12))
+                    label.refresh()
+                    text = label.texture
+                    Color(0, 0, 0, 1)
+                    Rectangle(pos=(middle[0]-dimensionX/2, middle[1]-(dimensionX*(3/16))/2), size=(dimensionX, dimensionX*(3/16)), texture=text)
 
     def moveDirect(self, direction, *args):
         if self.port != -1:
@@ -387,9 +420,9 @@ class Parametrage(BoxLayout):
             y = touch.y
             zoomedTrace = np.multiply(self.params["trace"], self.zoom).tolist()
 
-            if self.ids.pipeDrawing.collide_point(x, y):
+            if self.ids.libreDrawing.collide_point(x, y):
                 for i in range(int(len(zoomedTrace)/2)):
-                    if hypot(zoomedTrace[i*2]+self.ids.pipeDrawing.center_x - x, zoomedTrace[i*2+1]+self.ids.pipeDrawing.center_y - y) <= self.diametre/2:
+                    if hypot(zoomedTrace[i*2]+self.ids.libreDrawing.center_x - x, zoomedTrace[i*2+1]+self.ids.libreDrawing.center_y - y) <= self.diametre/2:
                         if touch.button == 'right':
                             del self.params["trace"][i*2+1]
                             del self.params["trace"][i*2]
@@ -399,22 +432,22 @@ class Parametrage(BoxLayout):
                             self.dragging = i
                         return
                 if touch.button == 'left':
-                    self.params["trace"].append((x-self.ids.pipeDrawing.center_x)/self.zoom)
-                    self.params["trace"].append((y-self.ids.pipeDrawing.center_y)/self.zoom)
+                    self.params["trace"].append((x-self.ids.libreDrawing.center_x)/self.zoom)
+                    self.params["trace"].append((y-self.ids.libreDrawing.center_y)/self.zoom)
                     self.params["photos"].append(False)
                     self.update_rect()
                 elif touch.button == 'right':
                     # Check if we clicked on a line or not
                     for i in range(int(len(zoomedTrace)/2)-1):
-                        firstPoint = (zoomedTrace[i*2]+self.ids.pipeDrawing.center_x, zoomedTrace[i*2+1]+self.ids.pipeDrawing.center_y)
-                        secondPoint = (zoomedTrace[(i+1)*2]+self.ids.pipeDrawing.center_x, zoomedTrace[(i+1)*2+1]+self.ids.pipeDrawing.center_y)
+                        firstPoint = (zoomedTrace[i*2]+self.ids.libreDrawing.center_x, zoomedTrace[i*2+1]+self.ids.libreDrawing.center_y)
+                        secondPoint = (zoomedTrace[(i+1)*2]+self.ids.libreDrawing.center_x, zoomedTrace[(i+1)*2+1]+self.ids.libreDrawing.center_y)
                         if hitLine(firstPoint, secondPoint, (x, y), self.lineWidth):
                             self.params["photos"][i] = not self.params["photos"][i]
                             self.update_rect()
                             return
                     if bool(self.inputs["loop"].input.active):
-                        firstPoint = (zoomedTrace[len(zoomedTrace)-2]+self.ids.pipeDrawing.center_x, zoomedTrace[len(zoomedTrace)-1]+self.ids.pipeDrawing.center_y)
-                        secondPoint = (zoomedTrace[0]+self.ids.pipeDrawing.center_x, zoomedTrace[1]+self.ids.pipeDrawing.center_y)
+                        firstPoint = (zoomedTrace[len(zoomedTrace)-2]+self.ids.libreDrawing.center_x, zoomedTrace[len(zoomedTrace)-1]+self.ids.libreDrawing.center_y)
+                        secondPoint = (zoomedTrace[0]+self.ids.libreDrawing.center_x, zoomedTrace[1]+self.ids.libreDrawing.center_y)
                         if hitLine(firstPoint, secondPoint, (x, y), self.lineWidth):
                             self.params["photos"][len(self.params["photos"])-1] = not self.params["photos"][len(self.params["photos"])-1]
                             self.update_rect()
@@ -435,8 +468,8 @@ class Parametrage(BoxLayout):
     def clickedMove(self, touch):
         if self.mode == "Libre":
             if touch.button == 'left' and self.dragging != -1:
-                thisX = (touch.x-self.ids.pipeDrawing.center_x)/self.zoom
-                thisY = (touch.y-self.ids.pipeDrawing.center_y)/self.zoom
+                thisX = (touch.x-self.ids.libreDrawing.center_x)/self.zoom
+                thisY = (touch.y-self.ids.libreDrawing.center_y)/self.zoom
 
                 if keyboard.is_pressed("ctrl") and len(self.params["trace"]) > 2: # To clamp relative to last one (right angles)
                     fromWhich = self.dragging-1 % len(self.params["trace"])
@@ -467,17 +500,17 @@ class Parametrage(BoxLayout):
                 self.update_rect()
 
     def positionClamp(self):
-        maxPosLeft = (-self.ids.canvasSplitter.size[0]/2-self.margin[0])/(self.zoom)
-        maxPosRight = (self.ids.canvasSplitter.size[0]/2-self.margin[1])/(self.zoom)
-        maxPosTop = (self.ids.canvasSplitter.size[1]/2-self.margin[2])/(self.zoom)
-        maxPosDown = (-self.ids.canvasSplitter.size[1]/2-self.margin[3])/(self.zoom)
+        maxPosLeft = (-self.ids.libreSplitter.size[0]/2-self.margin[0])/(self.zoom)
+        maxPosRight = (self.ids.libreSplitter.size[0]/2-self.margin[1])/(self.zoom)
+        maxPosTop = (self.ids.libreSplitter.size[1]/2-self.margin[2])/(self.zoom)
+        maxPosDown = (-self.ids.libreSplitter.size[1]/2-self.margin[3])/(self.zoom)
 
         for i in range(int(len(self.params["trace"])/2)):
             self.params["trace"][i*2] = min(max(self.params["trace"][i*2], maxPosLeft), maxPosRight)
             self.params["trace"][i*2+1] = min(max(self.params["trace"][i*2+1], maxPosDown), maxPosTop)
                 
     def zoomClamp(self):
-        size = self.ids.canvasSplitter.size
+        size = self.ids.libreSplitter.size
         worstX = 0
         worstY = 0
         worstMX = 0
@@ -508,13 +541,8 @@ class Parametrage(BoxLayout):
 
         self.zoom = max(self.zoom, 0.05)
 
-    def tuyeauMode(self):
-        if self.clock != -1:
-            self.clock.cancel()
-            self.clock = -1
-            
+    def tuyeauMode(self):            
         self.tuyeau_panel.clear_widgets()
-
         self.inputs["nbPipe"] = Input(name='Nombre de tuyeau', input_filter="int", default_text=str(self.params["nbPipe"]), callback=self.tuyeauGap)
         self.inputs["lenPipe"] = Input(name='Taille des tuyeaux (m)', input_filter="float", default_text=str(self.params["lenPipe"]), callback=self.update_rect)
         self.inputs["timePipe"] = Input(name='Temps pour un tuyeau (sec)', input_filter="float", default_text=str(self.params["timePipe"]), callback=self.update_rect)
@@ -550,26 +578,35 @@ class Parametrage(BoxLayout):
         self.update_rect()
     
     def libreMode(self):
-        if self.clock != -1:
-            self.clock.cancel()
-            self.clock = -1
-
         self.libre_panel.clear_widgets()
-
         self.inputs["loop"] = Input(name='Boucle', inputType=1, default_text=str(self.params["loop"]), callback=self.update_rect)
-
         self.libre_panel.add_widget(self.inputs["loop"])
-        self.zoom = float('inf')
-        self.zoomClamp()
 
     def directMode(self):
-        self.direct_panel.clear_widgets()
-        self.clock = Clock.schedule_interval(self.readFromSerial, 0.2)
+        self.clock = Clock.schedule_interval(self.readFromSerial, 0.2) #FIXME: not sure how to manage this know...
 
 
 class DaphnieMatonApp(App):
     def build(self):
+        self.settings_cls = SettingsWithSidebar
+        self.use_kivy_settings = False
+        setting = self.config.get('example', 'boolexample')
+
         return Parametrage()
+
+    def build_config(self, config):
+        config.setdefaults('example', {
+            'boolexample': True,
+            'numericexample': 10,
+            'optionsexample': 'option2',
+            'stringexample': 'some_string',
+            'pathexample': 'C:\\'})
+
+    def build_settings(self, settings):
+        settings.add_json_panel('Géneral', self.config, data=settings_json)
+
+    #def on_config_change(self, config, section, key, value):
+    #    print(config, section, key, value)
 
 if __name__ == '__main__':
     DaphnieMatonApp().run()
