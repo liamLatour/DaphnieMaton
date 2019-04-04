@@ -1,3 +1,4 @@
+#:kivy 1.10.1
 <LoadDialog>:
     BoxLayout:
         size: root.size
@@ -50,7 +51,19 @@
         height: 48
         size_hint_y : None
 
+<ModeDropDown>:
+    Button:
+        text: 'Vide'
+        height: 48
+        size_hint_y : None
+
+<Input>:
+    size_hint: (1, None)
+    size: (200, 30)
+    orientation: 'horizontal'
+
 <Parametrage>:
+    id: parametrage
     orientation:"vertical"
     ActionBar:
         pos_hint: {'top':1}
@@ -73,84 +86,129 @@
                 text: "Aide"
                 on_release: root.help()
 
-    BoxLayout:
-        BoxLayout:
-            orientation: 'vertical'
-            spacing: 5
+    TabbedPanel:
+        do_default_tab: False
+        id: lol
+        TabbedPanelItem:
+            text: 'Tuyeau'
             BoxLayout:
-                size_hint: (1, None)
-                size: (200, 30)
-                orientation: 'horizontal'
-                Label:
-                    text: 'Nombre de tuyeau'
-                TextInput:
-                    input_filter: 'float'
-                    text: '2'
-                    id: nbPipe
-                    multiline: False
-                    on_text_validate: root.update_rect()
-            BoxLayout:
-                size_hint: (1, None)
-                size: (200, 30)
-                orientation: 'horizontal'
-                Label:
-                    text: 'Taille des tuyeaux (m)'
-                TextInput:
-                    input_filter: 'float'
-                    text: '1.5'
-                    id: lenPipe
-                    multiline: False
-                    on_text_validate: root.update_rect()
-            BoxLayout:
-                size_hint: (1, None)
-                size: (200, 30)
-                orientation: 'horizontal'
-                Label:
-                    text: 'Temps pour un tuyeau (sec)'
-                TextInput:
-                    input_filter: 'float'
-                    text: '10'
-                    id: timePipe
-                    multiline: False
-                    on_text_validate: root.update_rect()
-            BoxLayout:
-                size_hint: (1, None)
-                size: (200, 30)
-                orientation: 'horizontal'
-                Label:
-                    text: u'Centim\u00e9tre par photo'
-                TextInput:
-                    input_filter: 'float'
-                    text: '0.5'
-                    id: photoPipe
-                    multiline: False
-                    on_text_validate: root.update_rect()
-            Widget:
-        Splitter:
-            sizable_from: 'left'
-            strip_size: '5pt'
-            id: canvasSplitter
-            BoxLayout:
-                orientation: 'vertical'
-                Widget:
-                    id: pipeDrawing
-                    canvas.before:
-                    Label:
-                        id: infoLabel
-                        halign: 'left'
-                        valign: 'top'
-                        size: (200, 150)
-                        padding: (5, 5)
-                        text_size: self.size
-                        text: "Temps totale: 5\nNombre photo: 100"
                 BoxLayout:
-                    size_hint: (1, None)
-                    size: (200, 50)
-                    spacing: 10
-                    orientation: 'horizontal'
-                    Button:
-                        text: 'Update'
-                        on_release: root.update()
-                    Button:
-                        text: 'Flash'
-                        on_release: root.flash()
+                    ScrollView:
+                        size_hint: (1, 1)
+                        BoxLayout:
+                            id: tuyeauInputs
+                            orientation: 'vertical'
+                            spacing: 5
+                            size_hint_y: None
+                            height: self.minimum_height
+
+                Splitter:
+                    sizable_from: 'left'
+                    strip_size: '5pt'
+                    id: canvasSplitter
+                    BoxLayout:
+                        orientation: 'vertical'
+                        Widget:
+                            id: pipeDrawing
+                            canvas.before:
+                            Label:
+                                id: infoLabel
+                                halign: 'left'
+                                valign: 'top'
+                                size: (200, 150)
+                                padding: (5, 5)
+                                text_size: self.size
+                                text: "Temps totale: 5\nNombre photo: 100"
+                            Widget:
+                                id: directDrawing
+                        BoxLayout:
+                            size_hint: (1, None)
+                            size: (200, 50)
+                            spacing: 10
+                            orientation: 'horizontal'
+                            Button:
+                                text: 'Update'
+                                on_release: root.update()
+        TabbedPanelItem:
+            text: 'Libre'
+            BoxLayout:
+                BoxLayout:
+                    ScrollView:
+                        size_hint: (1, 1)
+                        BoxLayout:
+                            id: libreInputs
+                            orientation: 'vertical'
+                            spacing: 5
+                            size_hint_y: None
+                            height: self.minimum_height
+                Splitter:
+                    sizable_from: 'left'
+                    strip_size: '5pt'
+                    id: canvasSplitter
+                    BoxLayout:
+                        orientation: 'vertical'
+                        Widget:
+                            id: pipeDrawing
+                            on_touch_down: root.clickedDown(args[1])
+                            on_touch_up: root.clickedUp(args[1])
+                            on_touch_move: root.clickedMove(args[1])
+                            canvas.before:
+                            Label:
+                                id: infoLabel
+                                halign: 'left'
+                                valign: 'top'
+                                size: (200, 150)
+                                padding: (5, 5)
+                                text_size: self.size
+                                text: "Temps totale: 5\nNombre photo: 100"
+                            Widget:
+                                id: directDrawing
+                        BoxLayout:
+                            size_hint: (1, None)
+                            size: (200, 50)
+                            spacing: 10
+                            orientation: 'horizontal'
+                            Button:
+                                text: 'Update'
+                                on_release: root.update()
+        TabbedPanelItem:
+            text: 'Direct'
+            BoxLayout:
+                BoxLayout:
+                    ScrollView:
+                        size_hint: (1, 1)
+                        BoxLayout:
+                            id: directInputs
+                            orientation: 'vertical'
+                            spacing: 5
+                            size_hint_y: None
+                            height: self.minimum_height
+                Splitter:
+                    sizable_from: 'left'
+                    strip_size: '5pt'
+                    id: canvasSplitter
+                    BoxLayout:
+                        orientation: 'vertical'
+                        Widget:
+                            id: pipeDrawing
+                            canvas.before:
+                            Label:
+                                id: infoLabel
+                                halign: 'left'
+                                valign: 'top'
+                                size: (200, 150)
+                                padding: (5, 5)
+                                text_size: self.size
+                                text: "Temps totale: 5\nNombre photo: 100"
+                            Widget:
+                                id: directDrawing
+                        BoxLayout:
+                            size_hint: (1, None)
+                            size: (200, 50)
+                            spacing: 10
+                            orientation: 'horizontal'
+                            Button:
+                                text: 'Update'
+                                on_release: root.update()
+        TabbedPanelItem:
+            text: 'Settings'
