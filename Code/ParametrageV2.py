@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import threading
 import time
 from functools import partial
@@ -20,22 +21,22 @@ from kivy.uix.button import Button
 from kivy.uix.image import AsyncImage
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
-from scipy.spatial import distance
 from kivy.uix.settings import SettingsWithSidebar
+from scipy.spatial import distance
 
 from libraries.classes import (Input, LoadDialog, ModeDropDown, PenDropDown,
                                SaveDialog, getPorts, hitLine, urlOpen)
 from libraries.createFile import generateFile
-
-
 from settingsjson import settings_json
-
-#TODO: add https://kivy.org/doc/stable/api-kivy.uix.settings.html
-
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 #Config.set('kivy','window_icon','logo.ico')
-Builder.load_file('main.kv')
+
+for arg in sys.argv:
+    if arg == "en":
+        Builder.load_file('.\\kv\\main.en.kv')
+    elif arg == "fr":
+        Builder.load_file('.\\kv\\main.fr.kv')
 
 class Parametrage(BoxLayout):
     def __init__(self, *args, **kwargs):
@@ -45,6 +46,7 @@ class Parametrage(BoxLayout):
             "lenPipe" : 1.2,
             "timePipe" : 10,
             "photoPipe" : 50,
+            "distOrigin" : 50,
             "constGap" : True,
             "gaps" : [20],
             "loop" : False,
@@ -52,13 +54,11 @@ class Parametrage(BoxLayout):
             "photos" : []
         }
         self.port = -1
-        self.osPath = "ArduinoRamps1.4\\OS.hex"
         self.pen_drop_down = PenDropDown()
         self.mode_drop_down = ModeDropDown()
 
         self.tuyeau_panel = self.ids.tuyeauInputs
         self.libre_panel = self.ids.libreInputs
-        self.direct_panel = self.ids.directInputs
         self.inputs = {}
         self.mode = "Tuyeau"
         self.font = ".\\assets\\seguisym.ttf"
@@ -83,10 +83,11 @@ class Parametrage(BoxLayout):
         keyboard.on_release_key('shift', self.update_rect)
 
     def binding(self, *args):
-        self.ids.pipeDrawing.bind(pos=self.update_rect, size=self.update_rect)
-        self.ids.directDrawing.bind(pos=self.update_rect, size=self.update_rect)
-        self.ids.libreDrawing.bind(pos=self.update_rect, size=self.update_rect)
-        self.update_rect()
+        self.ids.pipeDrawing.bind(size=self.update_rect, pos=self.update_rect)
+        self.ids.directDrawing.bind(size=self.update_rect, pos=self.update_rect)
+        self.ids.libreDrawing.bind(size=self.update_rect, pos=self.update_rect)
+
+        self.ids.changeTab.bind(on_touch_up = self.changedTab)
 
     def poplb_update(self, *args):
         self.poplb.text_size = self.popup.size
@@ -164,14 +165,10 @@ class Parametrage(BoxLayout):
     def save(self, path, filename):
         with open(os.path.join(path, filename+".json"), 'w') as stream:
             paramsCopy = self.params.copy()
-            try: paramsCopy["gaps"] = paramsCopy["gaps"].tolist()
-            except: pass
 
-            try: paramsCopy["trace"] = paramsCopy["trace"].tolist()
-            except: pass
-
-            try: paramsCopy["photos"] = paramsCopy["photos"].tolist()
-            except: pass
+            for item in paramsCopy: # Converts numpy arrays into python list
+                try: paramsCopy[item] = paramsCopy[item].tolist()
+                except: pass
 
             stream.write(json.dumps( paramsCopy ))
 
@@ -217,22 +214,27 @@ class Parametrage(BoxLayout):
             self.popup.dismiss()
             Popup(title='Absence de port', content=Label(text='Un port doit être précisé'), size_hint=(None, None), size=(400, 300)).open()
 
+    def changedTab(self, *args):
+        self.mode = self.ids.tabbedPanel.current_tab.name
+
+        if self.clock != -1:
+            self.clock.cancel()
+            self.clock = -1
+
+        self.zoom = float('inf')
+
+        if self.mode == "Direct":
+            self.clock = Clock.schedule_interval(self.readFromSerial, 0.2)
+        self.update_rect()
+
     # Drawing on canvas
     def update_rect(self, *args):
-        self.mode = self.ids.tabbedPanel.current_tab.text
+        self.mode = self.ids.tabbedPanel.current_tab.name
 
         if self.mode == "Tuyeau":
             self.ids.pipeSplitter.max_size = self.size[0] - 400
-            self.zoomClamp()
             middle = (self.ids.pipeDrawing.center_x, self.ids.pipeDrawing.center_y)
             self.ids.pipeDrawing.canvas.before.clear()
-            self.ids.pipeDrawing.canvas.after.clear()
-
-            # Retablie les variable pour le mode direct et libre
-            if self.clock != -1:
-                self.clock.cancel()
-                self.clock = -1
-            self.zoom = float('inf')
 
             gapsValue = []
             if bool(self.inputs["sameGap"].input.active):
@@ -288,11 +290,6 @@ class Parametrage(BoxLayout):
             self.zoomClamp()
             middle = (self.ids.libreDrawing.center_x, self.ids.libreDrawing.center_y)
             self.ids.libreDrawing.canvas.before.clear()
-            self.ids.libreDrawing.canvas.after.clear()
-
-            if self.clock != -1:
-                self.clock.cancel()
-                self.clock = -1
 
             self.ids.libreSplitter.min_size = int(round(self.size[0]/2))
             zoomedTrace = np.multiply(self.params["trace"], self.zoom).tolist()
@@ -346,16 +343,11 @@ class Parametrage(BoxLayout):
                 Rectangle(pos=(self.size[0]-200, self.size[1] - (70 +95)), size=(200, 70), texture=text)
 
         elif self.mode == "Direct":
-            self.ids.directSplitter.max_size = self.size[0] - 400
-            self.zoomClamp()
             middle = (self.ids.directDrawing.center_x, self.ids.directDrawing.center_y)
             self.ids.directDrawing.clear_widgets()
             self.ids.directDrawing.canvas.before.clear()
             self.ids.directDrawing.canvas.after.clear()
 
-            self.zoom = float('inf')
-
-            self.ids.infoLabel.text = ""
             buttonSize = min(self.ids.directSplitter.size[0]/4, self.ids.directSplitter.size[1]/4)
             fontSize = min(self.ids.directSplitter.size[0]/20, self.ids.directSplitter.size[1]/20)
 
@@ -386,12 +378,17 @@ class Parametrage(BoxLayout):
             self.ids.directDrawing.add_widget(down)
 
             with self.ids.directDrawing.canvas.before:
-                self.ids.infoLabel.pos = (self.size[0]-200, self.size[1] - 200)
-                self.ids.infoLabel.text = "X: " + str(self.position[0]) + " step" + \
-                                        "\nY: " + str(self.position[1]) + " step"
+                text = "X: " + str(self.position[0]) + " step" + \
+                        "\nY: " + str(self.position[1]) + " step"
 
                 Color(1,1,1, .2)
-                Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +50)), size = (200, 70))
+                Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +95)), size = (200, 70))
+
+                label = CoreLabel(text=text, font_size=30, halign='left', valign='top', padding=(5, 5))
+                label.refresh()
+                text = label.texture
+                Color(1, 1, 1, 1)
+                Rectangle(pos=(self.size[0]-200, self.size[1] - (70 +95)), size=(200, 70), texture=text)
 
             if not self.hasGoodProgram:
                 with self.ids.directDrawing.canvas.after:
@@ -541,18 +538,20 @@ class Parametrage(BoxLayout):
 
         self.zoom = max(self.zoom, 0.05)
 
-    def tuyeauMode(self):            
+    def tuyeauMode(self): #TODO: Change this to be in .kv
         self.tuyeau_panel.clear_widgets()
         self.inputs["nbPipe"] = Input(name='Nombre de tuyeau', input_filter="int", default_text=str(self.params["nbPipe"]), callback=self.tuyeauGap)
         self.inputs["lenPipe"] = Input(name='Taille des tuyeaux (m)', input_filter="float", default_text=str(self.params["lenPipe"]), callback=self.update_rect)
         self.inputs["timePipe"] = Input(name='Temps pour un tuyeau (sec)', input_filter="float", default_text=str(self.params["timePipe"]), callback=self.update_rect)
         self.inputs["photoPipe"] = Input(name='Centim\u00e9tre par photo', input_filter="float", default_text=str(self.params["photoPipe"]), callback=self.update_rect)
+        self.inputs["distOrigin"] = Input(name='Distance de l\'origine', input_filter="float", default_text=str(self.params["distOrigin"]), callback=self.update_rect)
         self.inputs["sameGap"] = Input(name='Ecart constant', inputType=1, default_text=str(self.params["constGap"]), callback=self.tuyeauGap)
 
         self.tuyeau_panel.add_widget(self.inputs["nbPipe"])
         self.tuyeau_panel.add_widget(self.inputs["lenPipe"])
         self.tuyeau_panel.add_widget(self.inputs["timePipe"])
         self.tuyeau_panel.add_widget(self.inputs["photoPipe"])
+        self.tuyeau_panel.add_widget(self.inputs["distOrigin"])
         self.tuyeau_panel.add_widget(self.inputs["sameGap"])
         self.tuyeauGap()
     
@@ -574,16 +573,11 @@ class Parametrage(BoxLayout):
 
                 self.inputs["gaps"].append(Input(name='Ecart entre tuyeau (cm)', input_filter="float", default_text=default, callback=self.update_rect))
                 self.tuyeau_panel.add_widget(self.inputs["gaps"][pipe])
-
-        self.update_rect()
     
     def libreMode(self):
         self.libre_panel.clear_widgets()
         self.inputs["loop"] = Input(name='Boucle', inputType=1, default_text=str(self.params["loop"]), callback=self.update_rect)
         self.libre_panel.add_widget(self.inputs["loop"])
-
-    def directMode(self):
-        self.clock = Clock.schedule_interval(self.readFromSerial, 0.2) #FIXME: not sure how to manage this know...
 
 
 class DaphnieMatonApp(App):
@@ -603,7 +597,7 @@ class DaphnieMatonApp(App):
             'pathexample': 'C:\\'})
 
     def build_settings(self, settings):
-        settings.add_json_panel('Géneral', self.config, data=settings_json)
+        settings.add_json_panel('Géneral', self.config, data=settings_json) # make it read from a .json file
 
     #def on_config_change(self, config, section, key, value):
     #    print(config, section, key, value)

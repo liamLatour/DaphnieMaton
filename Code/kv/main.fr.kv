@@ -1,0 +1,171 @@
+#:kivy 1.10.1
+<LoadDialog>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Annuler"
+                on_release: root.cancel()
+
+            Button:
+                text: "Charger"
+                on_release: root.load(filechooser.path, filechooser.selection)
+
+<SaveDialog>:
+    text_input: text_input
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            on_selection: text_input.text = self.selection and self.selection[0] or ''
+
+        TextInput:
+            id: text_input
+            size_hint_y: None
+            height: 30
+            multiline: False
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Annuler"
+                on_release: root.cancel()
+
+            Button:
+                text: "Sauvegarder"
+                on_release: root.save(filechooser.path, text_input.text)
+
+<PenDropDown>:
+    Button:
+        text: 'Aucun port'
+        height: 48
+        size_hint_y : None
+
+<Input>:
+    size_hint: (1, None)
+    size: (200, 30)
+    orientation: 'horizontal'
+
+<Parametrage>:
+    id: parametrage
+    orientation:"vertical"
+    ActionBar:
+        pos_hint: {'top':1}
+        ActionView:
+            use_separator: True
+            ActionPrevious:
+                title: 'DaphnieMaton'
+                with_previous: False
+            ActionButton:
+                text: 'Sauvegarder'
+                on_release: root.show_save()
+            ActionButton:
+                text: 'Ouvrir'
+                on_release: root.show_load()
+            ActionButton:
+                id: port_button
+                text: 'Port'
+                on_release: root.show_port()
+            ActionButton:
+                text: "Option"
+                on_release: app.open_settings()
+            ActionButton:
+                text: "Aide"
+                on_release: root.help()
+
+    TabbedPanel:
+        do_default_tab: False
+        id: tabbedPanel
+        TabbedPanelItem:
+            text: 'Tuyeau'
+            name: 'Tuyeau'
+            id: changeTab
+            BoxLayout:
+                BoxLayout:
+                    ScrollView:
+                        size_hint: (1, 1)
+                        BoxLayout:
+                            id: tuyeauInputs
+                            orientation: 'vertical'
+                            spacing: 5
+                            size_hint_y: None
+                            height: self.minimum_height
+
+                Splitter:
+                    sizable_from: 'left'
+                    strip_size: '5pt'
+                    id: pipeSplitter
+                    BoxLayout:
+                        orientation: 'vertical'
+                        Widget:
+                            id: pipeDrawing
+                            canvas.before:
+                        BoxLayout:
+                            size_hint: (1, None)
+                            size: (200, 50)
+                            spacing: 10
+                            orientation: 'horizontal'
+                            Button:
+                                text: u'T\u00e9l\u00e9verser'
+                                on_release: root.update()
+        TabbedPanelItem:
+            text: 'Libre'
+            name: 'Libre'
+            BoxLayout:
+                BoxLayout:
+                    ScrollView:
+                        size_hint: (1, 1)
+                        BoxLayout:
+                            id: libreInputs
+                            orientation: 'vertical'
+                            spacing: 5
+                            size_hint_y: None
+                            height: self.minimum_height
+                Splitter:
+                    sizable_from: 'left'
+                    strip_size: '5pt'
+                    id: libreSplitter
+                    BoxLayout:
+                        orientation: 'vertical'
+                        Widget:
+                            id: libreDrawing
+                            on_touch_down: root.clickedDown(args[1])
+                            on_touch_up: root.clickedUp(args[1])
+                            on_touch_move: root.clickedMove(args[1])
+                            canvas.before:
+                        BoxLayout:
+                            size_hint: (1, None)
+                            size: (200, 50)
+                            spacing: 10
+                            orientation: 'horizontal'
+                            Button:
+                                text: u'T\u00e9l\u00e9verser'
+                                on_release: root.update()
+        TabbedPanelItem:
+            text: 'Direct'
+            name: 'Direct'
+            BoxLayout:
+                id: directSplitter
+                BoxLayout:
+                    orientation: 'vertical'
+                    Widget:
+                        id: directDrawing
+                        canvas.before:
+                    BoxLayout:
+                        size_hint: (1, None)
+                        size: (200, 50)
+                        spacing: 10
+                        orientation: 'horizontal'
+                        Button:
+                            text: u'T\u00e9l\u00e9verser'
+                            on_release: root.update()
