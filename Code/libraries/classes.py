@@ -20,6 +20,7 @@ class SaveDialog(FloatLayout):
     save = ObjectProperty(None)
     text_input = ObjectProperty(None)
     cancel = ObjectProperty(None)
+    path = StringProperty("C:/")
 
 class PenDropDown(ActionDropDown):
     pass

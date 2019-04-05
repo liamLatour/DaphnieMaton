@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import sys
@@ -27,7 +28,6 @@ from scipy.spatial import distance
 from libraries.classes import (Input, LoadDialog, ModeDropDown, PenDropDown,
                                SaveDialog, getPorts, hitLine, urlOpen)
 from libraries.createFile import generateFile
-from settingsjson import settings_json
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 #Config.set('kivy','window_icon','logo.ico')
@@ -81,6 +81,8 @@ class Parametrage(BoxLayout):
         self.libreMode()
         Clock.schedule_once(self.binding)
         keyboard.on_release_key('shift', self.update_rect)
+
+        self.settings = App.get_running_app().config
 
     def binding(self, *args):
         self.ids.pipeDrawing.bind(size=self.update_rect, pos=self.update_rect)
@@ -150,7 +152,7 @@ class Parametrage(BoxLayout):
         self._popup.open()
 
     def show_save(self):
-        content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
+        content = SaveDialog(save=self.save, cancel=self.dismiss_popup, path=self.settings.get('general', 'savePath'))
         self._popup = Popup(title="Save file", content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()    
@@ -180,8 +182,7 @@ class Parametrage(BoxLayout):
             x = self.board.readline().decode("utf-8").rstrip()
             y = self.board.readline().decode("utf-8").rstrip()
             self.position = (x, y)
-            self.ids.infoLabel.text = "X: " + str(self.position[0]) + " step" + \
-                                      "\nY: " + str(self.position[1]) + " step"
+            self.update_rect()
 
     def update(self, *args):
         self.popup = Popup(title='Téléversement', content=AsyncImage(source='.\\assets\\logo.png', size=(100, 100)), size_hint=(None, None), size=(400, 300), auto_dismiss=False)
@@ -193,19 +194,20 @@ class Parametrage(BoxLayout):
         
     def updateAsync(self):
         generateFile(self.params["trace"], self.params["photos"])
+        arduinoPath = self.settings.get('general', 'arduinoPath')
         if self.port != -1:
             try:
                 self.board.close()
                 self.board = -1
             except: pass
             if self.mode == "Direct":
-                os.system(".\\arduino-1.8.9\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\directFile\\directFile.ino")            
+                os.system(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\directFile\\directFile.ino")            
                 self.hasGoodProgram = True
                 self.update_rect()
                 self.clock = Clock.schedule_interval(self.readFromSerial, 0.2)
             else:
                 generateFile(self.params["trace"], self.params["photos"])
-                os.system(".\\arduino-1.8.9\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\currentFile\\currentFile.ino")
+                os.system(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\currentFile\\currentFile.ino")
                 self.hasGoodProgram = False
             print("DONE !")
             self.popup.dismiss()
@@ -396,7 +398,7 @@ class Parametrage(BoxLayout):
                     dimensionY = self.ids.directSplitter.size[1] - 50
                     Color(1, 1, 1, 0.5)
                     Rectangle(pos=(middle[0]-dimensionX/2, middle[1]-dimensionY/2), size=(dimensionX, dimensionY))
-                    label = CoreLabel(text="Clicker sur 'Update' avant", font_size=100, halign='middle', valign='middle', padding=(12, 12))
+                    label = CoreLabel(text="Clicker sur 'Téléverser' avant", font_size=100, halign='middle', valign='middle', padding=(12, 12))
                     label.refresh()
                     text = label.texture
                     Color(0, 0, 0, 1)
@@ -584,23 +586,19 @@ class DaphnieMatonApp(App):
     def build(self):
         self.settings_cls = SettingsWithSidebar
         self.use_kivy_settings = False
-        setting = self.config.get('example', 'boolexample')
-
         return Parametrage()
 
     def build_config(self, config):
-        config.setdefaults('example', {
-            'boolexample': True,
-            'numericexample': 10,
-            'optionsexample': 'option2',
-            'stringexample': 'some_string',
-            'pathexample': 'C:\\'})
+        config.setdefaults('general', {
+            'arduinoPath': 'C:\\',
+            'savePath': 'C:\\',
+            'stepToCm': 100})
 
     def build_settings(self, settings):
-        settings.add_json_panel('Géneral', self.config, data=settings_json) # make it read from a .json file
-
-    #def on_config_change(self, config, section, key, value):
-    #    print(config, section, key, value)
+        f = io.open(".\\kv\\config.json", "r", encoding='utf8')
+        if f.mode == 'r':
+            contents = f.read()
+            settings.add_json_panel('Générale', self.config, data=contents)
 
 if __name__ == '__main__':
     DaphnieMatonApp().run()

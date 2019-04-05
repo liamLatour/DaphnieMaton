@@ -27,20 +27,19 @@
         FileChooserListView:
             id: filechooser
             on_selection: text_input.text = self.selection and self.selection[0] or ''
+            path: root.path
 
         TextInput:
             id: text_input
             size_hint_y: None
             height: 30
             multiline: False
-
         BoxLayout:
             size_hint_y: None
             height: 30
             Button:
                 text: "Annuler"
                 on_release: root.cancel()
-
             Button:
                 text: "Sauvegarder"
                 on_release: root.save(filechooser.path, text_input.text)
