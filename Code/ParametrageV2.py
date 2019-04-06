@@ -32,11 +32,17 @@ from libraries.createFile import generateFile
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 #Config.set('kivy','window_icon','logo.ico')
 
+loaded = False
 for arg in sys.argv:
     if arg == "en":
         Builder.load_file('.\\kv\\main.en.kv')
+        loaded = True
     elif arg == "fr":
         Builder.load_file('.\\kv\\main.fr.kv')
+        loaded = True
+
+if not loaded:
+    Builder.load_file('.\\kv\\main.fr.kv')
 
 class Parametrage(BoxLayout):
     def __init__(self, *args, **kwargs):
@@ -47,7 +53,7 @@ class Parametrage(BoxLayout):
             "timePipe" : 10,
             "photoPipe" : 50,
             "distOrigin" : 50,
-            "constGap" : True,
+            "sameGap" : True,
             "gaps" : [20],
             "loop" : False,
             "trace" : [],
@@ -58,8 +64,7 @@ class Parametrage(BoxLayout):
         self.mode_drop_down = ModeDropDown()
 
         self.tuyeau_panel = self.ids.tuyeauInputs
-        self.libre_panel = self.ids.libreInputs
-        self.inputs = {}
+        self.gaps = []
         self.mode = "Tuyeau"
         self.font = ".\\assets\\seguisym.ttf"
 
@@ -77,10 +82,11 @@ class Parametrage(BoxLayout):
         self.position = (0, 0)
         self.hasGoodProgram = False
 
-        self.tuyeauMode()
-        self.libreMode()
         Clock.schedule_once(self.binding)
         keyboard.on_release_key('shift', self.update_rect)
+        self.filePath = -1
+        self.fileName = "nouvelle configuration"
+        keyboard.add_hotkey('ctrl+s', self.save, args=[-1, -1])
 
         self.settings = App.get_running_app().config
 
@@ -158,13 +164,33 @@ class Parametrage(BoxLayout):
         self._popup.open()    
 
     def load(self, path, filename):
+        self.filePath = path
+        self.fileName = filename[0].replace(".json", "")
+
         with open(os.path.join(path, filename[0])) as stream:
             self.params = json.load(stream)
+            for param in self.params:
+                try:
+                    self.ids[param].input.text = str(self.params[param])
+                    self.ids[param].input.active = bool(self.params[param])
+                except:
+                    print(param)
 
-        self.change_mode("Tuyeau")
+        self.tuyeauGap()
         self.dismiss_popup()
 
     def save(self, path, filename):
+        if path == -1:
+            if self.filePath == -1:
+                print("no path")
+                return
+            else:
+                path = self.filePath
+                filename = self.fileName
+
+        self.filePath = path
+        self.fileName = filename
+
         with open(os.path.join(path, filename+".json"), 'w') as stream:
             paramsCopy = self.params.copy()
 
@@ -239,20 +265,20 @@ class Parametrage(BoxLayout):
             self.ids.pipeDrawing.canvas.before.clear()
 
             gapsValue = []
-            if bool(self.inputs["sameGap"].input.active):
-                gapsValue = np.ones(max(int(self.inputs["nbPipe"].input.text), 1)-1) * float(self.inputs["gaps"][0].input.text)
+            if bool(self.ids.sameGap.input.active):
+                gapsValue = np.ones(max(int(self.ids.nbPipe.input.text), 1)-1) * float(self.gaps[0].input.text)
             else:
-                for gap in self.inputs["gaps"]:
+                for gap in self.gaps:
                     gapsValue.append(float(gap.input.text))
 
             if len(gapsValue) == 0:
                 gapsValue = [20]
 
-            self.params["nbPipe"] = max(int(self.inputs["nbPipe"].input.text), 1)
-            self.params["lenPipe"] = max(float(self.inputs["lenPipe"].input.text), 0.1)
-            self.params["timePipe"] = float(self.inputs["timePipe"].input.text)
-            self.params["photoPipe"] = max(float(self.inputs["photoPipe"].input.text), 1)
-            self.params["constGap"] = bool(self.inputs["sameGap"].input.active)
+            self.params["nbPipe"] = max(int(self.ids.nbPipe.input.text), 1)
+            self.params["lenPipe"] = max(float(self.ids.lenPipe.input.text), 0.1)
+            self.params["timePipe"] = float(self.ids.timePipe.input.text)
+            self.params["photoPipe"] = max(float(self.ids.photoPipe.input.text), 1)
+            self.params["sameGap"] = bool(self.ids.sameGap.input.active)
             self.params["gaps"] = gapsValue
 
             shift = (self.params["nbPipe"] * 10 + np.sum(self.params["gaps"]))
@@ -307,7 +333,7 @@ class Parametrage(BoxLayout):
 
                 if len(zoomedTrace) > 0:
                     if len(zoomedTrace) > 4:
-                        isLoop = bool(self.inputs["loop"].input.active)
+                        isLoop = bool(self.ids.loop.input.active)
                     else:
                         isLoop = False
                     
@@ -444,7 +470,7 @@ class Parametrage(BoxLayout):
                             self.params["photos"][i] = not self.params["photos"][i]
                             self.update_rect()
                             return
-                    if bool(self.inputs["loop"].input.active):
+                    if bool(self.ids.loop.input.active):
                         firstPoint = (zoomedTrace[len(zoomedTrace)-2]+self.ids.libreDrawing.center_x, zoomedTrace[len(zoomedTrace)-1]+self.ids.libreDrawing.center_y)
                         secondPoint = (zoomedTrace[0]+self.ids.libreDrawing.center_x, zoomedTrace[1]+self.ids.libreDrawing.center_y)
                         if hitLine(firstPoint, secondPoint, (x, y), self.lineWidth):
@@ -539,47 +565,29 @@ class Parametrage(BoxLayout):
             self.zoom = min((size[1]/2 - 20)/float(100), self.zoom)
 
         self.zoom = max(self.zoom, 0.05)
-
-    def tuyeauMode(self): #TODO: Change this to be in .kv
-        self.tuyeau_panel.clear_widgets()
-        self.inputs["nbPipe"] = Input(name='Nombre de tuyeau', input_filter="int", default_text=str(self.params["nbPipe"]), callback=self.tuyeauGap)
-        self.inputs["lenPipe"] = Input(name='Taille des tuyeaux (m)', input_filter="float", default_text=str(self.params["lenPipe"]), callback=self.update_rect)
-        self.inputs["timePipe"] = Input(name='Temps pour un tuyeau (sec)', input_filter="float", default_text=str(self.params["timePipe"]), callback=self.update_rect)
-        self.inputs["photoPipe"] = Input(name='Centim\u00e9tre par photo', input_filter="float", default_text=str(self.params["photoPipe"]), callback=self.update_rect)
-        self.inputs["distOrigin"] = Input(name='Distance de l\'origine', input_filter="float", default_text=str(self.params["distOrigin"]), callback=self.update_rect)
-        self.inputs["sameGap"] = Input(name='Ecart constant', inputType=1, default_text=str(self.params["constGap"]), callback=self.tuyeauGap)
-
-        self.tuyeau_panel.add_widget(self.inputs["nbPipe"])
-        self.tuyeau_panel.add_widget(self.inputs["lenPipe"])
-        self.tuyeau_panel.add_widget(self.inputs["timePipe"])
-        self.tuyeau_panel.add_widget(self.inputs["photoPipe"])
-        self.tuyeau_panel.add_widget(self.inputs["distOrigin"])
-        self.tuyeau_panel.add_widget(self.inputs["sameGap"])
-        self.tuyeauGap()
     
     def tuyeauGap(self, *args):
-        if "gaps" in self.inputs:
-            for gap in self.inputs["gaps"]:
+        try: self.gaps
+        except: return
+
+        if self.gaps != []:
+            for gap in self.gaps:
                 self.tuyeau_panel.remove_widget(gap)
 
-        if bool(self.inputs["sameGap"].input.active):
-            self.inputs["gaps"] = [Input(name='Ecart entre tuyeau (cm)', input_filter="float", default_text=str(self.params["gaps"][0]), callback=self.update_rect)]
-            self.tuyeau_panel.add_widget(self.inputs["gaps"][0])
+        if bool(self.ids.sameGap.input.active):
+            self.gaps = [Input(inputName='Ecart entre tuyeau (cm)', input_filter="float", default_text=str(self.params["gaps"][0]), callback=self.update_rect)]
+            self.tuyeau_panel.add_widget(self.gaps[0])
         else:
-            self.inputs["gaps"] = []
-            for pipe in range(max(int(self.inputs["nbPipe"].input.text), 1)-1):
+            self.gaps = []
+            for pipe in range(max(int(self.ids.nbPipe.input.text), 2)-1):
                 try:
                     default = str(self.params["gaps"][pipe])
                 except:
                     default = str(self.params["gaps"][0])   
 
-                self.inputs["gaps"].append(Input(name='Ecart entre tuyeau (cm)', input_filter="float", default_text=default, callback=self.update_rect))
-                self.tuyeau_panel.add_widget(self.inputs["gaps"][pipe])
-    
-    def libreMode(self):
-        self.libre_panel.clear_widgets()
-        self.inputs["loop"] = Input(name='Boucle', inputType=1, default_text=str(self.params["loop"]), callback=self.update_rect)
-        self.libre_panel.add_widget(self.inputs["loop"])
+                self.gaps.append(Input(inputName='Ecart entre tuyeau (cm)', input_filter="float", default_text=default, callback=self.update_rect))
+                self.tuyeau_panel.add_widget(self.gaps[pipe])
+        Clock.schedule_once(self.update_rect, 0.5)
 
 
 class DaphnieMatonApp(App):

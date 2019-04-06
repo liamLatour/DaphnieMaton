@@ -2,12 +2,13 @@ import re
 from math import pow, sqrt
 
 import serial.tools.list_ports
-from kivy.properties import NumericProperty, ObjectProperty, StringProperty
+from kivy.properties import NumericProperty, ObjectProperty, StringProperty, ConfigParserProperty
 from kivy.uix.actionbar import ActionDropDown
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
 from kivy.uix.switch import Switch
+from kivy.clock import Clock
 from kivy.uix.textinput import TextInput
 from scipy.spatial import distance
 
@@ -29,25 +30,30 @@ class ModeDropDown(ActionDropDown):
     pass
 
 class Input(BoxLayout):
-    name = StringProperty('default')
+    inputName = StringProperty('default')
     input_filter = StringProperty('default')
     default_text = StringProperty('default')
-    callback = ObjectProperty(None)
+    callback = ObjectProperty(None, rebind=True)
     inputType = NumericProperty(0)
 
     def __init__(self, **kwargs):
         super(Input, self).__init__(**kwargs)
-        self.add_widget(Label(text=self.name))
+        Clock.schedule_once(self.after_init)        
+
+    def after_init(self, *args):
+        self.label = Label(text=self.inputName)
+        self.add_widget(self.label)
 
         if self.inputType == 0:
             self.input = TextInput(text=self.default_text, multiline=False, input_filter=self.input_filter)
-            if self.callback != None:
-                self.input.bind(on_text_validate=self.callback)
+            if self.callback != None and self.callback != '':
+                self.input.bind(on_text_validate=lambda *args: self.callback())
+            self.add_widget(self.input)
         elif self.inputType == 1:
             self.input = Switch(active=self.default_text=="True")
-            if self.callback != None:
-                self.input.bind(active=self.callback)
-        self.add_widget(self.input)
+            if self.callback != None and self.callback != '':
+                self.input.bind(active=lambda *args: self.callback())
+            self.add_widget(self.input)
 
 def getPorts():
     ports = list(serial.tools.list_ports.comports())

@@ -99,7 +99,42 @@
                             spacing: 5
                             size_hint_y: None
                             height: self.minimum_height
-
+                            Input:
+                                id: nbPipe
+                                inputName: "Nombre de tuyeau"
+                                input_filter: "int"
+                                default_text: "0" 
+                                callback: lambda *args: root.tuyeauGap()
+                            Input:
+                                id: lenPipe
+                                inputName: "Taille des tuyeaux (m)"
+                                input_filter: "float"
+                                default_text: "0" 
+                                callback: lambda *args: root.update_rect()
+                            Input:
+                                id: timePipe
+                                inputName: "Temps pour un tuyeau (sec)"
+                                input_filter: "float"
+                                default_text: "0" 
+                                callback: lambda *args: root.update_rect()
+                            Input:
+                                id: photoPipe
+                                inputName: u'Centim\u00e9tre par photo'
+                                input_filter: "float"
+                                default_text: "0" 
+                                callback: lambda *args: root.update_rect()
+                            Input:
+                                id: distOrigin
+                                inputName: "Distance de l'origine"
+                                input_filter: "float"
+                                default_text: "0" 
+                                callback: lambda *args: root.update_rect()
+                            Input:
+                                id: sameGap
+                                inputName: "Ecart constant"
+                                inputType: 1
+                                default_text: "False" 
+                                callback: lambda *args: root.tuyeauGap()
                 Splitter:
                     sizable_from: 'left'
                     strip_size: '5pt'
@@ -130,6 +165,12 @@
                             spacing: 5
                             size_hint_y: None
                             height: self.minimum_height
+                            Input:
+                                id: loop
+                                inputName: "Boucle"
+                                inputType: 1
+                                default_text: "False" #root.params["loop"]
+                                callback: lambda *args: root.update_rect()
                 Splitter:
                     sizable_from: 'left'
                     strip_size: '5pt'
