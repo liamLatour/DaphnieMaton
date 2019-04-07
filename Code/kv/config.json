@@ -11,6 +11,13 @@
        "key":"stepToCm"
     },
     {
+      "type":"numeric",
+      "title":"Auto save delay",
+      "desc":"Time in minutes to wait between auto-saves",
+      "section":"general",
+      "key":"autoSave"
+   },
+    {
        "type":"path",
        "title":"Arduino.exe path",
        "desc":"Path to the folder containing the 'arduino.exe' file",

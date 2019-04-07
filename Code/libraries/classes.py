@@ -1,5 +1,5 @@
 import re
-from math import pow, sqrt
+from math import pow, sqrt, cos, sin
 
 import serial.tools.list_ports
 from kivy.properties import NumericProperty, ObjectProperty, StringProperty, ConfigParserProperty
@@ -16,6 +16,7 @@ from scipy.spatial import distance
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
     cancel = ObjectProperty(None)
+    path = StringProperty("C:/")
 
 class SaveDialog(FloatLayout):
     save = ObjectProperty(None)
@@ -38,7 +39,11 @@ class Input(BoxLayout):
 
     def __init__(self, **kwargs):
         super(Input, self).__init__(**kwargs)
-        Clock.schedule_once(self.after_init)        
+        if self.callback != None and self.callback != '':
+            self.after_init()
+        else:
+            # Have to wait if declared in .kv because the properties are not set before init
+            Clock.schedule_once(self.after_init)        
 
     def after_init(self, *args):
         self.label = Label(text=self.inputName)
@@ -72,7 +77,12 @@ def urlOpen(instance, value):
 def hitLine(lineA, lineB, point, lineWidth):
     numerator = abs((lineB[1]-lineA[1])*point[0]-(lineB[0]-lineA[0])*point[1]+lineB[0]*lineA[1]-lineB[1]*lineA[0])
     denominator = sqrt(pow(lineB[1]-lineA[1], 2)+pow(lineB[0]-lineA[0], 2))
+    if denominator == 0:
+        denominator = 0.00001
     if numerator/denominator <= lineWidth:
         if distance.euclidean(lineA, point) < distance.euclidean(lineA, lineB) and distance.euclidean(lineB, point) < distance.euclidean(lineA, lineB):
             return True
     return False
+
+def polToCar(center, dist, angle):
+    return (cos(angle)*dist+center[0], sin(angle)*dist + center[1])

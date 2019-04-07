@@ -5,7 +5,7 @@ import sys
 import threading
 import time
 from functools import partial
-from math import hypot
+from math import hypot, atan2, pi
 
 import keyboard
 import numpy as np
@@ -24,13 +24,16 @@ from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.settings import SettingsWithSidebar
 from scipy.spatial import distance
+from functools import partial
 
 from libraries.classes import (Input, LoadDialog, ModeDropDown, PenDropDown,
-                               SaveDialog, getPorts, hitLine, urlOpen)
+                               SaveDialog, getPorts, hitLine, urlOpen, polToCar)
 from libraries.createFile import generateFile
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
-#Config.set('kivy','window_icon','logo.ico')
+Config.set('kivy','window_icon','kivyLogo.ico')
+
+#https://stackoverflow.com/questions/47729340/how-to-change-default-kivy-logo-with-another-image-logo
 
 loaded = False
 for arg in sys.argv:
@@ -47,6 +50,7 @@ if not loaded:
 class Parametrage(BoxLayout):
     def __init__(self, *args, **kwargs):
         super(Parametrage, self).__init__(*args, **kwargs)
+        self.settings = App.get_running_app().config
         self.params = {
             "nbPipe": 2,
             "lenPipe" : 1.2,
@@ -83,18 +87,16 @@ class Parametrage(BoxLayout):
         self.hasGoodProgram = False
 
         Clock.schedule_once(self.binding)
+        Clock.schedule_interval(partial(self.save, -1, -1), int(self.settings.get('general', 'autoSave'))*60)
         keyboard.on_release_key('shift', self.update_rect)
         self.filePath = -1
         self.fileName = "nouvelle configuration"
         keyboard.add_hotkey('ctrl+s', self.save, args=[-1, -1])
 
-        self.settings = App.get_running_app().config
-
     def binding(self, *args):
         self.ids.pipeDrawing.bind(size=self.update_rect, pos=self.update_rect)
         self.ids.directDrawing.bind(size=self.update_rect, pos=self.update_rect)
         self.ids.libreDrawing.bind(size=self.update_rect, pos=self.update_rect)
-
         self.ids.changeTab.bind(on_touch_up = self.changedTab)
 
     def poplb_update(self, *args):
@@ -152,7 +154,10 @@ class Parametrage(BoxLayout):
         self._popup.dismiss()
 
     def show_load(self):
-        content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
+        if self.filePath != -1:
+            content = LoadDialog(load=self.load, cancel=self.dismiss_popup, path=self.filePath)
+        else:
+            content = LoadDialog(load=self.load, cancel=self.dismiss_popup, path=self.settings.get('general', 'savePath'))
         self._popup = Popup(title="Load file", content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()
@@ -161,7 +166,7 @@ class Parametrage(BoxLayout):
         content = SaveDialog(save=self.save, cancel=self.dismiss_popup, path=self.settings.get('general', 'savePath'))
         self._popup = Popup(title="Save file", content=content,
                             size_hint=(0.9, 0.9))
-        self._popup.open()    
+        self._popup.open()
 
     def load(self, path, filename):
         self.filePath = path
@@ -173,8 +178,7 @@ class Parametrage(BoxLayout):
                 try:
                     self.ids[param].input.text = str(self.params[param])
                     self.ids[param].input.active = bool(self.params[param])
-                except:
-                    print(param)
+                except: pass
 
         self.tuyeauGap()
         self.dismiss_popup()
@@ -460,6 +464,7 @@ class Parametrage(BoxLayout):
                     self.params["trace"].append((x-self.ids.libreDrawing.center_x)/self.zoom)
                     self.params["trace"].append((y-self.ids.libreDrawing.center_y)/self.zoom)
                     self.params["photos"].append(False)
+                    self.dragging = len(self.params["photos"])-1
                     self.update_rect()
                 elif touch.button == 'right':
                     # Check if we clicked on a line or not
@@ -499,13 +504,14 @@ class Parametrage(BoxLayout):
                 if keyboard.is_pressed("ctrl") and len(self.params["trace"]) > 2: # To clamp relative to last one (right angles)
                     fromWhich = self.dragging-1 % len(self.params["trace"])
                     previousPoint = (self.params["trace"][(fromWhich)*2], self.params["trace"][(fromWhich)*2+1])
+                    dist = distance.euclidean(previousPoint, (thisX, thisY))
 
-                    if distance.euclidean(previousPoint, (thisX, 0)) < distance.euclidean(previousPoint, (0, thisY)):
-                        self.params["trace"][self.dragging*2] = previousPoint[0]
-                        self.params["trace"][self.dragging*2+1] = thisY
-                    else:
-                        self.params["trace"][self.dragging*2] = thisX
-                        self.params["trace"][self.dragging*2+1] = previousPoint[1]
+                    angle = round(atan2(thisY-previousPoint[1], thisX-previousPoint[0])/ (pi/4)) * (pi/4)
+
+                    newPosition = polToCar(previousPoint, dist, angle)
+
+                    self.params["trace"][self.dragging*2] = newPosition[0]
+                    self.params["trace"][self.dragging*2+1] = newPosition[1]
                 
                 elif keyboard.is_pressed("shift"): # To clamp to the corners (origin, top-right, ...)
                     dist1 = distance.euclidean(self.corners[0], (thisX, thisY))
@@ -587,20 +593,22 @@ class Parametrage(BoxLayout):
 
                 self.gaps.append(Input(inputName='Ecart entre tuyeau (cm)', input_filter="float", default_text=default, callback=self.update_rect))
                 self.tuyeau_panel.add_widget(self.gaps[pipe])
-        Clock.schedule_once(self.update_rect, 0.5)
+        self.update_rect()
 
 
 class DaphnieMatonApp(App):
     def build(self):
         self.settings_cls = SettingsWithSidebar
         self.use_kivy_settings = False
+        self.icon = '..\\Images\\kivyLogo.png'
         return Parametrage()
 
     def build_config(self, config):
         config.setdefaults('general', {
             'arduinoPath': 'C:\\',
             'savePath': 'C:\\',
-            'stepToCm': 100})
+            'stepToCm': 100,
+            'autoSave': 5})
 
     def build_settings(self, settings):
         f = io.open(".\\kv\\config.json", "r", encoding='utf8')

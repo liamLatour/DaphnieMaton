@@ -6,6 +6,7 @@
         orientation: "vertical"
         FileChooserListView:
             id: filechooser
+            path: root.path
 
         BoxLayout:
             size_hint_y: None
@@ -65,6 +66,7 @@
             ActionPrevious:
                 title: 'DaphnieMaton'
                 with_previous: False
+                app_icon: '..\Images\kivyLogo.ico'
             ActionButton:
                 text: 'Sauvegarder'
                 on_release: root.show_save()
