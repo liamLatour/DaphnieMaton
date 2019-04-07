@@ -1,3 +1,4 @@
+import gettext
 import io
 import json
 import os
@@ -5,7 +6,8 @@ import sys
 import threading
 import time
 from functools import partial
-from math import hypot, atan2, pi
+from math import atan2, hypot, pi
+from os.path import dirname, join
 
 import keyboard
 import numpy as np
@@ -17,6 +19,7 @@ from kivy.config import Config, ConfigParser
 from kivy.core.text import Label as CoreLabel
 from kivy.graphics import Color, Ellipse, Line, Rectangle
 from kivy.lang import Builder
+from kivy.properties import StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.image import AsyncImage
@@ -24,28 +27,23 @@ from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.settings import SettingsWithSidebar
 from scipy.spatial import distance
-from functools import partial
 
 from libraries.classes import (Input, LoadDialog, ModeDropDown, PenDropDown,
-                               SaveDialog, getPorts, hitLine, urlOpen, polToCar)
+                               SaveDialog, getPorts, hitLine, polToCar,
+                               urlOpen)
 from libraries.createFile import generateFile
+from libraries.localization import change_language_to
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Config.set('kivy','window_icon','kivyLogo.ico')
 
+
 #https://stackoverflow.com/questions/47729340/how-to-change-default-kivy-logo-with-another-image-logo
+#https://github.com/fossasia/kniteditor/blob/master/kniteditor/localization/__init__.py
+#https://blog.fossasia.org/awesome-kivy-revelations/
+# babel for python
 
-loaded = False
-for arg in sys.argv:
-    if arg == "en":
-        Builder.load_file('.\\kv\\main.en.kv')
-        loaded = True
-    elif arg == "fr":
-        Builder.load_file('.\\kv\\main.fr.kv')
-        loaded = True
-
-if not loaded:
-    Builder.load_file('.\\kv\\main.fr.kv')
+Builder.load_file('.\\kv\\main.kv')
 
 class Parametrage(BoxLayout):
     def __init__(self, *args, **kwargs):
@@ -90,7 +88,7 @@ class Parametrage(BoxLayout):
         Clock.schedule_interval(partial(self.save, -1, -1), int(self.settings.get('general', 'autoSave'))*60)
         keyboard.on_release_key('shift', self.update_rect)
         self.filePath = -1
-        self.fileName = "nouvelle configuration"
+        self.fileName = "new configuration"
         keyboard.add_hotkey('ctrl+s', self.save, args=[-1, -1])
 
     def binding(self, *args):
@@ -595,26 +593,42 @@ class Parametrage(BoxLayout):
                 self.tuyeau_panel.add_widget(self.gaps[pipe])
         self.update_rect()
 
-
 class DaphnieMatonApp(App):
-    def build(self):
-        self.settings_cls = SettingsWithSidebar
-        self.use_kivy_settings = False
-        self.icon = '..\\Images\\kivyLogo.png'
-        return Parametrage()
-
     def build_config(self, config):
         config.setdefaults('general', {
             'arduinoPath': 'C:\\',
             'savePath': 'C:\\',
             'stepToCm': 100,
-            'autoSave': 5})
+            'autoSave': 5,
+            'language': "English"})
+
+    def build(self):
+        self.settings_cls = SettingsWithSidebar
+        #self.use_kivy_settings = False
+        self.icon = '..\\Images\\kivyLogo.png'
+        self.update_language_from_config()
+
+        return Parametrage()
+
+    def update_language_from_config(self):
+        config_language = self.config.get('general', 'language')
+        if config_language == "English":
+            change_language_to("en")
+        if config_language == "French":
+            change_language_to("fr")
 
     def build_settings(self, settings):
         f = io.open(".\\kv\\config.json", "r", encoding='utf8')
         if f.mode == 'r':
             contents = f.read()
             settings.add_json_panel('Générale', self.config, data=contents)
+    
+    def on_config_change(self, config, section, key, value):
+        if section == "general" and key == "language":
+            if value == "English":
+                change_language_to("en")
+            if value == "French":
+                change_language_to("fr")
 
 if __name__ == '__main__':
     DaphnieMatonApp().run()

@@ -1,14 +1,15 @@
 import re
-from math import pow, sqrt, cos, sin
+from math import cos, pow, sin, sqrt
 
 import serial.tools.list_ports
-from kivy.properties import NumericProperty, ObjectProperty, StringProperty, ConfigParserProperty
+from kivy.clock import Clock
+from kivy.properties import (ConfigParserProperty, NumericProperty,
+                             ObjectProperty, StringProperty)
 from kivy.uix.actionbar import ActionDropDown
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
 from kivy.uix.switch import Switch
-from kivy.clock import Clock
 from kivy.uix.textinput import TextInput
 from scipy.spatial import distance
 

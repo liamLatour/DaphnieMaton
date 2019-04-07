@@ -1,0 +1,72 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.8\n"
+
+msgid "Centimeter per picture"
+msgstr ""
+
+msgid "Option"
+msgstr ""
+
+msgid "Load"
+msgstr ""
+
+msgid "Open"
+msgstr ""
+
+msgid "Distance of origin"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "DaphnieMaton"
+msgstr ""
+
+msgid "Upload"
+msgstr ""
+
+msgid "Number of pipes"
+msgstr ""
+
+msgid "Time for one pipe (sec)"
+msgstr ""
+
+msgid "Direct"
+msgstr ""
+
+msgid "Free"
+msgstr ""
+
+msgid "Loop"
+msgstr ""
+
+msgid "Port"
+msgstr ""
+
+msgid "No port"
+msgstr ""
+
+msgid "Pipe lenght (m)"
+msgstr ""
+
+msgid "Pipe"
+msgstr ""
+
+msgid "Constant gap"
+msgstr ""
+
+msgid "Help"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
