@@ -1,13 +1,14 @@
 # -*- mode: python -*-
+from kivy.deps import sdl2, glew
 
 block_cipher = None
 
 
-a = Analysis(['kv\\ParametrageV2.py'],
+a = Analysis(['C:\\Users\\Administrateur\\Desktop\\DaphnieMaton\\Code\\app\\ParametrageV2.py'],
              pathex=['C:\\Users\\Administrateur\\Desktop\\DaphnieMaton\\Code'],
              binaries=[],
              datas=[],
-             hiddenimports=[],
+             hiddenimports=['win32file', 'win32timezone'],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
@@ -26,11 +27,12 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=True )
-coll = COLLECT(exe,
+          console=False )
+coll = COLLECT(exe, Tree('C:\\Users\\Administrateur\\Desktop\\DaphnieMaton\\Code\\app'),
                a.binaries,
                a.zipfiles,
                a.datas,
+               *[Tree(p) for p in (sdl2.dep_bins + glew.dep_bins)],
                strip=False,
                upx=True,
                name='DaphniMaton')

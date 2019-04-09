@@ -4,7 +4,7 @@ from kivy.deps import sdl2, glew
 block_cipher = None
 
 
-a = Analysis(['C:\\Users\\Administrateur\\Desktop\\DaphnieMaton\\Code\\kv\\ParametrageV2.py'],
+a = Analysis(['C:\\Users\\Administrateur\\Desktop\\DaphnieMaton\\Code\\app\\ParametrageV2.py'],
              pathex=['C:\\Users\\Administrateur\\Desktop\\DaphnieMaton\\Code'],
              binaries=[],
              datas=[],
@@ -28,7 +28,7 @@ exe = EXE(pyz,
           strip=False,
           upx=True,
           console=False )
-coll = COLLECT(exe, Tree('C:\\Users\\Administrateur\\Desktop\\DaphnieMaton\\Code\\kv'),
+coll = COLLECT(exe, Tree('C:\\Users\\Administrateur\\Desktop\\DaphnieMaton\\Code\\app'),
                a.binaries,
                a.zipfiles,
                a.datas,
