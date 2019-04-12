@@ -61,6 +61,7 @@ class Parametrage(BoxLayout):
         self.imageHeight = 1.4 # in meter
         self.actualWidth = 1.2 # in meter
         self.actualHeight = 1.2 # in meter
+        self.imageOrigin = (5.8, 10.5) # in cm
 
         self.port = -1
         self.pen_drop_down = PenDropDown()
@@ -287,7 +288,7 @@ class Parametrage(BoxLayout):
         photos.append(False)
 
         for x in range(self.params["nbPipe"]-1):
-            curX += 10+self.params["gaps"][x]
+            curX += self.params["gaps"][x]*ratioX
             path.append(curX)
             path.append((-length/2)*ratioY)
             photos.append(True)
@@ -350,14 +351,16 @@ class Parametrage(BoxLayout):
                 Color(1, 1, 1, 1)
                 Rectangle(pos=(self.size[0]-200, self.size[1] - (70 +95)), size=(200, 70), texture=text)
 
-                ratio = (width / (self.imageWidth*100)) # Converts cm into pixels
-                curX = middle[0] - width/2 + self.params["distOriginX"]*ratio
+                ratioX = (width / (self.imageWidth*100)) # Converts cm into pixels
+                ratioY = (width / (self.imageHeight*100)) # Converts cm into pixels
+                curX = middle[0] - width/2 + (self.params["distOriginX"]+self.imageOrigin[0])*ratioX
+                deltaY = -(width-height)/2 + (self.params["distOriginY"]+self.imageOrigin[1])*ratioY
 
-                Rectangle(pos = (curX, middle[1]-height/2), size = (10, height))
+                Rectangle(pos = (curX, middle[1]-height/2 + deltaY), size = (10, height))
 
                 for x in range(self.params["nbPipe"]-1):
-                    curX += (10+self.params["gaps"][x])*ratio
-                    Rectangle(pos = (curX, middle[1]-height/2), size = (10, height))
+                    curX += self.params["gaps"][x]*ratioX
+                    Rectangle(pos = (curX, middle[1]-height/2 + deltaY), size = (10, height))
 
         elif self.mode == "Libre":
             self.ids.libreSplitter.max_size = self.size[0] - 400
