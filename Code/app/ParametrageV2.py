@@ -57,8 +57,11 @@ class Parametrage(BoxLayout):
             "trace" : [],
             "photos" : []
         }
-        self.imageWidth = 1.2 # in meter
-        self.imageHeight = 1.2 # in meter
+        self.imageWidth = 1.4 # in meter
+        self.imageHeight = 1.4 # in meter
+        self.actualWidth = 1.2 # in meter
+        self.actualHeight = 1.2 # in meter
+
         self.port = -1
         self.pen_drop_down = PenDropDown()
         self.mode_drop_down = ModeDropDown()
@@ -171,9 +174,9 @@ class Parametrage(BoxLayout):
         self.dismiss_popup()
 
     def save(self, path, filename):
-        print("saved")
         if path == -1:
             if self.filePath == -1:
+                print("no path")
                 return
             else:
                 path = self.filePath
@@ -271,22 +274,25 @@ class Parametrage(BoxLayout):
         height = self.corners[0][1] - self.corners[1][1]
         width = self.corners[0][0] - self.corners[2][0]
 
-        curX = origin[0] + self.params["distOriginX"]
+        ratioX = width / (self.actualWidth*100)
+        ratioY = height / (self.actualHeight)
+
+        curX = origin[0] + self.params["distOriginX"]*ratioX
 
         path.append(curX)
-        path.append(-height/2)
+        path.append((-length/2)*ratioY)
         photos.append(True)
         path.append(curX)
-        path.append(height/2)
+        path.append((length/2)*ratioY)
         photos.append(False)
 
         for x in range(self.params["nbPipe"]-1):
             curX += 10+self.params["gaps"][x]
             path.append(curX)
-            path.append(-height/2)
+            path.append((-length/2)*ratioY)
             photos.append(True)
             path.append(curX)
-            path.append(height/2)
+            path.append((length/2)*ratioY)
             photos.append(False)
 
         if copy:
@@ -345,7 +351,7 @@ class Parametrage(BoxLayout):
                 Rectangle(pos=(self.size[0]-200, self.size[1] - (70 +95)), size=(200, 70), texture=text)
 
                 ratio = (width / (self.imageWidth*100)) # Converts cm into pixels
-                curX = middle[0] - width/2 + self.params["distOriginX"] + 0
+                curX = middle[0] - width/2 + self.params["distOriginX"]*ratio
 
                 Rectangle(pos = (curX, middle[1]-height/2), size = (10, height))
 
