@@ -1,0 +1,13 @@
+[
+    {
+       "type":"title",
+       "title": "Shortcuts"
+    },
+    {
+       "type":"string",
+       "title":"Save",
+       "desc":"To save current file",
+       "section":"shortcuts",
+       "key":"save"
+    }
+]

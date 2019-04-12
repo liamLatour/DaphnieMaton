@@ -126,8 +126,14 @@
                                 default_text: '0' 
                                 callback: lambda *args: root.update_rect()
                             Input:
-                                id: distOrigin
-                                inputName: _('Distance of origin')
+                                id: distOriginX
+                                inputName: _('Distance from origin X')
+                                input_filter: 'float'
+                                default_text: '0'
+                                callback: lambda *args: root.update_rect()
+                            Input:
+                                id: distOriginY
+                                inputName: _('Distance from origin Y')
                                 input_filter: 'float'
                                 default_text: '0' 
                                 callback: lambda *args: root.update_rect()
@@ -154,6 +160,9 @@
                             Button:
                                 text: _('Upload')
                                 on_release: root.update()
+                            Button:
+                                text: _('Copy to Free mode')
+                                on_release: root.generatePathFromPipe(True)
         TabbedPanelItem:
             text: _('Free')
             name: 'Libre'

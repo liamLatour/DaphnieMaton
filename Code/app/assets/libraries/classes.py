@@ -32,6 +32,17 @@ class ModeDropDown(ActionDropDown):
     pass
 
 class Input(BoxLayout):
+    """Custom input to handle parameters.
+
+    inputName string: the name.
+    input_filter string: filter for numeric values (int, float, ...).
+    default_text string: text to be displayed at startup.
+    callback funct: function to call when it changes.
+    inputType int: Text or switch (0 or 1).
+
+    returns: the BoxLayout object.
+    """
+
     inputName = StringProperty('default')
     input_filter = StringProperty('default')
     default_text = StringProperty('default')
@@ -62,6 +73,10 @@ class Input(BoxLayout):
             self.add_widget(self.input)
 
 def getPorts():
+    """Used to gather every connected devices on usb.
+
+    returns: list of found devices on COM ports.
+    """
     ports = list(serial.tools.list_ports.comports())
     arduinoPorts = {}
     for p in ports:
@@ -71,11 +86,24 @@ def getPorts():
 
     return arduinoPorts
 
-def urlOpen(instance, value):
+def urlOpen(instance, url):
+    """Opens a browser window with specified url.
+
+    url string: the website to go to.
+    """
     import webbrowser
-    webbrowser.open(value, new=2)
+    webbrowser.open(url, new=2)
 
 def hitLine(lineA, lineB, point, lineWidth):
+    """Checks whether the point is in line or out.
+
+    lineA tuple: a point of the line.
+    lineB tuple: another point of the line.
+    point tuple: point we want to check.
+    lineWidth tuple: width of the line.
+
+    returns: True if in and False if out.
+    """
     numerator = abs((lineB[1]-lineA[1])*point[0]-(lineB[0]-lineA[0])*point[1]+lineB[0]*lineA[1]-lineB[1]*lineA[0])
     denominator = sqrt(pow(lineB[1]-lineA[1], 2)+pow(lineB[0]-lineA[0], 2))
     if denominator == 0:
@@ -86,4 +114,12 @@ def hitLine(lineA, lineB, point, lineWidth):
     return False
 
 def polToCar(center, dist, angle):
+    """Converts polar coordinates to cartesian.
+
+    center tuple: center of the local system.
+    dist float: distance from the center to the point.
+    angle float: angle in radian.
+
+    returns: a tuple representing the X and Y -> (x, y)
+    """
     return (cos(angle)*dist+center[0], sin(angle)*dist + center[1])

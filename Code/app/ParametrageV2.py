@@ -17,7 +17,6 @@ from kivy.config import Config, ConfigParser
 from kivy.core.text import Label as CoreLabel
 from kivy.graphics import Color, Ellipse, Line, Rectangle
 from kivy.lang import Builder
-from kivy.properties import StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.image import AsyncImage
@@ -50,13 +49,16 @@ class Parametrage(BoxLayout):
             "lenPipe" : 1.2,
             "timePipe" : 10,
             "photoPipe" : 50,
-            "distOrigin" : 50,
+            "distOriginX" : 50,
+            "distOriginY" : 50,
             "sameGap" : True,
             "gaps" : [20],
             "loop" : False,
             "trace" : [],
             "photos" : []
         }
+        self.imageWidth = 1.2 # in meter
+        self.imageHeight = 1.2 # in meter
         self.port = -1
         self.pen_drop_down = PenDropDown()
         self.mode_drop_down = ModeDropDown()
@@ -72,7 +74,7 @@ class Parametrage(BoxLayout):
         self.dragging = -1
         self.zoom = 1
         self.margin = [-self.diametre/2-5, self.diametre/2+5, self.diametre/2+25, -self.diametre/2-25] # Left, Right, Top, Down
-        self.corners = [(88, 87.5), (88, -87.5), (-90, 87.5), (-90, -87.5)]
+        self.corners = [(88, 87.5), (88, -87.5), (-90, 87.5), (-90, -87.5)] # Right-Top, Right-Down, Left-Top, Left-Down
 
         # Specifique au mode 'direct'
         self.board = -1
@@ -85,7 +87,6 @@ class Parametrage(BoxLayout):
         keyboard.on_release_key('shift', self.update_rect)
         self.filePath = -1
         self.fileName = _("configuration")
-        keyboard.add_hotkey('ctrl+s', self.save, args=[-1, -1])
 
     def binding(self, *args):
         self.ids.pipeDrawing.bind(size=self.update_rect, pos=self.update_rect)
@@ -170,6 +171,7 @@ class Parametrage(BoxLayout):
         self.dismiss_popup()
 
     def save(self, path, filename):
+        print("saved")
         if path == -1:
             if self.filePath == -1:
                 return
@@ -205,31 +207,41 @@ class Parametrage(BoxLayout):
         if self.clock != -1:
             self.clock.cancel()
             self.clock = -1
+
         threading.Thread(target=self.updateAsync).start()
         
     def updateAsync(self): #TODO: Update this (lol)
-        generateFile(self.params["trace"], self.params["photos"])
-        arduinoPath = self.settings.get('general', 'arduinoPath')
-        if self.port != -1:
-            try:
-                self.board.close()
-                self.board = -1
-            except: pass
-            if self.mode == "Direct":
-                osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\directFile\\directFile.ino")            
-                self.hasGoodProgram = True
-                self.update_rect()
-                self.clock = Clock.schedule_interval(self.readFromSerial, 0.2)
+        try:
+            arduinoPath = self.settings.get('general', 'arduinoPath')
+            if self.port != -1:
+                try:
+                    self.board.close()
+                    self.board = -1
+                except: pass
+                if self.mode == "Tuyeau":
+                    parcours = self.generatePathFromPipe()
+                    generateFile(parcours[0], parcours[1])
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\currentFile\\currentFile.ino")
+                    self.hasGoodProgram = False
+                elif self.mode == "Libre":
+                    generateFile(self.params["trace"], self.params["photos"])
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\currentFile\\currentFile.ino")
+                    self.hasGoodProgram = False
+                elif self.mode == "Direct":
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\directFile\\directFile.ino")            
+                    self.hasGoodProgram = True
+                    self.update_rect()
+                    self.clock = Clock.schedule_interval(self.readFromSerial, 0.2)
+
+                print("DONE !")
+                self.popup.dismiss()
+                Popup(title=_('Success !'), content=Label(text=_('Upload finished successfully !')), size_hint=(None, None), size=(400, 300)).open()
             else:
-                generateFile(self.params["trace"], self.params["photos"])
-                osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\currentFile\\currentFile.ino")
-                self.hasGoodProgram = False
-            print("DONE !")
+                self.popup.dismiss()
+                Popup(title=_('No port detected'), content=Label(text=_('No serial port was specified')), size_hint=(None, None), size=(400, 300)).open()
+        except:
             self.popup.dismiss()
-            Popup(title=_('Success !'), content=Label(text=_('Upload finished successfully !')), size_hint=(None, None), size=(400, 300)).open()
-        else:
-            self.popup.dismiss()
-            Popup(title=_('No port detected'), content=Label(text=_('No serial port was specified')), size_hint=(None, None), size=(400, 300)).open()
+            Popup(title=_('Oopsie...'), content=Label(text=_('Something went wrong, try again or report a bug')), size_hint=(None, None), size=(400, 300)).open()
 
     def changedTab(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
@@ -244,40 +256,81 @@ class Parametrage(BoxLayout):
             self.clock = Clock.schedule_interval(self.readFromSerial, 0.2)
         self.update_rect()
 
+    def generatePathFromPipe(self, copy=False):
+        """Converts the pipe parameters to a path.
+
+        copy bool: copy in Free mode or not
+
+        return: the converted path
+        """
+        path = []
+        photos = []
+
+        length = self.params["lenPipe"]
+        origin = self.corners[3]
+        height = self.corners[0][1] - self.corners[1][1]
+        width = self.corners[0][0] - self.corners[2][0]
+
+        curX = origin[0] + self.params["distOriginX"]
+
+        path.append(curX)
+        path.append(-height/2)
+        photos.append(True)
+        path.append(curX)
+        path.append(height/2)
+        photos.append(False)
+
+        for x in range(self.params["nbPipe"]-1):
+            curX += 10+self.params["gaps"][x]
+            path.append(curX)
+            path.append(-height/2)
+            photos.append(True)
+            path.append(curX)
+            path.append(height/2)
+            photos.append(False)
+
+        if copy:
+            self.params["trace"] = path
+            self.params["photos"] = photos
+
+        return (path, photos)
+
     # Drawing on canvas
     def update_rect(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
 
         if self.mode == "Tuyeau":
-            self.ids.pipeSplitter.max_size = self.size[0] - 400
             middle = (self.ids.pipeDrawing.center_x, self.ids.pipeDrawing.center_y)
             self.ids.pipeDrawing.canvas.before.clear()
 
             gapsValue = []
             if bool(self.ids.sameGap.input.active):
-                gapsValue = np.ones(max(int(self.ids.nbPipe.input.text), 1)-1) * float(self.gaps[0].input.text)
+                gapsValue = np.ones(max(int(self.sanitize(self.ids.nbPipe.input.text)), 1)-1) * float(self.sanitize(self.gaps[0].input.text))
             else:
                 for gap in self.gaps:
-                    gapsValue.append(float(gap.input.text))
+                    gapsValue.append(float(self.sanitize(gap.input.text)))
 
             if len(gapsValue) == 0:
                 gapsValue = [20]
 
-            self.params["nbPipe"] = max(int(self.ids.nbPipe.input.text), 1)
-            self.params["lenPipe"] = max(float(self.ids.lenPipe.input.text), 0.1)
-            self.params["timePipe"] = float(self.ids.timePipe.input.text)
-            self.params["photoPipe"] = max(float(self.ids.photoPipe.input.text), 1)
-            self.params["sameGap"] = bool(self.ids.sameGap.input.active)
+            self.params["nbPipe"] = max(int(self.sanitize(self.ids.nbPipe.input.text)), 1)
+            self.params["lenPipe"] = max(float(self.sanitize(self.ids.lenPipe.input.text)), 0.1)
+            self.params["timePipe"] = float(self.sanitize(self.ids.timePipe.input.text))
+            self.params["photoPipe"] = max(float(self.sanitize(self.ids.photoPipe.input.text)), 1)
+            self.params["distOriginX"] = float(self.sanitize(self.ids.distOriginX.input.text))
+            self.params["distOriginY"] = float(self.sanitize(self.ids.distOriginY.input.text))
+            self.params["sameGap"] = bool(self.sanitize(self.ids.sameGap.input.active))
             self.params["gaps"] = gapsValue
 
-            shift = (self.params["nbPipe"] * 10 + np.sum(self.params["gaps"]))
-
-            try:
-                self.ids.pipeSplitter.min_size = max(int(round(shift+50)), 200)
-            except:
-                self.ids.pipeSplitter.min_size = round(self.size[0] - 400)
+            self.ids.pipeSplitter.max_size = self.size[0] - 400
+            self.ids.pipeSplitter.min_size = int(round(self.size[0]/2))
 
             with self.ids.pipeDrawing.canvas.before:
+                width = min(self.ids.pipeSplitter.size[0]-50, self.ids.pipeSplitter.size[1]-50)
+                height = self.params["lenPipe"]/self.imageHeight *width
+
+                Rectangle(source='.\\assets\\topDownView.png', pos = (middle[0]-width/2, middle[1]-width/2), size = (width, width))
+
                 text = _("Total time") + ": " + str(self.params["timePipe"]*self.params["nbPipe"]) + " sec" + \
                                         "\n"+_("Photo number") + ": " + str( round((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100))) + \
                                         "\n"+_("Photo every") +" "+ str( round( ((self.params["timePipe"]*self.params["nbPipe"]) / ((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100)))*10 )/10 ) + " sec"
@@ -291,15 +344,13 @@ class Parametrage(BoxLayout):
                 Color(1, 1, 1, 1)
                 Rectangle(pos=(self.size[0]-200, self.size[1] - (70 +95)), size=(200, 70), texture=text)
 
-                height = max(100, self.size[1]/2)
-                Color(1,1,1)
-
-                curX = middle[0] - shift/2
+                ratio = (width / (self.imageWidth*100)) # Converts cm into pixels
+                curX = middle[0] - width/2 + self.params["distOriginX"] + 0
 
                 Rectangle(pos = (curX, middle[1]-height/2), size = (10, height))
 
                 for x in range(self.params["nbPipe"]-1):
-                    curX += 10+self.params["gaps"][x]
+                    curX += (10+self.params["gaps"][x])*ratio
                     Rectangle(pos = (curX, middle[1]-height/2), size = (10, height))
 
         elif self.mode == "Libre":
@@ -558,9 +609,6 @@ class Parametrage(BoxLayout):
         self.zoom = max(self.zoom, 0.05)
     
     def tuyeauGap(self, *args):
-        try: self.gaps
-        except: return
-
         if self.gaps != []:
             for gap in self.gaps:
                 self.tuyeau_panel.remove_widget(gap)
@@ -570,7 +618,7 @@ class Parametrage(BoxLayout):
             self.tuyeau_panel.add_widget(self.gaps[0])
         else:
             self.gaps = []
-            for pipe in range(max(int(self.ids.nbPipe.input.text), 2)-1):
+            for pipe in range(max(int(self.sanitize(self.ids.nbPipe.input.text)), 2)-1):
                 try:
                     default = str(self.params["gaps"][pipe])
                 except:
@@ -580,6 +628,18 @@ class Parametrage(BoxLayout):
                 self.tuyeau_panel.add_widget(self.gaps[pipe])
         self.update_rect()
 
+    def sanitize(self, number):
+        """Avoids getting errors on empty inputs.
+
+        number string||float||int: the value to sanitize.
+
+        returns: 0 if it is NaN, otherwise the value itself.
+        """
+        if number == '':
+            return 0
+        else:
+            return number
+
 class DaphnieMatonApp(App):
     def build_config(self, config):
         config.setdefaults('general', {
@@ -588,14 +648,18 @@ class DaphnieMatonApp(App):
             'stepToCm': 100,
             'autoSave': 5,
             'language': "English"})
+        config.setdefaults('shortcuts', {
+            'save': 'ctrl+s'})
 
     def build(self):
         self.settings_cls = SettingsWithSidebar
         #self.use_kivy_settings = False
         self.icon = '..\\Images\\kivyLogo.png'
         self.update_language_from_config()
+        self.app = Parametrage()
+        self.save = keyboard.add_hotkey(self.config.get('shortcuts', 'save'), self.app.save, args=[-1, -1])
 
-        return Parametrage()
+        return self.app
 
     def update_language_from_config(self):
         config_language = self.config.get('general', 'language')
@@ -606,10 +670,20 @@ class DaphnieMatonApp(App):
         if f.mode == 'r':
             contents = f.read()
             settings.add_json_panel(_('General'), self.config, data=contents)
+
+        f = openFile(".\\assets\\shortcuts.json", "r", encoding='utf8')
+        if f.mode == 'r':
+            contents = f.read()
+            settings.add_json_panel(_('Shortcuts'), self.config, data=contents)
     
     def on_config_change(self, config, section, key, value):
         if section == "general" and key == "language":
             change_language_to(translation_to_language_code(value))
+            print("Language changed")
+        if section == "shortcuts" and key == "save":
+            keyboard.remove_hotkey(self.save)
+            self.save = keyboard.add_hotkey(value, self.app.save, args=[-1, -1])
+            print("shortcut changed")
 
 if __name__ == '__main__':
     DaphnieMatonApp().run()
