@@ -586,18 +586,19 @@ class Parametrage(BoxLayout):
                 self.update_rect()
 
     def inputMove(self, *args):
-        position = re.findall(r"[-+]?\d*\.\d+|\d+", self.ids.coord.input.text)
+        position = re.findall(r"[-+]?\d*\.\d+|[-+]?\d+", self.ids.coord.input.text)
 
-        if self.lastTouched == -1:
-            self.params["trace"].append(float(position[0]))
-            self.params["trace"].append(float(position[1]))
-            self.lastTouched = len(self.params["trace"]) -1
-            self.params["photos"].append(False)
-        else:
-            self.params["trace"][self.lastTouched*2] = float(position[0])
-            self.params["trace"][self.lastTouched*2+1] = float(position[1])
+        if len(position) == 2:
+            if self.lastTouched == -1:
+                self.params["trace"].append(float(position[0]))
+                self.params["trace"].append(float(position[1]))
+                self.params["photos"].append(False)
+                self.lastTouched = len(self.params["photos"]) -1
+            elif self.lastTouched*2+1 < len(self.params["trace"]):
+                self.params["trace"][self.lastTouched*2] = float(position[0])
+                self.params["trace"][self.lastTouched*2+1] = float(position[1])
 
-        self.update_rect()
+            self.update_rect()
 
     def positionClamp(self):
         maxPosLeft = (-self.ids.libreSplitter.size[0]/2-self.margin[0])/(self.zoom)
