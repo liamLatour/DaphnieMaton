@@ -44,7 +44,7 @@ class Input(BoxLayout):
     """
 
     inputName = StringProperty('default')
-    input_filter = StringProperty('default')
+    input_filter = StringProperty(None)
     default_text = StringProperty('default')
     callback = ObjectProperty(None, rebind=True)
     inputType = NumericProperty(0)

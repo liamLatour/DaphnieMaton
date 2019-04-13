@@ -1,13 +1,20 @@
 [
-    {
-       "type":"title",
-       "title": "Shortcuts"
-    },
-    {
-       "type":"string",
-       "title":"Save",
-       "desc":"To save current file",
-       "section":"shortcuts",
-       "key":"save"
-    }
+   {
+      "type":"title",
+      "title": "Shortcuts"
+   },
+   {
+      "type":"string",
+      "title":"Save",
+      "desc":"To save current file",
+      "section":"shortcuts",
+      "key":"save"
+   },
+   {
+      "type":"string",
+      "title":"Copy coordinates",
+      "desc":"To copy the coordinates in Direct mode",
+      "section":"shortcuts",
+      "key":"copy"
+   }
 ]

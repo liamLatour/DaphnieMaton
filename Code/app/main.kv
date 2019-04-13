@@ -180,8 +180,13 @@
                                 id: loop
                                 inputName: _('Loop')
                                 inputType: 1
-                                default_text: 'False' #root.params['loop']
+                                default_text: 'False'
                                 callback: lambda *args: root.update_rect()
+                            Input:
+                                id: coord
+                                inputName: _('Coordinates')
+                                default_text: '0 : 0'
+                                callback: lambda *args: root.inputMove()
                 Splitter:
                     sizable_from: 'left'
                     strip_size: '5pt'

@@ -1,3 +1,4 @@
+import re
 import threading
 import time
 from functools import partial
@@ -10,6 +11,7 @@ from os.path import join as osJoinPath
 
 import keyboard
 import numpy as np
+import pyperclip
 import serial
 from kivy.app import App
 from kivy.clock import Clock
@@ -76,6 +78,7 @@ class Parametrage(BoxLayout):
         self.lineWidth = 5
         self.diametre = 20
         self.dragging = -1
+        self.lastTouched = -1
         self.zoom = 1
         self.margin = [-self.diametre/2-5, self.diametre/2+5, self.diametre/2+25, -self.diametre/2-25] # Left, Right, Top, Down
         self.corners = [(88, 87.5), (88, -87.5), (-90, 87.5), (-90, -87.5)] # Right-Top, Right-Down, Left-Top, Left-Down
@@ -174,7 +177,7 @@ class Parametrage(BoxLayout):
         self.tuyeauGap()
         self.dismiss_popup()
 
-    def save(self, path, filename):
+    def save(self, path, filename, *args):
         if path == -1:
             if self.filePath == -1:
                 print("no path")
@@ -213,8 +216,8 @@ class Parametrage(BoxLayout):
             self.clock = -1
 
         threading.Thread(target=self.updateAsync).start()
-        
-    def updateAsync(self): #TODO: Update this (lol)
+
+    def updateAsync(self):
         try:
             arduinoPath = self.settings.get('general', 'arduinoPath')
             if self.port != -1:
@@ -501,17 +504,21 @@ class Parametrage(BoxLayout):
                             del self.params["trace"][i*2+1]
                             del self.params["trace"][i*2]
                             del self.params["photos"][i]
+                            self.lastTouched = -1
                             self.update_rect()
                         elif touch.button == 'left':
                             self.dragging = i
                         return
                 if touch.button == 'left':
+                    self.ids.coord.input.text = str(round(((x-self.ids.libreDrawing.center_x)/self.zoom)*10)/10) + " : " + str(round(((y-self.ids.libreDrawing.center_y)/self.zoom)*10)/10)
                     self.params["trace"].append((x-self.ids.libreDrawing.center_x)/self.zoom)
                     self.params["trace"].append((y-self.ids.libreDrawing.center_y)/self.zoom)
                     self.params["photos"].append(False)
+                    self.lastTouched = len(self.params["photos"])-1
                     self.dragging = len(self.params["photos"])-1
                     self.update_rect()
                 elif touch.button == 'right':
+                    self.lastTouched = -1
                     # Check if we clicked on a line or not
                     for i in range(int(len(zoomedTrace)/2)-1):
                         firstPoint = (zoomedTrace[i*2]+self.ids.libreDrawing.center_x, zoomedTrace[i*2+1]+self.ids.libreDrawing.center_y)
@@ -542,6 +549,7 @@ class Parametrage(BoxLayout):
     
     def clickedMove(self, touch):
         if self.mode == "Libre":
+            newPosition = -1
             if touch.button == 'left' and self.dragging != -1:
                 thisX = (touch.x-self.ids.libreDrawing.center_x)/self.zoom
                 thisY = (touch.y-self.ids.libreDrawing.center_y)/self.zoom
@@ -550,13 +558,10 @@ class Parametrage(BoxLayout):
                     fromWhich = self.dragging-1 % len(self.params["trace"])
                     previousPoint = (self.params["trace"][(fromWhich)*2], self.params["trace"][(fromWhich)*2+1])
                     dist = distance.euclidean(previousPoint, (thisX, thisY))
-
                     angle = round(atan2(thisY-previousPoint[1], thisX-previousPoint[0])/ (pi/4)) * (pi/4)
 
-                    newPosition = polToCar(previousPoint, dist, angle)
-
-                    self.params["trace"][self.dragging*2] = newPosition[0]
-                    self.params["trace"][self.dragging*2+1] = newPosition[1]
+                    position = polToCar(previousPoint, dist, angle)
+                    newPosition = (position[0], position[1])
                 
                 elif keyboard.is_pressed("shift"): # To clamp to the corners (origin, top-right, ...)
                     dist1 = distance.euclidean(self.corners[0], (thisX, thisY))
@@ -565,15 +570,34 @@ class Parametrage(BoxLayout):
                     dist4 = distance.euclidean(self.corners[3], (thisX, thisY))
 
                     indice = np.argmin(np.array([dist1, dist2, dist3, dist4]))
-
-                    self.params["trace"][self.dragging*2] = self.corners[indice][0]
-                    self.params["trace"][self.dragging*2+1] = self.corners[indice][1]
+                    newPosition = (self.corners[indice][0], self.corners[indice][1])
 
                 else:
-                    self.params["trace"][self.dragging*2] = thisX
-                    self.params["trace"][self.dragging*2+1] = thisY
+                    newPosition = (thisX, thisY)
+
+                if newPosition != -1:
+                    self.ids.coord.input.text = str(round(newPosition[0]*10)/10) + " : " + str(round(newPosition[1]*10)/10)
+
+                    self.params["trace"][self.dragging*2] = newPosition[0]
+                    self.params["trace"][self.dragging*2+1] = newPosition[1]
+
+                    self.lastTouched = self.dragging
 
                 self.update_rect()
+
+    def inputMove(self, *args):
+        position = re.findall(r"[-+]?\d*\.\d+|\d+", self.ids.coord.input.text)
+
+        if self.lastTouched == -1:
+            self.params["trace"].append(float(position[0]))
+            self.params["trace"].append(float(position[1]))
+            self.lastTouched = len(self.params["trace"]) -1
+            self.params["photos"].append(False)
+        else:
+            self.params["trace"][self.lastTouched*2] = float(position[0])
+            self.params["trace"][self.lastTouched*2+1] = float(position[1])
+
+        self.update_rect()
 
     def positionClamp(self):
         maxPosLeft = (-self.ids.libreSplitter.size[0]/2-self.margin[0])/(self.zoom)
@@ -649,6 +673,11 @@ class Parametrage(BoxLayout):
         else:
             return number
 
+    def copyToClipboard(self):
+        if self.mode == "Direct":
+            print("Copied")
+            pyperclip.copy(str(self.position))
+
 class DaphnieMatonApp(App):
     def build_config(self, config):
         config.setdefaults('general', {
@@ -658,7 +687,8 @@ class DaphnieMatonApp(App):
             'autoSave': 5,
             'language': "English"})
         config.setdefaults('shortcuts', {
-            'save': 'ctrl+s'})
+            'save': 'ctrl+s',
+            'copy': 'ctrl+c'})
 
     def build(self):
         self.settings_cls = SettingsWithSidebar
@@ -667,6 +697,7 @@ class DaphnieMatonApp(App):
         self.update_language_from_config()
         self.app = Parametrage()
         self.save = keyboard.add_hotkey(self.config.get('shortcuts', 'save'), self.app.save, args=[-1, -1])
+        self.copy = keyboard.add_hotkey(self.config.get('shortcuts', 'copy'), self.app.copyToClipboard)
 
         return self.app
 
@@ -692,6 +723,10 @@ class DaphnieMatonApp(App):
         if section == "shortcuts" and key == "save":
             keyboard.remove_hotkey(self.save)
             self.save = keyboard.add_hotkey(value, self.app.save, args=[-1, -1])
+            print("shortcut changed")
+        if section == "shortcuts" and key == "copy":
+            keyboard.remove_hotkey(self.copy)
+            self.copy = keyboard.add_hotkey(value, self.app.copyToClipboard)
             print("shortcut changed")
 
 if __name__ == '__main__':
