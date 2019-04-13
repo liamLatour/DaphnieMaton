@@ -513,9 +513,15 @@ class Parametrage(BoxLayout):
                             self.dragging = i
                         return
                 if touch.button == 'left':
-                    self.ids.coord.input.text = str(round(((x-self.ids.libreDrawing.center_x)/self.zoom)*10)/10) + " : " + str(round(((y-self.ids.libreDrawing.center_y)/self.zoom)*10)/10)
-                    self.params["trace"].append((x-self.ids.libreDrawing.center_x)/self.zoom)
-                    self.params["trace"].append((y-self.ids.libreDrawing.center_y)/self.zoom)
+                    coordX = (x-self.ids.libreDrawing.center_x)/self.zoom
+                    coordY = (y-self.ids.libreDrawing.center_y)/self.zoom
+
+                    height = self.corners[0][1] - self.corners[1][1]
+                    width = self.corners[0][0] - self.corners[2][0]
+
+                    self.ids.coord.input.text = str(round(((coordX-self.corners[3][0])*(self.actualWidth*1000))/width)/10) + " : " + str(round(((coordY-self.corners[3][1])*(self.actualHeight*1000))/height)/10)
+                    self.params["trace"].append(coordX)
+                    self.params["trace"].append(coordY)
                     self.params["photos"].append(False)
                     self.lastTouched = len(self.params["photos"])-1
                     self.dragging = len(self.params["photos"])-1
@@ -579,7 +585,10 @@ class Parametrage(BoxLayout):
                     newPosition = (thisX, thisY)
 
                 if newPosition != -1:
-                    self.ids.coord.input.text = str(round(newPosition[0]*10)/10) + " : " + str(round(newPosition[1]*10)/10)
+                    height = self.corners[0][1] - self.corners[1][1]
+                    width = self.corners[0][0] - self.corners[2][0]
+
+                    self.ids.coord.input.text = str(round(((newPosition[0]-self.corners[3][0])*(self.actualWidth*1000))/width)/10) + " : " + str(round(((newPosition[1]-self.corners[3][1])*(self.actualHeight*1000))/height)/10)
 
                     self.params["trace"][self.dragging*2] = newPosition[0]
                     self.params["trace"][self.dragging*2+1] = newPosition[1]
@@ -591,15 +600,21 @@ class Parametrage(BoxLayout):
     def inputMove(self, *args):
         position = re.findall(r"[-+]?\d*\.\d+|[-+]?\d+", self.ids.coord.input.text)
 
+        height = self.corners[0][1] - self.corners[1][1]
+        width = self.corners[0][0] - self.corners[2][0]
+
+        ratioX = width / (self.actualWidth*100)
+        ratioY = height / (self.actualHeight*100)
+
         if len(position) == 2:
             if self.lastTouched == -1:
-                self.params["trace"].append(float(position[0]))
-                self.params["trace"].append(float(position[1]))
+                self.params["trace"].append(float(position[0])*ratioX + self.corners[3][0])
+                self.params["trace"].append(float(position[1])*ratioY + self.corners[3][1])
                 self.params["photos"].append(False)
                 self.lastTouched = len(self.params["photos"]) -1
             elif self.lastTouched*2+1 < len(self.params["trace"]):
-                self.params["trace"][self.lastTouched*2] = float(position[0])
-                self.params["trace"][self.lastTouched*2+1] = float(position[1])
+                self.params["trace"][self.lastTouched*2] = float(position[0])*ratioX + self.corners[3][0]
+                self.params["trace"][self.lastTouched*2+1] = float(position[1])*ratioY + self.corners[3][1]
 
             self.update_rect()
 
