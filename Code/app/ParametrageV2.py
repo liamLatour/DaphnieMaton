@@ -166,16 +166,19 @@ class Parametrage(BoxLayout):
         self.filePath = path
         self.fileName = filename[0].replace(".json", "")
 
-        with open(osJoinPath(path, filename[0])) as stream:
-            self.params = jsLoad(stream)
-            for param in self.params:
-                try:
-                    self.ids[param].input.text = str(self.params[param])
-                    self.ids[param].input.active = bool(self.params[param])
-                except: pass
+        try:
+            with open(osJoinPath(path, filename[0])) as stream:
+                self.params = jsLoad(stream)
+                for param in self.params:
+                    try:
+                        self.ids[param].input.text = str(self.params[param])
+                        self.ids[param].input.active = bool(self.params[param])
+                    except: pass
 
-        self.tuyeauGap()
-        self.dismiss_popup()
+            self.tuyeauGap()
+            self.dismiss_popup()
+        except:
+            print("wrong file")
 
     def save(self, path, filename, *args):
         if path == -1:
