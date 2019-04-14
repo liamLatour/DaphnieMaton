@@ -67,6 +67,12 @@ void loop() {
       Serial.println(Xaxis.currentPosition());
       Serial.println(Y1axis.currentPosition());
     }
+    else if(incomingByte == 10){
+      // remise à zero
+    }
+    else if(incomingByte == 11){
+      Serial.println("DaphnieMaton");
+    }
   }
   if(runningX == 1){
     Xaxis.setSpeed(500);

@@ -230,15 +230,25 @@ class Parametrage(BoxLayout):
                 except: pass
                 if self.mode == "Tuyeau":
                     parcours = self.generatePathFromPipe()
-                    generateFile(parcours[0], parcours[1])
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\currentFile\\currentFile.ino")
+                    genFile = generateFile(parcours[0], parcours[1])
+
+                    f = open(".\\assets\\currentFile\\currentFile.ino","w+")
+                    f.write(genFile)
+                    f.close()
+
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
                     self.hasGoodProgram = False
                 elif self.mode == "Libre":
-                    generateFile(self.params["trace"], self.params["photos"])
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\currentFile\\currentFile.ino")
+                    genFile = generateFile(self.params["trace"], self.params["photos"])
+
+                    f = open(".\\assets\\currentFile\\currentFile.ino","w+")
+                    f.write(genFile)
+                    f.close()
+
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
                     self.hasGoodProgram = False
                 elif self.mode == "Direct":
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\directFile\\directFile.ino")            
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
                     self.hasGoodProgram = True
                     self.update_rect()
                     self.clock = Clock.schedule_interval(self.readFromSerial, 0.2)
@@ -249,9 +259,9 @@ class Parametrage(BoxLayout):
             else:
                 self.popup.dismiss()
                 Popup(title=_('No port detected'), content=Label(text=_('No serial port was specified')), size_hint=(None, None), size=(400, 300)).open()
-        except:
+        except Exception as e:
             self.popup.dismiss()
-            Popup(title=_('Oopsie...'), content=Label(text=_('Something went wrong, try again or report a bug')), size_hint=(None, None), size=(400, 300)).open()
+            Popup(title=_('Oopsie...'), content=Label(text=_('Something went wrong, try again or report a bug') + "\n" + str(e)), size_hint=(None, None), size=(400, 300)).open()
 
     def changedTab(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
@@ -263,7 +273,13 @@ class Parametrage(BoxLayout):
         self.zoom = float('inf')
 
         if self.mode == "Direct":
-            self.clock = Clock.schedule_interval(self.readFromSerial, 0.2)
+            self.moveDirect(bytes([11]))
+            if self.board != -1:
+                response = self.board.readline().decode("utf-8").rstrip()
+                if response == "DaphnieMaton":
+                    self.hasGoodProgram = True
+                    self.clock = Clock.schedule_interval(self.readFromSerial, 0.2)
+
         self.update_rect()
 
     def generatePathFromPipe(self, copy=False):
