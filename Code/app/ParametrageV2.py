@@ -29,10 +29,12 @@ from scipy.spatial import distance
 
 from assets.libraries.classes import (Input, LoadDialog, ModeDropDown,
                                       PenDropDown, SaveDialog, getPorts,
-                                      hitLine, polToCar, urlOpen)
+                                      hitLine, polToCar, urlOpen, MyLabel)
 from assets.libraries.createFile import generateFile
 from assets.libraries.localization import (_, change_language_to,
                                            translation_to_language_code)
+
+from assets.helpMsg import pipeHelp, freeHelp, directHelp
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Config.set('kivy','window_icon','kivyLogo.ico')
@@ -71,10 +73,10 @@ class Parametrage(BoxLayout):
 
         self.tuyeau_panel = self.ids.tuyeauInputs
         self.gaps = []
-        self.mode = "Tuyeau"
+        self.mode = "Pipe"
         self.font = ".\\assets\\seguisym.ttf"
 
-        # Specifique au mode 'Libre'
+        # Specifique au mode 'Free'
         self.lineWidth = 5
         self.diametre = 20
         self.dragging = -1
@@ -107,18 +109,14 @@ class Parametrage(BoxLayout):
     def help(self, *args):
         self.popup = Popup(title=_('Help'), size_hint=(0.7, 0.7))
         self.popbox = BoxLayout()
-        self.poplb = Label(text='[u][size=20]Utilisation[/size][/u]\n\n \
-                            1) Regler les [b]paramètres[/b] afin qu\'ils correspondent au système réel\n \
-                            2) Connectez le système à l\'[b]ordinateur[/b]\n \
-                            3) Selectioner le [b]port[b] de l\'arduino dans le menu\n \
-                            4) Vous pouvez maintenant clicker sur [b]Update[/b]\n \
-                            5) Finalement apuyez sur le bouton de [b]démarrage[/b] pour commencer l\'aquisition\n\n\n \
-                            Code disponible [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]ici[/u][/color][/ref] pour signaler un bug',
-                            text_size=self.popup.size,
-                            strip=True,
-                            valign='top',
-                            padding= (15, 35),
-                            markup = True)
+
+        if self.mode == "Pipe":
+            self.poplb = MyLabel(text=pipeHelp)#Label(text=pipeHelp, text_size=self.popup.size, strip=True, valign='middle', halign='center', padding= (15, 35), markup = True)
+        elif self.mode == "Free":
+            self.poplb = MyLabel(text=freeHelp)
+        elif self.mode == "Direct":
+            self.poplb = MyLabel(text=directHelp)
+
         self.poplb.bind(on_ref_press=urlOpen)
         self.popup.bind(size=self.poplb_update)
 
@@ -139,6 +137,15 @@ class Parametrage(BoxLayout):
         self.port = nb
         if nb>= 0:
             self.ids.port_button.text = _("Port") + " " + str(nb)
+
+            self.moveDirect(bytes([11]))
+            if self.board != -1:
+                response = self.board.readline().decode("utf-8").rstrip()
+                if response == "DaphnieMaton":
+                    self.hasGoodProgram = True
+                    self.clock = Clock.schedule_interval(self.readFromSerial, 0.2)
+                    self.update_rect()
+
         else:
             self.ids.port_button.text = _("Port")
         self.pen_drop_down.dismiss()
@@ -228,7 +235,7 @@ class Parametrage(BoxLayout):
                     self.board.close()
                     self.board = -1
                 except: pass
-                if self.mode == "Tuyeau":
+                if self.mode == "Pipe":
                     parcours = self.generatePathFromPipe()
                     genFile = generateFile(parcours[0], parcours[1])
 
@@ -238,7 +245,7 @@ class Parametrage(BoxLayout):
 
                     osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
                     self.hasGoodProgram = False
-                elif self.mode == "Libre":
+                elif self.mode == "Free":
                     genFile = generateFile(self.params["trace"], self.params["photos"])
 
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
@@ -328,7 +335,7 @@ class Parametrage(BoxLayout):
     def update_rect(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
 
-        if self.mode == "Tuyeau":
+        if self.mode == "Pipe":
             middle = (self.ids.pipeDrawing.center_x, self.ids.pipeDrawing.center_y)
             self.ids.pipeDrawing.canvas.before.clear()
 
@@ -384,7 +391,7 @@ class Parametrage(BoxLayout):
                     curX += self.params["gaps"][x]*ratioX
                     Rectangle(pos = (curX, middle[1]-height/2 + deltaY), size = (10, height))
 
-        elif self.mode == "Libre":
+        elif self.mode == "Free":
             self.ids.libreSplitter.max_size = self.size[0] - 400
             self.zoomClamp()
             middle = (self.ids.libreDrawing.center_x, self.ids.libreDrawing.center_y)
@@ -450,7 +457,7 @@ class Parametrage(BoxLayout):
             buttonSize = min(self.ids.directSplitter.size[0]/4, self.ids.directSplitter.size[1]/4)
             fontSize = min(self.ids.directSplitter.size[0]/20, self.ids.directSplitter.size[1]/20)
 
-            raz = Button(text=_('Reset'), font_size=fontSize, pos = (middle[0]-buttonSize/2, middle[1]-buttonSize/2), size = (buttonSize, buttonSize))
+            raz = Button(text=_('Origin'), font_size=fontSize, pos = (middle[0]-buttonSize/2, middle[1]-buttonSize/2), size = (buttonSize, buttonSize))
 
             right = Button(text=u'\u23E9', font_size=fontSize, font_name=self.font, pos = (middle[0]+buttonSize+5-buttonSize/2, middle[1]-buttonSize/2), size = (buttonSize, buttonSize))
             left = Button(text=u'\u23EA', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize-5-buttonSize/2, middle[1]-buttonSize/2), size = (buttonSize, buttonSize))
@@ -495,7 +502,7 @@ class Parametrage(BoxLayout):
                     dimensionY = self.ids.directSplitter.size[1] - 50
                     Color(1, 1, 1, 0.7)
                     Rectangle(pos=(middle[0]-dimensionX/2, middle[1]-dimensionY/2), size=(dimensionX, dimensionY))
-                    label = CoreLabel(text=_("Click on 'Update' before sending serial data"), font_size=100, halign='middle', valign='middle', padding=(12, 12))
+                    label = CoreLabel(text=_("Click on 'Upload' before sending serial data"), font_size=100, halign='middle', valign='middle', padding=(12, 12))
                     label.refresh()
                     text = label.texture
                     Color(0, 0, 0, 1)
@@ -511,7 +518,7 @@ class Parametrage(BoxLayout):
                 self.board.write(direction)
     
     def clickedDown(self, touch):
-        if self.mode == "Libre":
+        if self.mode == "Free":
             x = touch.x
             y = touch.y
             zoomedTrace = np.multiply(self.params["trace"], self.zoom).tolist()
@@ -565,7 +572,7 @@ class Parametrage(BoxLayout):
                     self.update_rect()
 
     def clickedUp(self, touch):
-        if self.mode == "Libre":
+        if self.mode == "Free":
             if touch.button == 'left':
                 self.dragging = -1
             if self.zoom == 0.05:
@@ -573,7 +580,7 @@ class Parametrage(BoxLayout):
                 self.update_rect()
     
     def clickedMove(self, touch):
-        if self.mode == "Libre":
+        if self.mode == "Free":
             newPosition = -1
             if touch.button == 'left' and self.dragging != -1:
                 thisX = (touch.x-self.ids.libreDrawing.center_x)/self.zoom

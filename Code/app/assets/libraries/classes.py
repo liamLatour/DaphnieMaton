@@ -12,7 +12,7 @@ from kivy.uix.label import Label
 from kivy.uix.switch import Switch
 from kivy.uix.textinput import TextInput
 from scipy.spatial import distance
-
+from kivy.uix.image import Image
 
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
@@ -30,6 +30,16 @@ class PenDropDown(ActionDropDown):
 
 class ModeDropDown(ActionDropDown):
     pass
+
+class MyLabel(Image):
+    text = StringProperty('')
+
+    def on_text(self, *_):
+        l = Label(text=self.text, valign='middle', halign='justify', padding= (15, 35), markup = True)
+        l.font_size = '50'
+        l.texture_update()
+        # Set it to image, it'll be scaled to image size automatically:
+        self.texture = l.texture
 
 class Input(BoxLayout):
     """Custom input to handle parameters.
