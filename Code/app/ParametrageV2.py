@@ -35,6 +35,7 @@ from assets.libraries.localization import (_, change_language_to,
                                            translation_to_language_code)
 
 from assets.helpMsg import pipeHelp, freeHelp, directHelp
+import assets.libraries.undoRedo as UndoRedo
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Config.set('kivy','window_icon','..\\..\\Images\\kivyLogo.ico')
@@ -107,6 +108,9 @@ class Parametrage(BoxLayout):
         self.poplb.text_size = self.popup.size
 
     def help(self, *args):
+        try: self.popup.dismiss()
+        except: pass
+
         self.popup = Popup(title=_('Help'), size_hint=(0.7, 0.7))
         self.popbox = BoxLayout()
 
@@ -578,6 +582,7 @@ class Parametrage(BoxLayout):
             if self.zoom == 0.05:
                 self.positionClamp()
                 self.update_rect()
+            UndoRedo.do([self.params["trace"].copy(), self.params["photos"].copy()])
     
     def clickedMove(self, touch):
         if self.mode == "Free":
@@ -623,6 +628,7 @@ class Parametrage(BoxLayout):
     def removeAllNodes(self):
         self.params["trace"] = []
         self.params["photos"] = []
+        UndoRedo.do([self.params["trace"].copy(), self.params["photos"].copy()])
         self.update_rect()
 
     def inputMove(self, *args):
@@ -725,6 +731,13 @@ class Parametrage(BoxLayout):
             print("Copied")
             pyperclip.copy(str(self.position))
 
+    def undo(self):
+        last = UndoRedo.undo([self.params["trace"].copy(), self.params["photos"].copy()])
+        if last != -1:
+            self.params["trace"] = last[0]
+            self.params["photos"] = last[1]
+        self.update_rect()
+
 class DaphnieMatonApp(App):
     def build_config(self, config):
         config.setdefaults('general', {
@@ -735,7 +748,8 @@ class DaphnieMatonApp(App):
             'language': "English"})
         config.setdefaults('shortcuts', {
             'save': 'ctrl+s',
-            'copy': 'ctrl+c'})
+            'copy': 'ctrl+c',
+            'undo': 'ctrl+z'})
 
     def build(self):
         self.settings_cls = SettingsWithSidebar
@@ -745,6 +759,7 @@ class DaphnieMatonApp(App):
         self.app = Parametrage()
         self.save = keyboard.add_hotkey(self.config.get('shortcuts', 'save'), self.app.save, args=[-1, -1])
         self.copy = keyboard.add_hotkey(self.config.get('shortcuts', 'copy'), self.app.copyToClipboard)
+        self.help = keyboard.add_hotkey(self.config.get('shortcuts', 'undo'), self.app.undo)
 
         return self.app
 
@@ -770,14 +785,16 @@ class DaphnieMatonApp(App):
             print("Language changed")
         if section == "general" and key == "calibrate":
             print("Calibrate")
+
         if section == "shortcuts" and key == "save":
             keyboard.remove_hotkey(self.save)
             self.save = keyboard.add_hotkey(value, self.app.save, args=[-1, -1])
-            print("shortcut changed")
         if section == "shortcuts" and key == "copy":
             keyboard.remove_hotkey(self.copy)
             self.copy = keyboard.add_hotkey(value, self.app.copyToClipboard)
-            print("shortcut changed")
+        if section == "shortcuts" and key == "help":
+            keyboard.remove_hotkey(self.help)
+            self.help = keyboard.add_hotkey(value, self.app.undo)
 
 if __name__ == '__main__':
     DaphnieMatonApp().run()
