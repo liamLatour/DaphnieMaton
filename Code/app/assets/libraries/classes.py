@@ -89,7 +89,7 @@ class Input(BoxLayout):
         if self.inputType == 0:
             self.input = TextInput(text=self.default_text, multiline=False, input_filter=self.input_filter)
             if self.callback != None and self.callback != '':
-                self.input.bind(on_text_validate=lambda *args: self.callback())
+                self.input.bind(text=lambda *args: self.callback())
             self.add_widget(self.input)
         elif self.inputType == 1:
             self.input = Switch(active=self.default_text=="True")

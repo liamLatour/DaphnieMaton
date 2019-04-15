@@ -347,20 +347,20 @@ class Parametrage(BoxLayout):
 
             gapsValue = []
             if bool(self.ids.sameGap.input.active):
-                gapsValue = np.ones(max(int(self.sanitize(self.ids.nbPipe.input.text)), 1)-1) * float(self.sanitize(self.gaps[0].input.text))
+                gapsValue = np.ones(max(self.sanitize(self.ids.nbPipe.input.text), 1)-1) * self.sanitize(self.gaps[0].input.text)
             else:
                 for gap in self.gaps:
-                    gapsValue.append(float(self.sanitize(gap.input.text)))
+                    gapsValue.append(self.sanitize(gap.input.text))
 
             if len(gapsValue) == 0:
                 gapsValue = [20]
 
-            self.params["nbPipe"] = max(int(self.sanitize(self.ids.nbPipe.input.text)), 1)
-            self.params["lenPipe"] = max(float(self.sanitize(self.ids.lenPipe.input.text)), 0.1)
-            self.params["photoPipe"] = max(float(self.sanitize(self.ids.photoPipe.input.text)), 1)
-            self.params["distOriginX"] = float(self.sanitize(self.ids.distOriginX.input.text))
-            self.params["distOriginY"] = float(self.sanitize(self.ids.distOriginY.input.text))
-            self.params["sameGap"] = bool(self.sanitize(self.ids.sameGap.input.active))
+            self.params["nbPipe"] = max(self.sanitize(self.ids.nbPipe.input.text), 1)
+            self.params["lenPipe"] = max(self.sanitize(self.ids.lenPipe.input.text), 0.1)
+            self.params["photoPipe"] = max(self.sanitize(self.ids.photoPipe.input.text), 1)
+            self.params["distOriginX"] = self.sanitize(self.ids.distOriginX.input.text)
+            self.params["distOriginY"] = self.sanitize(self.ids.distOriginY.input.text)
+            self.params["sameGap"] = self.sanitize(self.ids.sameGap.input.active)
             self.params["gaps"] = gapsValue
 
             if self.params["nbPipe"] <= 2:
@@ -705,7 +705,7 @@ class Parametrage(BoxLayout):
             for gap in self.gaps:
                 self.tuyeau_panel.remove_widget(gap)
 
-        if int(self.sanitize(self.ids.nbPipe.input.text)) < 2:
+        if self.sanitize(self.ids.nbPipe.input.text) < 2:
             return
 
         if bool(self.ids.sameGap.input.active):
@@ -713,7 +713,7 @@ class Parametrage(BoxLayout):
             self.tuyeau_panel.add_widget(self.gaps[0])
         else:
             self.gaps = []
-            for pipe in range(max(int(self.sanitize(self.ids.nbPipe.input.text)), 2)-1):
+            for pipe in range(max(self.sanitize(self.ids.nbPipe.input.text), 2)-1):
                 try:
                     default = str(self.params["gaps"][pipe])
                 except:
@@ -730,10 +730,16 @@ class Parametrage(BoxLayout):
 
         returns: 0 if it is NaN, otherwise the value itself.
         """
-        if number == '':
-            return 0
-        else:
-            return number
+        try:
+            return int(number)
+        except:
+            try:
+                return float(number)
+            except:
+                try:
+                    return bool(number)
+                except:
+                    return 0
 
     def copyToClipboard(self):
         if self.mode == "Direct":
