@@ -29,7 +29,7 @@ from scipy.spatial import distance
 
 from assets.libraries.classes import (Input, LoadDialog, ModeDropDown,
                                       PenDropDown, SaveDialog, getPorts,
-                                      hitLine, polToCar, urlOpen, MyLabel)
+                                      hitLine, polToCar, urlOpen, MyLabel, SettingButtons)
 from assets.libraries.createFile import generateFile
 from assets.libraries.localization import (_, change_language_to,
                                            translation_to_language_code)
@@ -748,6 +748,7 @@ class DaphnieMatonApp(App):
         change_language_to(translation_to_language_code(config_language))
 
     def build_settings(self, settings):
+        settings.register_type('buttons', SettingButtons)
         f = openFile(".\\assets\\config.json", "r", encoding='utf8')
         if f.mode == 'r':
             contents = f.read()
@@ -762,6 +763,8 @@ class DaphnieMatonApp(App):
         if section == "general" and key == "language":
             change_language_to(translation_to_language_code(value))
             print("Language changed")
+        if section == "general" and key == "calibrate":
+            print("Calibrate")
         if section == "shortcuts" and key == "save":
             keyboard.remove_hotkey(self.save)
             self.save = keyboard.add_hotkey(value, self.app.save, args=[-1, -1])

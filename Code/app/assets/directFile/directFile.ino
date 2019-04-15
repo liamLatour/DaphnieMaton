@@ -36,6 +36,7 @@ void setup(){
 }
 
 void loop() {
+  // TODO: Switch
   if (Serial.available() > 0) {
     int incomingByte = Serial.read();
 

@@ -41,5 +41,17 @@
       "desc":"Path where you most often save",
       "section":"general",
       "key":"savePath"
+   },
+   {
+      "type": "buttons",
+      "title": "Calibrate",
+      "desc": "Used to calibrate the system, in case it has changed",
+      "section": "general",
+      "key": "calibrate",
+      "buttons":
+      [{
+         "title":"Calibrate",
+         "id":"cal"
+      }]
    }
 ]
