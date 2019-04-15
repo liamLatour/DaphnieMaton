@@ -34,7 +34,6 @@ class ModeDropDown(ActionDropDown):
     pass
 
 class SettingButtons(SettingItem):
-
     def __init__(self, **kwargs):
         self.register_event_type('on_release')
         self.panel = kwargs["panel"]
@@ -96,6 +95,11 @@ class Input(BoxLayout):
             self.input = Switch(active=self.default_text=="True")
             if self.callback != None and self.callback != '':
                 self.input.bind(active=lambda *args: self.callback())
+            self.add_widget(self.input)
+        elif self.inputType == 2:
+            self.input = Button(text=self.default_text)
+            if self.callback != None and self.callback != '':
+                self.input.bind(on_press=lambda *args: self.callback())
             self.add_widget(self.input)
 
 def getPorts():

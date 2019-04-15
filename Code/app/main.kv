@@ -66,7 +66,7 @@
             ActionPrevious:
                 title: _('DaphnieMaton')
                 with_previous: False
-                app_icon: '..\Images\kivyLogo.ico'
+                app_icon: '..\..\Images\kivyLogo.ico'
             ActionButton:
                 text: _('Save')
                 on_release: root.show_save()
@@ -187,6 +187,12 @@
                                 inputName: _('Coordinates')
                                 default_text: '0 : 0'
                                 callback: lambda *args: root.inputMove()
+                            Input:
+                                id: clear
+                                inputName: _('Clear all nodes')
+                                inputType: 2
+                                default_text: 'Clear'
+                                callback: lambda *args: root.removeAllNodes()
                 Splitter:
                     sizable_from: 'left'
                     strip_size: '5pt'

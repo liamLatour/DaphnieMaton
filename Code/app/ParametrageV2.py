@@ -37,7 +37,7 @@ from assets.libraries.localization import (_, change_language_to,
 from assets.helpMsg import pipeHelp, freeHelp, directHelp
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
-Config.set('kivy','window_icon','kivyLogo.ico')
+Config.set('kivy','window_icon','..\\..\\Images\\kivyLogo.ico')
 
 
 #https://stackoverflow.com/questions/47729340/how-to-change-default-kivy-logo-with-another-image-logo
@@ -619,6 +619,11 @@ class Parametrage(BoxLayout):
                     self.lastTouched = self.dragging
 
                 self.update_rect()
+
+    def removeAllNodes(self):
+        self.params["trace"] = []
+        self.params["photos"] = []
+        self.update_rect()
 
     def inputMove(self, *args):
         position = re.findall(r"[-+]?\d*\.\d+|[-+]?\d+", self.ids.coord.input.text)

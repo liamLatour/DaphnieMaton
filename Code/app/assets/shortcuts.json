@@ -16,5 +16,12 @@
       "desc":"To copy the coordinates in Direct mode",
       "section":"shortcuts",
       "key":"copy"
+   },
+   {
+      "type":"string",
+      "title":"Help panel",
+      "desc":"Hot key to display help panel",
+      "section":"shortcuts",
+      "key":"help"
    }
 ]
