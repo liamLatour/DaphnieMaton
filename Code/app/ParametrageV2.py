@@ -52,7 +52,6 @@ class Parametrage(BoxLayout):
         self.params = {
             "nbPipe": 2,
             "lenPipe" : 1.2,
-            "timePipe" : 10,
             "photoPipe" : 50,
             "distOriginX" : 50,
             "distOriginY" : 50,
@@ -62,6 +61,7 @@ class Parametrage(BoxLayout):
             "trace" : [],
             "photos" : []
         }
+        self.speed = 8.6 # m per minutes
         self.imageWidth = 1.4 # in meter
         self.imageHeight = 1.4 # in meter
         self.actualWidth = 1.2 # in meter
@@ -103,6 +103,8 @@ class Parametrage(BoxLayout):
         self.ids.directDrawing.bind(size=self.update_rect, pos=self.update_rect)
         self.ids.libreDrawing.bind(size=self.update_rect, pos=self.update_rect)
         self.ids.changeTab.bind(on_touch_up = self.changedTab)
+
+        self.tuyeauGap()
 
     def poplb_update(self, *args):
         self.poplb.text_size = self.popup.size
@@ -355,7 +357,6 @@ class Parametrage(BoxLayout):
 
             self.params["nbPipe"] = max(int(self.sanitize(self.ids.nbPipe.input.text)), 1)
             self.params["lenPipe"] = max(float(self.sanitize(self.ids.lenPipe.input.text)), 0.1)
-            self.params["timePipe"] = float(self.sanitize(self.ids.timePipe.input.text))
             self.params["photoPipe"] = max(float(self.sanitize(self.ids.photoPipe.input.text)), 1)
             self.params["distOriginX"] = float(self.sanitize(self.ids.distOriginX.input.text))
             self.params["distOriginY"] = float(self.sanitize(self.ids.distOriginY.input.text))
@@ -376,9 +377,9 @@ class Parametrage(BoxLayout):
 
                 Rectangle(source='.\\assets\\topDownView.png', pos = (middle[0]-width/2, middle[1]-width/2), size = (width, width))
 
-                text = _("Total time") + ": " + str(self.params["timePipe"]*self.params["nbPipe"]) + " sec" + \
+                text = _("Total time") + ": " + str(self.speed*self.params["nbPipe"]) + " sec" + \
                                         "\n"+_("Photo number") + ": " + str( round((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100))) + \
-                                        "\n"+_("Photo every") +" "+ str( round( ((self.params["timePipe"]*self.params["nbPipe"]) / ((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100)))*10 )/10 ) + " sec"
+                                        "\n"+_("Photo every") +" "+ str( round( ((self.speed*self.params["nbPipe"]) / ((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100)))*10 )/10 ) + " sec"
 
                 Color(1,1,1, .2)
                 Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +95)), size = (200, 70))
@@ -718,7 +719,7 @@ class Parametrage(BoxLayout):
                 except:
                     default = str(self.params["gaps"][0])   
 
-                self.gaps.append(Input(inputName=_('Gap between pipes')+" (cm)", input_filter="float", default_text=default, callback=self.update_rect))
+                self.gaps.append(Input(inputName=_('Gap between pipes ')+str(pipe+1)+"-"+str(pipe+2)+" (cm)", input_filter="float", default_text=default, callback=self.update_rect))
                 self.tuyeau_panel.add_widget(self.gaps[pipe])
         self.update_rect()
 

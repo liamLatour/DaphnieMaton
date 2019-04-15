@@ -105,41 +105,35 @@
                                 id: nbPipe
                                 inputName: _('Number of pipes')
                                 input_filter: 'int'
-                                default_text: '0' 
+                                default_text: '2' 
                                 callback: lambda *args: root.tuyeauGap()
                             Input:
                                 id: lenPipe
                                 inputName: _('Pipe lenght (m)')
                                 input_filter: 'float'
-                                default_text: '0' 
-                                callback: lambda *args: root.update_rect()
-                            Input:
-                                id: timePipe
-                                inputName: _('Time for one pipe (sec)')
-                                input_filter: 'float'
-                                default_text: '0' 
+                                default_text: '1' 
                                 callback: lambda *args: root.update_rect()
                             Input:
                                 id: photoPipe
                                 inputName: _('Centimeter per picture')
                                 input_filter: 'float'
-                                default_text: '0' 
+                                default_text: '5' 
                                 callback: lambda *args: root.update_rect()
                             Input:
                                 id: distOriginX
                                 inputName: _('Distance from origin X')
                                 input_filter: 'float'
-                                default_text: '0'
+                                default_text: '15'
                                 callback: lambda *args: root.update_rect()
                             Input:
                                 id: distOriginY
                                 inputName: _('Distance from origin Y')
                                 input_filter: 'float'
-                                default_text: '0' 
+                                default_text: '15' 
                                 callback: lambda *args: root.update_rect()
                             Input:
                                 id: sameGap
-                                inputName: _('Constant gap')
+                                inputName: _('Constant gap between pipes')
                                 inputType: 1
                                 default_text: 'False' 
                                 callback: lambda *args: root.tuyeauGap()
