@@ -362,6 +362,11 @@ class Parametrage(BoxLayout):
             self.params["sameGap"] = bool(self.sanitize(self.ids.sameGap.input.active))
             self.params["gaps"] = gapsValue
 
+            if self.params["nbPipe"] <= 2:
+                self.ids.sameGap.hide()
+            else:
+                self.ids.sameGap.show()
+
             self.ids.pipeSplitter.max_size = self.size[0] - 400
             self.ids.pipeSplitter.min_size = int(round(self.size[0]/2))
 
@@ -698,6 +703,9 @@ class Parametrage(BoxLayout):
         if self.gaps != []:
             for gap in self.gaps:
                 self.tuyeau_panel.remove_widget(gap)
+
+        if int(self.sanitize(self.ids.nbPipe.input.text)) < 2:
+            return
 
         if bool(self.ids.sameGap.input.active):
             self.gaps = [Input(inputName=_('Gap between pipes')+" (cm)", input_filter="float", default_text=str(self.params["gaps"][0]), callback=self.update_rect)]

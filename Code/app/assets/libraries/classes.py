@@ -101,6 +101,22 @@ class Input(BoxLayout):
             if self.callback != None and self.callback != '':
                 self.input.bind(on_press=lambda *args: self.callback())
             self.add_widget(self.input)
+    
+    def hide(self, *args):
+        self.height = '0'
+        try:
+            self.remove_widget(self.label)
+            self.remove_widget(self.input)
+        except:
+            pass
+
+    def show(self, *args):
+        self.height = '30'
+        try:
+            self.add_widget(self.label)
+            self.add_widget(self.input)
+        except:
+            pass
 
 def getPorts():
     """Used to gather every connected devices on usb.
