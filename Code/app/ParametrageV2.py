@@ -224,22 +224,29 @@ class Parametrage(BoxLayout):
             self.position = (x, y)
             self.update_rect()
 
+    def getCallibrationAsync(self, *args):
+        if self.port != -1 and self.board != -1:
+            if self.board.in_waiting > 0:
+                data_str = self.board.readline().decode("utf-8").rstrip()
+                self.settings.set("general", "stepToCm", str(data_str))
+                self.settings.write()
+                print("Callibrated to " + str(data_str))
+
     def callibrate(self):
         if self.port != -1:
             self.moveDirect(bytes([10]))
-            
-            # TODO: add a listener when the serial fires its return value
+            Clock.schedule_interval(self.getCallibrationAsync, 0.5)
 
-    def update(self, *args):
+    def update(self, callibration=False, callback=None, *args):
         self.popup = Popup(title=_('Upload'), content=AsyncImage(source='.\\assets\\logo.png', size=(100, 100)), size_hint=(None, None), size=(400, 300), auto_dismiss=False)
         self.popup.open()
         if self.clock != -1:
             self.clock.cancel()
             self.clock = -1
 
-        threading.Thread(target=self.updateAsync).start()
+        threading.Thread(target=lambda: self.updateAsync(callibration=callibration, callback=callback)).start()
 
-    def updateAsync(self):
+    def updateAsync(self, callibration, callback):
         try:
             arduinoPath = self.settings.get('general', 'arduinoPath')
             if self.port != -1:
@@ -247,25 +254,29 @@ class Parametrage(BoxLayout):
                     self.board.close()
                     self.board = -1
                 except: pass
-                if self.mode == "Pipe":
+
+                if callibration:
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
+                    self.hasGoodProgram = True
+                    self.update_rect()
+
+                elif self.mode == "Pipe":
                     parcours = self.generatePathFromPipe()
                     genFile = generateFile(parcours[0], parcours[1])
-
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
-
                     osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
                     self.hasGoodProgram = False
+
                 elif self.mode == "Free":
                     genFile = generateFile(self.params["trace"], self.params["photos"])
-
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
-
                     osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
                     self.hasGoodProgram = False
+
                 elif self.mode == "Direct":
                     osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
                     self.hasGoodProgram = True
@@ -275,6 +286,8 @@ class Parametrage(BoxLayout):
                 print("DONE !")
                 self.popup.dismiss()
                 Popup(title=_('Success !'), content=Label(text=_('Upload finished successfully !')), size_hint=(None, None), size=(400, 300)).open()
+                if callback != None:
+                    callback()
             else:
                 self.popup.dismiss()
                 Popup(title=_('No port detected'), content=Label(text=_('No serial port was specified')), size_hint=(None, None), size=(400, 300)).open()
@@ -813,7 +826,7 @@ class DaphnieMatonApp(App):
             change_language_to(translation_to_language_code(value))
             print("Language changed")
         if section == "general" and key == "calibrate":
-            self.app.callibrate()
+            self.app.update(callibration=True, callback=self.app.callibrate)
             print("Calibrate")
 
         if section == "shortcuts" and key == "save":

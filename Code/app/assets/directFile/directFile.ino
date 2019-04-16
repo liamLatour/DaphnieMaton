@@ -70,6 +70,7 @@ void loop() {
         break;
       case 10:
         // callibrate
+        delay(5000);
         Serial.println("300"); // step to cm
         break;
       default:
