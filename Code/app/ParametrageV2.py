@@ -144,7 +144,7 @@ class Parametrage(BoxLayout):
         if nb>= 0:
             self.ids.port_button.text = _("Port") + " " + str(nb)
 
-            self.moveDirect(bytes([11]))
+            self.moveDirect(bytes([9]))
             if self.board != -1:
                 response = self.board.readline().decode("utf-8").rstrip()
                 if response == "DaphnieMaton":
@@ -218,11 +218,17 @@ class Parametrage(BoxLayout):
 
     def readFromSerial(self, *args):
         if self.port != -1:
-            self.moveDirect(bytes([9]))
+            self.moveDirect(bytes([7]))
             x = self.board.readline().decode("utf-8").rstrip()
             y = self.board.readline().decode("utf-8").rstrip()
             self.position = (x, y)
             self.update_rect()
+
+    def callibrate(self):
+        if self.port != -1:
+            self.moveDirect(bytes([10]))
+            
+            # TODO: add a listener when the serial fires its return value
 
     def update(self, *args):
         self.popup = Popup(title=_('Upload'), content=AsyncImage(source='.\\assets\\logo.png', size=(100, 100)), size_hint=(None, None), size=(400, 300), auto_dismiss=False)
@@ -286,7 +292,7 @@ class Parametrage(BoxLayout):
         self.zoom = float('inf')
 
         if self.mode == "Direct":
-            self.moveDirect(bytes([11]))
+            self.moveDirect(bytes([9]))
             if self.board != -1:
                 response = self.board.readline().decode("utf-8").rstrip()
                 if response == "DaphnieMaton":
@@ -350,7 +356,7 @@ class Parametrage(BoxLayout):
                 gapsValue = np.ones(max(self.sanitize(self.ids.nbPipe.input.text), 1)-1) * self.sanitize(self.gaps[0].input.text)
             else:
                 for gap in self.gaps:
-                    gapsValue.append(self.sanitize(gap.input.text))
+                    gapsValue.append(max(self.sanitize(gap.input.text), 0))
 
             if len(gapsValue) == 0:
                 gapsValue = [20]
@@ -439,7 +445,10 @@ class Parametrage(BoxLayout):
                             Line(points=[zoomedTrace[i*2]+middle[0], zoomedTrace[i*2+1]+middle[1], zoomedTrace[(i+1)*2]+middle[0], zoomedTrace[(i+1)*2+1]+middle[1]], width=self.lineWidth)
                     
                     for i in range(int(len(zoomedTrace)/2)):
-                        Color(1, 0.8, 0, 0.8)
+                        if self.lastTouched == i:
+                            Color(1, 0, 0, 0.8)
+                            Ellipse(pos=(zoomedTrace[i*2]+middle[0]-(self.diametre+5)/2, zoomedTrace[i*2+1]+middle[1]-(self.diametre+5)/2), size=(self.diametre+5, self.diametre+5))
+                        Color(1, 0.8, 0, 1)
                         Ellipse(pos=(zoomedTrace[i*2]+middle[0]-self.diametre/2, zoomedTrace[i*2+1]+middle[1]-self.diametre/2), size=(self.diametre, self.diametre))
                         label = CoreLabel(text=str(i+1), font_size=20)
                         label.refresh()
@@ -474,17 +483,16 @@ class Parametrage(BoxLayout):
             up = Button(text=u'\u23EB', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize/2, middle[1]+buttonSize+5-buttonSize/2), size = (buttonSize, buttonSize))
             down = Button(text=u'\u23EC', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize/2, middle[1]-buttonSize-5-buttonSize/2), size = (buttonSize, buttonSize))
 
-            raz.bind(on_press=partial(self.moveDirect, bytes([0])))
-            raz.bind(on_release=partial(self.moveDirect, bytes([10])))
+            raz.bind(on_release=partial(self.moveDirect, bytes([8])))
 
             right.bind(on_press=partial(self.moveDirect, bytes([1])))
             right.bind(on_release=partial(self.moveDirect, bytes([5])))
             left.bind(on_press=partial(self.moveDirect, bytes([2])))
-            left.bind(on_release=partial(self.moveDirect, bytes([6])))
+            left.bind(on_release=partial(self.moveDirect, bytes([5])))
             up.bind(on_press=partial(self.moveDirect, bytes([3])))
-            up.bind(on_release=partial(self.moveDirect, bytes([7])))
+            up.bind(on_release=partial(self.moveDirect, bytes([6])))
             down.bind(on_press=partial(self.moveDirect, bytes([4])))
-            down.bind(on_release=partial(self.moveDirect, bytes([8])))
+            down.bind(on_release=partial(self.moveDirect, bytes([6])))
 
             self.ids.directDrawing.add_widget(raz)
 
@@ -552,13 +560,17 @@ class Parametrage(BoxLayout):
                     height = self.corners[0][1] - self.corners[1][1]
                     width = self.corners[0][0] - self.corners[2][0]
 
+                    self.ids.coord.unbindThis()
                     self.ids.coord.input.text = str(round(((coordX-self.corners[3][0])*(self.actualWidth*1000))/width)/10) + " : " + str(round(((coordY-self.corners[3][1])*(self.actualHeight*1000))/height)/10)
+                    self.ids.coord.bindThis()
+
                     self.params["trace"].append(coordX)
                     self.params["trace"].append(coordY)
                     self.params["photos"].append(False)
                     self.lastTouched = len(self.params["photos"])-1
                     self.dragging = len(self.params["photos"])-1
                     self.update_rect()
+                    return
                 elif touch.button == 'right':
                     self.lastTouched = -1
                     # Check if we clicked on a line or not
@@ -622,7 +634,9 @@ class Parametrage(BoxLayout):
                     height = self.corners[0][1] - self.corners[1][1]
                     width = self.corners[0][0] - self.corners[2][0]
 
+                    self.ids.coord.unbindThis()
                     self.ids.coord.input.text = str(round(((newPosition[0]-self.corners[3][0])*(self.actualWidth*1000))/width)/10) + " : " + str(round(((newPosition[1]-self.corners[3][1])*(self.actualHeight*1000))/height)/10)
+                    self.ids.coord.bindThis()
 
                     self.params["trace"][self.dragging*2] = newPosition[0]
                     self.params["trace"][self.dragging*2+1] = newPosition[1]
@@ -799,6 +813,7 @@ class DaphnieMatonApp(App):
             change_language_to(translation_to_language_code(value))
             print("Language changed")
         if section == "general" and key == "calibrate":
+            self.app.callibrate()
             print("Calibrate")
 
         if section == "shortcuts" and key == "save":

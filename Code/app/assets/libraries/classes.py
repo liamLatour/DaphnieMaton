@@ -86,21 +86,39 @@ class Input(BoxLayout):
         self.label = Label(text=self.inputName)
         self.add_widget(self.label)
 
+        if self.callback != None and self.callback != '':
+            self.toCall = lambda *args: self.callback()
+        else:
+            self.toCall = lambda : print("no callback")
+
         if self.inputType == 0:
             self.input = TextInput(text=self.default_text, multiline=False, input_filter=self.input_filter)
-            if self.callback != None and self.callback != '':
-                self.input.bind(text=lambda *args: self.callback())
+            self.input.bind(text=self.toCall)
             self.add_widget(self.input)
         elif self.inputType == 1:
             self.input = Switch(active=self.default_text=="True")
-            if self.callback != None and self.callback != '':
-                self.input.bind(active=lambda *args: self.callback())
+            self.input.bind(active=self.toCall)
             self.add_widget(self.input)
         elif self.inputType == 2:
             self.input = Button(text=self.default_text)
-            if self.callback != None and self.callback != '':
-                self.input.bind(on_press=lambda *args: self.callback())
+            self.input.bind(on_press=self.toCall)
             self.add_widget(self.input)
+
+    def bindThis(self, *args):
+        if self.inputType == 0:
+            self.input.bind(text=self.toCall)
+        elif self.inputType == 1:
+            self.input.bind(active=self.toCall)
+        elif self.inputType == 2:
+            self.input.bind(on_press=self.toCall)
+
+    def unbindThis(self, *args):
+        if self.inputType == 0:
+            self.input.unbind(text=self.toCall)
+        elif self.inputType == 1:
+            self.input.unbind(active=self.toCall)
+        elif self.inputType == 2:
+            self.input.unbind(on_press=self.toCall)
     
     def hide(self, *args):
         self.height = '0'
