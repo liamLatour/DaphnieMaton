@@ -29,7 +29,7 @@ from scipy.spatial import distance
 
 from assets.libraries.classes import (Input, LoadDialog, ModeDropDown,
                                       PenDropDown, SaveDialog, getPorts,
-                                      hitLine, polToCar, urlOpen, MyLabel, SettingButtons)
+                                      hitLine, polToCar, urlOpen, MyLabel, SettingButtons, SettingColorPicker)
 from assets.libraries.createFile import generateFile
 from assets.libraries.localization import (_, change_language_to,
                                            translation_to_language_code)
@@ -42,6 +42,8 @@ Config.set('kivy','window_icon','..\\..\\Images\\kivyLogo.ico')
 
 
 #https://stackoverflow.com/questions/47729340/how-to-change-default-kivy-logo-with-another-image-logo
+#https://stackoverflow.com/questions/34468909/how-to-make-tooltip-using-kivy
+
 
 Builder.load_file('.\\main.kv')
 
@@ -103,7 +105,6 @@ class Parametrage(BoxLayout):
         self.ids.directDrawing.bind(size=self.update_rect, pos=self.update_rect)
         self.ids.libreDrawing.bind(size=self.update_rect, pos=self.update_rect)
         self.ids.changeTab.bind(on_touch_up = self.changedTab)
-
         self.tuyeauGap()
 
     def poplb_update(self, *args):
@@ -795,7 +796,8 @@ class DaphnieMatonApp(App):
             'savePath': 'C:\\',
             'stepToCm': 100,
             'autoSave': 5,
-            'language': "English"})
+            'language': "English",
+            'pipeColor': "15"})
         config.setdefaults('shortcuts', {
             'save': 'ctrl+s',
             'copy': 'ctrl+c',
@@ -819,6 +821,7 @@ class DaphnieMatonApp(App):
 
     def build_settings(self, settings):
         settings.register_type('buttons', SettingButtons)
+        settings.register_type('color', SettingColorPicker)
         f = openFile(".\\assets\\config.json", "r", encoding='utf8')
         if f.mode == 'r':
             contents = f.read()
