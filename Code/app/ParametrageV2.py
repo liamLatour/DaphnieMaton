@@ -64,9 +64,9 @@ class Parametrage(BoxLayout):
         self.speed = 8.6 # m per minutes
         self.imageWidth = 1.4 # in meter
         self.imageHeight = 1.4 # in meter
-        self.actualWidth = 1.2 # in meter
-        self.actualHeight = 1.2 # in meter
-        self.imageOrigin = (5.8, 10.5) # in cm
+        self.actualWidth = 1.144 # in meter
+        self.actualHeight = 1.1 # in meter
+        self.imageOrigin = (17, 17.2) # in cm
 
         self.port = -1
         self.pen_drop_down = PenDropDown()
@@ -84,7 +84,7 @@ class Parametrage(BoxLayout):
         self.lastTouched = -1
         self.zoom = 1
         self.margin = [-self.diametre/2-5, self.diametre/2+5, self.diametre/2+25, -self.diametre/2-25] # Left, Right, Top, Down
-        self.corners = [(88, 87.5), (88, -87.5), (-90, 87.5), (-90, -87.5)] # Right-Top, Right-Down, Left-Top, Left-Down
+        self.corners = [(88, 82), (88, -72), (-75, 82), (-75, -72)] # Right-Top, Right-Down, Left-Top, Left-Down
 
         # Specifique au mode 'direct'
         self.board = -1
@@ -176,16 +176,17 @@ class Parametrage(BoxLayout):
         self._popup.open()
 
     def load(self, path, filename):
-        self.filePath = path
-        self.fileName = filename[0].replace(".json", "")
-
         try:
+            self.filePath = path
+            self.fileName = filename[0].replace(".json", "")
             with open(osJoinPath(path, filename[0])) as stream:
                 self.params = jsLoad(stream)
                 for param in self.params:
                     try:
+                        self.ids[param].unbindThis()
                         self.ids[param].input.text = str(self.params[param])
                         self.ids[param].input.active = bool(self.params[param])
+                        self.ids[param].bindThis()
                     except: pass
 
             self.tuyeauGap()
@@ -230,12 +231,15 @@ class Parametrage(BoxLayout):
                 data_str = self.board.readline().decode("utf-8").rstrip()
                 self.settings.set("general", "stepToCm", str(data_str))
                 self.settings.write()
+                self.callibrateClock.cancel()
+                self.popup.dismiss()
+                Popup(title=_('Callibration successful'), content=Label(text=_('The DaphnieMaton has found it\'s ratio: ') + str(data_str) + " step/cm"), size_hint=(None, None), size=(400, 300)).open()
                 print("Callibrated to " + str(data_str))
 
     def callibrate(self):
         if self.port != -1:
             self.moveDirect(bytes([10]))
-            Clock.schedule_interval(self.getCallibrationAsync, 0.5)
+            self.callibrateClock = Clock.schedule_interval(self.getCallibrationAsync, 0.5)
 
     def update(self, callibration=False, callback=None, *args):
         self.popup = Popup(title=_('Upload'), content=AsyncImage(source='.\\assets\\logo.png', size=(100, 100)), size_hint=(None, None), size=(400, 300), auto_dismiss=False)
@@ -333,21 +337,22 @@ class Parametrage(BoxLayout):
         ratioY = height / (self.actualHeight)
 
         curX = origin[0] + self.params["distOriginX"]*ratioX
+        deltaY = origin[1] + self.params["distOriginY"]*ratioY
 
         path.append(curX)
-        path.append((-length/2)*ratioY)
+        path.append(deltaY)
         photos.append(True)
         path.append(curX)
-        path.append((length/2)*ratioY)
+        path.append(deltaY + length*ratioY)
         photos.append(False)
 
         for x in range(self.params["nbPipe"]-1):
             curX += self.params["gaps"][x]*ratioX
             path.append(curX)
-            path.append((-length/2)*ratioY)
+            path.append(deltaY)
             photos.append(True)
             path.append(curX)
-            path.append((length/2)*ratioY)
+            path.append(deltaY + length*ratioY)
             photos.append(False)
 
         if copy:
@@ -379,7 +384,7 @@ class Parametrage(BoxLayout):
             self.params["photoPipe"] = max(self.sanitize(self.ids.photoPipe.input.text), 1)
             self.params["distOriginX"] = self.sanitize(self.ids.distOriginX.input.text)
             self.params["distOriginY"] = self.sanitize(self.ids.distOriginY.input.text)
-            self.params["sameGap"] = self.sanitize(self.ids.sameGap.input.active)
+            self.params["sameGap"] = self.ids.sameGap.input.active
             self.params["gaps"] = gapsValue
 
             if self.params["nbPipe"] <= 2:
@@ -396,7 +401,7 @@ class Parametrage(BoxLayout):
 
                 Rectangle(source='.\\assets\\topDownView.png', pos = (middle[0]-width/2, middle[1]-width/2), size = (width, width))
 
-                text = _("Total time") + ": " + str(self.speed*self.params["nbPipe"]) + " sec" + \
+                text = _("Total time") + ": " + str(round(self.speed*self.params["nbPipe"]/100)*100) + " sec" + \
                                         "\n"+_("Photo number") + ": " + str( round((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100))) + \
                                         "\n"+_("Photo every") +" "+ str( round( ((self.speed*self.params["nbPipe"]) / ((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100)))*10 )/10 ) + " sec"
 
@@ -411,14 +416,17 @@ class Parametrage(BoxLayout):
 
                 ratioX = (width / (self.imageWidth*100)) # Converts cm into pixels
                 ratioY = (width / (self.imageHeight*100)) # Converts cm into pixels
-                curX = middle[0] - width/2 + (self.params["distOriginX"]+self.imageOrigin[0])*ratioX
-                deltaY = -(width-height)/2 + (self.params["distOriginY"]+self.imageOrigin[1])*ratioY
 
-                Rectangle(pos = (curX, middle[1]-height/2 + deltaY), size = (10, height))
+                curX = middle[0] - width/2 + (self.params["distOriginX"] + self.imageOrigin[0])*ratioX
+                deltaY = -(width-height)/2 + (self.params["distOriginY"] + self.imageOrigin[1])*ratioY
+
+                pipeWidth = width/50
+
+                Rectangle(pos = (curX, middle[1]-height/2 + deltaY), size = (pipeWidth, height))
 
                 for x in range(self.params["nbPipe"]-1):
                     curX += self.params["gaps"][x]*ratioX
-                    Rectangle(pos = (curX, middle[1]-height/2 + deltaY), size = (10, height))
+                    Rectangle(pos = (curX, middle[1]-height/2 + deltaY), size = (pipeWidth, height))
 
         elif self.mode == "Free":
             self.ids.libreSplitter.max_size = self.size[0] - 400
