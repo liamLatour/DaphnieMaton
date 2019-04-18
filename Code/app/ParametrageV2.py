@@ -10,6 +10,7 @@ from os import system as osSystem
 from os.path import join as osJoinPath
 
 import keyboard
+import kivy.utils as utils
 import numpy as np
 import pyperclip
 import serial
@@ -27,15 +28,15 @@ from kivy.uix.popup import Popup
 from kivy.uix.settings import SettingsWithSidebar
 from scipy.spatial import distance
 
-from assets.libraries.classes import (Input, LoadDialog, ModeDropDown,
-                                      PenDropDown, SaveDialog, getPorts,
-                                      hitLine, polToCar, urlOpen, MyLabel, SettingButtons, SettingColorPicker)
+import assets.libraries.undoRedo as UndoRedo
+from assets.helpMsg import directHelp, freeHelp, pipeHelp
+from assets.libraries.classes import (Input, LoadDialog, ModeDropDown, MyLabel,
+                                      PenDropDown, SaveDialog, SettingButtons,
+                                      SettingColorPicker, getPorts, hitLine,
+                                      polToCar, urlOpen)
 from assets.libraries.createFile import generateFile
 from assets.libraries.localization import (_, change_language_to,
                                            translation_to_language_code)
-
-from assets.helpMsg import pipeHelp, freeHelp, directHelp
-import assets.libraries.undoRedo as UndoRedo
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Config.set('kivy','window_icon','..\\..\\Images\\kivyLogo.ico')
@@ -63,6 +64,7 @@ class Parametrage(BoxLayout):
             "trace" : [],
             "photos" : []
         }
+
         self.speed = 8.6 # m per minutes
         self.imageWidth = 1.4 # in meter
         self.imageHeight = 1.4 # in meter
@@ -105,10 +107,21 @@ class Parametrage(BoxLayout):
         self.ids.directDrawing.bind(size=self.update_rect, pos=self.update_rect)
         self.ids.libreDrawing.bind(size=self.update_rect, pos=self.update_rect)
         self.ids.changeTab.bind(on_touch_up = self.changedTab)
+        self.updateColors()
         self.tuyeauGap()
 
     def poplb_update(self, *args):
         self.poplb.text_size = self.popup.size
+
+    def updateColors(self):
+        self.pipeColor = utils.get_color_from_hex(self.settings.get('colors', 'pipeColor'))
+        self.background = utils.get_color_from_hex(self.settings.get('colors', 'background'))
+        self.nodeColor = utils.get_color_from_hex(self.settings.get('colors', 'nodeColor'))
+        self.nodeHighlight = utils.get_color_from_hex(self.settings.get('colors', 'nodeHighlight'))
+        self.pathColor = utils.get_color_from_hex(self.settings.get('colors', 'pathColor'))
+        self.pathHighlight = utils.get_color_from_hex(self.settings.get('colors', 'pathHighlight'))
+
+        self.update_rect()
 
     def help(self, *args):
         try: self.popup.dismiss()
@@ -338,7 +351,7 @@ class Parametrage(BoxLayout):
         ratioY = height / (self.actualHeight)
 
         curX = origin[0] + self.params["distOriginX"]*ratioX
-        deltaY = origin[1] + self.params["distOriginY"]*ratioY
+        deltaY = origin[1] + self.params["distOriginY"]*ratioY/100
 
         path.append(curX)
         path.append(deltaY)
@@ -423,6 +436,7 @@ class Parametrage(BoxLayout):
 
                 pipeWidth = width/50
 
+                Color(self.pipeColor[0], self.pipeColor[1], self.pipeColor[2], self.pipeColor[3])
                 Rectangle(pos = (curX, middle[1]-height/2 + deltaY), size = (pipeWidth, height))
 
                 for x in range(self.params["nbPipe"]-1):
@@ -457,20 +471,20 @@ class Parametrage(BoxLayout):
 
                     for i in range(int(len(zoomedTrace)/2)):
                         if (i+1)*2+1 >= len(zoomedTrace) and isLoop:
-                            if self.params["photos"][i]: Color(1, 0.31, 1, 0.5)
-                            else: Color(0, 0.31, 1, 0.5)
+                            if self.params["photos"][i]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
+                            else: Color(self.pathColor[0], self.pathColor[1], self.pathColor[2], self.pathColor[3])
                             Line(points=[zoomedTrace[i*2]+middle[0], zoomedTrace[i*2+1]+middle[1], zoomedTrace[0]+middle[0], zoomedTrace[1]+middle[1]], width=self.lineWidth)
                         
                         elif (i+1)*2+1 < len(zoomedTrace):
-                            if self.params["photos"][i]: Color(1, 0.31, 1, 0.5)
-                            else: Color(0, 0.31, 1, 0.5)
+                            if self.params["photos"][i]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
+                            else: Color(self.pathColor[0], self.pathColor[1], self.pathColor[2], self.pathColor[3])
                             Line(points=[zoomedTrace[i*2]+middle[0], zoomedTrace[i*2+1]+middle[1], zoomedTrace[(i+1)*2]+middle[0], zoomedTrace[(i+1)*2+1]+middle[1]], width=self.lineWidth)
                     
                     for i in range(int(len(zoomedTrace)/2)):
                         if self.lastTouched == i:
-                            Color(1, 0, 0, 0.8)
+                            Color(self.nodeHighlight[0], self.nodeHighlight[1], self.nodeHighlight[2], self.nodeHighlight[3])
                             Ellipse(pos=(zoomedTrace[i*2]+middle[0]-(self.diametre+5)/2, zoomedTrace[i*2+1]+middle[1]-(self.diametre+5)/2), size=(self.diametre+5, self.diametre+5))
-                        Color(1, 0.8, 0, 1)
+                        Color(self.nodeColor[0], self.nodeColor[1], self.nodeColor[2], self.nodeColor[3])
                         Ellipse(pos=(zoomedTrace[i*2]+middle[0]-self.diametre/2, zoomedTrace[i*2+1]+middle[1]-self.diametre/2), size=(self.diametre, self.diametre))
                         label = CoreLabel(text=str(i+1), font_size=20)
                         label.refresh()
@@ -790,47 +804,57 @@ class Parametrage(BoxLayout):
         self.update_rect()
 
 class DaphnieMatonApp(App):
+    def build(self):
+        self.settings_cls = SettingsWithSidebar
+        self.icon = '..\\Images\\kivyLogo.png'
+        self.update_language_from_config()
+        self.app = Parametrage()
+
+        self.shortcuts = {
+            'save': [lambda: self.app.save(-1, -1)],
+            'copy': [self.app.copyToClipboard],
+            'undo': [self.app.undo]
+        }
+
+        self.configFiles = {
+            ".\\assets\\config.json": 'General',
+            ".\\assets\\shortcuts.json": 'Shortcuts',
+            ".\\assets\\colors.json": 'Colours'
+        }
+
+        for short in self.shortcuts:
+             self.shortcuts[short].append(keyboard.add_hotkey(self.config.get('shortcuts', short), self.shortcuts[short][0]))
+
+        return self.app
+
     def build_config(self, config):
         config.setdefaults('general', {
             'arduinoPath': 'C:\\',
             'savePath': 'C:\\',
             'stepToCm': 100,
             'autoSave': 5,
-            'language': "English",
-            'pipeColor': "15"})
+            'language': "English"})
         config.setdefaults('shortcuts', {
             'save': 'ctrl+s',
             'copy': 'ctrl+c',
             'undo': 'ctrl+z'})
-
-    def build(self):
-        self.settings_cls = SettingsWithSidebar
-        #self.use_kivy_settings = False
-        self.icon = '..\\Images\\kivyLogo.png'
-        self.update_language_from_config()
-        self.app = Parametrage()
-        self.save = keyboard.add_hotkey(self.config.get('shortcuts', 'save'), self.app.save, args=[-1, -1])
-        self.copy = keyboard.add_hotkey(self.config.get('shortcuts', 'copy'), self.app.copyToClipboard)
-        self.help = keyboard.add_hotkey(self.config.get('shortcuts', 'undo'), self.app.undo)
-
-        return self.app
-
-    def update_language_from_config(self):
-        config_language = self.config.get('general', 'language')
-        change_language_to(translation_to_language_code(config_language))
+        config.setdefaults('colors', {
+            'pipeColor': '#FFFFFF',
+            'background': '#010101',
+            'nodeColor': "#e0e028",
+            'nodeHighlight': "#d32828",
+            'pathColor': "#d32828",
+            'pathHighlight': "#d32828"})
 
     def build_settings(self, settings):
         settings.register_type('buttons', SettingButtons)
         settings.register_type('color', SettingColorPicker)
-        f = openFile(".\\assets\\config.json", "r", encoding='utf8')
-        if f.mode == 'r':
-            contents = f.read()
-            settings.add_json_panel(_('General'), self.config, data=contents)
 
-        f = openFile(".\\assets\\shortcuts.json", "r", encoding='utf8')
-        if f.mode == 'r':
-            contents = f.read()
-            settings.add_json_panel(_('Shortcuts'), self.config, data=contents)
+        for files in self.configFiles:
+            f = openFile(files, "r", encoding='utf8')
+            if f.mode == 'r':
+                contents = f.read()
+                settings.add_json_panel(_(self.configFiles[files]), self.config, data=contents)
     
     def on_config_change(self, config, section, key, value):
         if section == "general" and key == "language":
@@ -840,15 +864,19 @@ class DaphnieMatonApp(App):
             self.app.update(callibration=True, callback=self.app.callibrate)
             print("Calibrate")
 
-        if section == "shortcuts" and key == "save":
-            keyboard.remove_hotkey(self.save)
-            self.save = keyboard.add_hotkey(value, self.app.save, args=[-1, -1])
-        if section == "shortcuts" and key == "copy":
-            keyboard.remove_hotkey(self.copy)
-            self.copy = keyboard.add_hotkey(value, self.app.copyToClipboard)
-        if section == "shortcuts" and key == "help":
-            keyboard.remove_hotkey(self.help)
-            self.help = keyboard.add_hotkey(value, self.app.undo)
+        if section == "shortcuts":
+            for short in self.shortcuts:
+                if short == key:
+                    keyboard.remove_hotkey(self.shortcuts[short][1])
+                    self.shortcuts[short][1] = keyboard.add_hotkey(value, self.shortcuts[short][0])
+                    return
+
+        if section == "colors":
+            self.app.updateColors()
+
+    def update_language_from_config(self):
+        config_language = self.config.get('general', 'language')
+        change_language_to(translation_to_language_code(config_language))
 
 if __name__ == '__main__':
     DaphnieMatonApp().run()

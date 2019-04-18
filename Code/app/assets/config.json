@@ -43,13 +43,6 @@
       "key":"savePath"
    },
    {
-      "type":"color",
-      "title":"Pipe color",
-      "desc":"Color of the pipe",
-      "section":"general",
-      "key":"pipeColor"
-   },
-   {
       "type": "buttons",
       "title": "Calibrate",
       "desc": "Used to calibrate the system, in case it has changed",
