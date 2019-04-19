@@ -573,6 +573,7 @@ class Parametrage(BoxLayout):
             zoomedTrace = np.multiply(self.params["trace"], self.zoomFactor).tolist()
 
             if self.ids.libreDrawing.collide_point(x, y):
+                # Checks if the user right clicked on a node, if yes remove it
                 for i in range(int(len(zoomedTrace)/2)):
                     if hypot(zoomedTrace[i*2]+self.ids.libreDrawing.center_x - x, zoomedTrace[i*2+1]+self.ids.libreDrawing.center_y - y) <= self.diametre/2:
                         if touch.button == 'right':
@@ -583,17 +584,48 @@ class Parametrage(BoxLayout):
                             self.update_rect()
                         elif touch.button == 'left':
                             self.isDragging = i
+                            self.lastTouched = i
+                            self.printCoords(self.params["trace"][i*2], self.params["trace"][i*2+1])
+                            self.update_rect()
                         return
+
+                # Check if we clicked on a line or not
+                for i in range(int(len(zoomedTrace)/2)-1):
+                    firstPoint = (zoomedTrace[i*2]+self.ids.libreDrawing.center_x, zoomedTrace[i*2+1]+self.ids.libreDrawing.center_y)
+                    secondPoint = (zoomedTrace[(i+1)*2]+self.ids.libreDrawing.center_x, zoomedTrace[(i+1)*2+1]+self.ids.libreDrawing.center_y)
+                    if hitLine(firstPoint, secondPoint, (x, y), self.lineWidth):
+                        if touch.button == 'right':
+                            self.params["photos"][i] = not self.params["photos"][i]
+                            self.lastTouched = -1
+                            self.update_rect()
+                            return
+                        elif touch.button == 'left':
+                            coordX = (x-self.ids.libreDrawing.center_x)/self.zoomFactor
+                            coordY = (y-self.ids.libreDrawing.center_y)/self.zoomFactor
+
+                            self.printCoords(coordX,coordY)
+
+                            self.params["trace"].insert((i+1)*2, coordX)
+                            self.params["trace"].insert((i+1)*2+1, coordY)
+                            self.params["photos"].insert((i+1), False)
+                            self.lastTouched = i+1
+                            self.isDragging = i+1
+                            self.update_rect()
+                            return
+                if touch.button == 'right':
+                    if bool(self.ids.loop.input.active) and len(zoomedTrace) > 1:
+                        firstPoint = (zoomedTrace[len(zoomedTrace)-2]+self.ids.libreDrawing.center_x, zoomedTrace[len(zoomedTrace)-1]+self.ids.libreDrawing.center_y)
+                        secondPoint = (zoomedTrace[0]+self.ids.libreDrawing.center_x, zoomedTrace[1]+self.ids.libreDrawing.center_y)
+                        if hitLine(firstPoint, secondPoint, (x, y), self.lineWidth):
+                            self.params["photos"][len(self.params["photos"])-1] = not self.params["photos"][len(self.params["photos"])-1]
+                            self.update_rect()
+
+                # Adds a new node where the user clicked
                 if touch.button == 'left':
                     coordX = (x-self.ids.libreDrawing.center_x)/self.zoomFactor
                     coordY = (y-self.ids.libreDrawing.center_y)/self.zoomFactor
 
-                    height = self.corners[0][1] - self.corners[1][1]
-                    width = self.corners[0][0] - self.corners[2][0]
-
-                    self.ids.coord.unbindThis()
-                    self.ids.coord.input.text = str(round(((coordX-self.corners[3][0])*(self.actualWidth*1000))/width)/10) + " : " + str(round(((coordY-self.corners[3][1])*(self.actualHeight*1000))/height)/10)
-                    self.ids.coord.bindThis()
+                    self.printCoords(coordX, coordY)
 
                     self.params["trace"].append(coordX)
                     self.params["trace"].append(coordY)
@@ -602,23 +634,9 @@ class Parametrage(BoxLayout):
                     self.isDragging = len(self.params["photos"])-1
                     self.update_rect()
                     return
-                elif touch.button == 'right':
-                    self.lastTouched = -1
-                    # Check if we clicked on a line or not
-                    for i in range(int(len(zoomedTrace)/2)-1):
-                        firstPoint = (zoomedTrace[i*2]+self.ids.libreDrawing.center_x, zoomedTrace[i*2+1]+self.ids.libreDrawing.center_y)
-                        secondPoint = (zoomedTrace[(i+1)*2]+self.ids.libreDrawing.center_x, zoomedTrace[(i+1)*2+1]+self.ids.libreDrawing.center_y)
-                        if hitLine(firstPoint, secondPoint, (x, y), self.lineWidth):
-                            self.params["photos"][i] = not self.params["photos"][i]
-                            self.update_rect()
-                            return
-                    if bool(self.ids.loop.input.active):
-                        firstPoint = (zoomedTrace[len(zoomedTrace)-2]+self.ids.libreDrawing.center_x, zoomedTrace[len(zoomedTrace)-1]+self.ids.libreDrawing.center_y)
-                        secondPoint = (zoomedTrace[0]+self.ids.libreDrawing.center_x, zoomedTrace[1]+self.ids.libreDrawing.center_y)
-                        if hitLine(firstPoint, secondPoint, (x, y), self.lineWidth):
-                            self.params["photos"][len(self.params["photos"])-1] = not self.params["photos"][len(self.params["photos"])-1]
-                            self.update_rect()
-                elif touch.is_mouse_scrolling:
+
+                # Updates zooming depending on the mouse wheel
+                if touch.is_mouse_scrolling:
                     dist = 0.1 if touch.button == 'scrollup' else -0.1
                     self.zoomFactor += dist
                     self.zoomClamp()
@@ -632,7 +650,7 @@ class Parametrage(BoxLayout):
                 self.positionClamp()
                 self.update_rect()
             UndoRedo.do([self.params["trace"].copy(), self.params["photos"].copy()])
-    
+
     def clickedMove(self, touch):
         if self.mode == "Free":
             newPosition = -1
@@ -662,12 +680,7 @@ class Parametrage(BoxLayout):
                     newPosition = (thisX, thisY)
 
                 if newPosition != -1:
-                    height = self.corners[0][1] - self.corners[1][1]
-                    width = self.corners[0][0] - self.corners[2][0]
-
-                    self.ids.coord.unbindThis()
-                    self.ids.coord.input.text = str(round(((newPosition[0]-self.corners[3][0])*(self.actualWidth*1000))/width)/10) + " : " + str(round(((newPosition[1]-self.corners[3][1])*(self.actualHeight*1000))/height)/10)
-                    self.ids.coord.bindThis()
+                    self.printCoords(newPosition[0], newPosition[1])
 
                     self.params["trace"][self.isDragging*2] = newPosition[0]
                     self.params["trace"][self.isDragging*2+1] = newPosition[1]
@@ -675,6 +688,15 @@ class Parametrage(BoxLayout):
                     self.lastTouched = self.isDragging
 
                 self.update_rect()
+
+    def printCoords(self, X, Y):
+        height = self.corners[0][1] - self.corners[1][1]
+        width = self.corners[0][0] - self.corners[2][0]
+
+        self.ids.coord.unbindThis()
+        self.ids.coord.input.text = str(round(((X-self.corners[3][0])*(self.actualWidth*1000))/width)/10) + " : " + str(round(((Y-self.corners[3][1])*(self.actualHeight*1000))/height)/10)
+        self.ids.coord.bindThis()
+    
 
     def removeAllNodes(self):
         self.params["trace"] = []
