@@ -4,17 +4,6 @@
       "title": "General"
    },
    {
-      "type":"options",
-      "title":"Language",
-      "desc":"Choose the app language",
-      "section":"general",
-      "key":"language",
-      "options":[
-         "Français",
-         "English"
-      ]
-   },
-   {
       "type":"numeric",
       "title":"Step to cm",
       "desc":"Number of steps in one cm",

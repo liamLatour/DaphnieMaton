@@ -132,6 +132,12 @@
                                 default_text: '5' 
                                 callback: lambda *args: root.update_rect()
                             Input:
+                                id: horizontal
+                                inputName: _('Pipes are horizontal')
+                                inputType: 1
+                                default_text: 'False'
+                                callback: lambda *args: root.update_rect()
+                            Input:
                                 id: sameGap
                                 inputName: _('Constant gap between pipes')
                                 inputType: 1

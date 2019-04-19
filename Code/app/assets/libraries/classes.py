@@ -51,6 +51,7 @@ class SettingButtons(SettingItem):
     def On_ButtonPressed(self,instance):
         self.panel.settings.dispatch('on_config_change',self.panel.config, self.section, self.key, instance.ID)
 
+
 class SettingColorPicker(SettingItem):
     popup = ObjectProperty(None, allownone=True)
     textinput = ObjectProperty(None)

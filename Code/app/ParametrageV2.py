@@ -345,24 +345,46 @@ class Parametrage(BoxLayout):
         ratioX = width / (self.actualWidth*100)
         ratioY = height / (self.actualHeight)
 
-        curX = origin[0] + self.params["distOriginX"]*ratioX
-        deltaY = origin[1] + self.params["distOriginY"]*ratioY/100
+        if self.params["horizontal"]:
+            xPosition = origin[0] + self.params["distOriginX"]*ratioX
+            yPosition = origin[1] + self.params["distOriginY"]*ratioY/100
 
-        path.append(curX)
-        path.append(deltaY)
-        photos.append(True)
-        path.append(curX)
-        path.append(deltaY + length*ratioY)
-        photos.append(False)
-
-        for x in range(self.params["nbPipe"]-1):
-            curX += self.params["gaps"][x]*ratioX
-            path.append(curX)
-            path.append(deltaY)
+            path.append(xPosition)
+            path.append(yPosition)
             photos.append(True)
-            path.append(curX)
-            path.append(deltaY + length*ratioY)
+            path.append(xPosition + length*ratioX*100)
+            path.append(yPosition)
             photos.append(False)
+
+            for x in range(self.params["nbPipe"]-1):
+                yPosition += self.params["gaps"][x]*ratioY/100
+                path.append(xPosition)
+                path.append(yPosition)
+                photos.append(True)
+                path.append(xPosition + length*ratioX*100)
+                path.append(yPosition)
+                photos.append(False)
+        else:
+            xPosition = origin[0] + self.params["distOriginX"]*ratioX
+            yPosition = origin[1] + self.params["distOriginY"]*ratioY/100
+
+            path.append(xPosition)
+            path.append(yPosition)
+            photos.append(True)
+            path.append(xPosition)
+            path.append(yPosition + length*ratioY)
+            photos.append(False)
+
+            for x in range(self.params["nbPipe"]-1):
+                xPosition += self.params["gaps"][x]*ratioX
+                path.append(xPosition)
+                path.append(yPosition)
+                photos.append(True)
+                path.append(xPosition)
+                path.append(yPosition + length*ratioY)
+                photos.append(False)
+
+        
 
         if copy:
             self.params["trace"] = path
@@ -386,13 +408,17 @@ class Parametrage(BoxLayout):
                     gapsValue.append(max(self.sanitize(gap.input.text), 0))
 
             if len(gapsValue) == 0:
-                gapsValue = [20]
+                if len(self.params["gaps"]) > 0:
+                    gapsValue = [self.params["gaps"][0]]
+                else:
+                    gapsValue = [20]
 
             self.params["nbPipe"] = max(self.sanitize(self.ids.nbPipe.input.text), 1)
             self.params["lenPipe"] = max(self.sanitize(self.ids.lenPipe.input.text), 0.1)
             self.params["photoPipe"] = max(self.sanitize(self.ids.photoPipe.input.text), 1)
             self.params["distOriginX"] = self.sanitize(self.ids.distOriginX.input.text)
             self.params["distOriginY"] = self.sanitize(self.ids.distOriginY.input.text)
+            self.params["horizontal"] = self.ids.horizontal.input.active
             self.params["sameGap"] = self.ids.sameGap.input.active
             self.params["gaps"] = gapsValue
 
@@ -410,7 +436,7 @@ class Parametrage(BoxLayout):
 
                 Rectangle(source='.\\assets\\topDownView.png', pos = (middle[0]-width/2, middle[1]-width/2), size = (width, width))
 
-                text = _("Total time") + ": " + str(round(self.speed*self.params["nbPipe"]/100)*100) + " sec" + \
+                text = _("Total time") + ": " + str(round( ((self.params["nbPipe"]*self.params["lenPipe"])/self.speed)*600 )/10) + " sec" + \
                                         "\n"+_("Photo number") + ": " + str( round((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100))) + \
                                         "\n"+_("Photo every") +" "+ str( round( ((self.speed*self.params["nbPipe"]) / ((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100)))*10 )/10 ) + " sec"
 
@@ -426,17 +452,28 @@ class Parametrage(BoxLayout):
                 ratioX = (width / (self.imageWidth*100)) # Converts cm into pixels
                 ratioY = (width / (self.imageHeight*100)) # Converts cm into pixels
 
-                curX = middle[0] - width/2 + (self.params["distOriginX"] + self.imageOrigin[0])*ratioX
-                deltaY = -(width-height)/2 + (self.params["distOriginY"] + self.imageOrigin[1])*ratioY
-
                 pipeWidth = width/50
 
                 Color(self.pipeColor[0], self.pipeColor[1], self.pipeColor[2], self.pipeColor[3])
-                Rectangle(pos = (curX, middle[1]-height/2 + deltaY), size = (pipeWidth, height))
 
-                for x in range(self.params["nbPipe"]-1):
-                    curX += self.params["gaps"][x]*ratioX
-                    Rectangle(pos = (curX, middle[1]-height/2 + deltaY), size = (pipeWidth, height))
+                if self.params["horizontal"]:
+                    xPosition = -(width-height)/2 + (self.params["distOriginX"] + self.imageOrigin[0])*ratioX
+                    yPosition = middle[1] - width/2 + (self.params["distOriginY"] + self.imageOrigin[1])*ratioY
+
+                    Rectangle(pos = (middle[0]-height/2 + xPosition, yPosition), size = (height, pipeWidth))
+
+                    for x in range(self.params["nbPipe"]-1):
+                        yPosition += self.params["gaps"][x]*ratioY
+                        Rectangle(pos = (middle[0]-height/2 + xPosition, yPosition), size = (height, pipeWidth))
+                else:
+                    xPosition = middle[0] - width/2 + (self.params["distOriginX"] + self.imageOrigin[0])*ratioX
+                    yPosition = -(width-height)/2 + (self.params["distOriginY"] + self.imageOrigin[1])*ratioY
+
+                    Rectangle(pos = (xPosition, middle[1]-height/2 + yPosition), size = (pipeWidth, height))
+
+                    for x in range(self.params["nbPipe"]-1):
+                        xPosition += self.params["gaps"][x]*ratioX
+                        Rectangle(pos = (xPosition, middle[1]-height/2 + yPosition), size = (pipeWidth, height))
 
         elif self.mode == "Free":
             self.ids.libreSplitter.max_size = self.size[0] - 400
@@ -773,9 +810,11 @@ class Parametrage(BoxLayout):
                 self.pipePanel.remove_widget(gap)
 
         if self.sanitize(self.ids.nbPipe.input.text) < 2:
+            self.update_rect()
             return
 
         if bool(self.ids.sameGap.input.active):
+            
             self.gaps = [Input(inputName=_('Gap between pipes')+" (cm)", input_filter="float", default_text=str(self.params["gaps"][0]), callback=self.update_rect)]
             self.pipePanel.add_widget(self.gaps[0])
         else:
@@ -856,12 +895,12 @@ class DaphnieMatonApp(App):
             'copy': 'ctrl+c',
             'undo': 'ctrl+z'})
         config.setdefaults('colors', {
-            'pipeColor': '#FFFFFF',
+            'pipeColor': '#72f7ff',
             'background': '#010101',
             'nodeColor': "#e0e028",
             'nodeHighlight': "#d32828",
-            'pathColor': "#d32828",
-            'pathHighlight': "#d32828"})
+            'pathColor': "#72f7ff",
+            'pathHighlight': "#82d883"})
 
     def build_settings(self, settings):
         settings.register_type('buttons', SettingButtons)
@@ -897,3 +936,20 @@ class DaphnieMatonApp(App):
 
 if __name__ == '__main__':
     DaphnieMatonApp().run()
+
+
+
+"""
+,
+   {
+      "type":"options",
+      "title":"Language",
+      "desc":"Choose the app language",
+      "section":"general",
+      "key":"language",
+      "options":[
+         "Français",
+         "English"
+      ]
+   }
+"""
