@@ -30,8 +30,8 @@ from scipy.spatial import distance
 
 import assets.libraries.undoRedo as UndoRedo
 from assets.helpMsg import directHelp, freeHelp, pipeHelp
-from assets.libraries.classes import (Input, LoadDialog, ModeDropDown, MyLabel,
-                                      PenDropDown, SaveDialog, SettingButtons,
+from assets.libraries.classes import (Input, LoadDialog, MyLabel,
+                                      PortDropDown, SaveDialog, SettingButtons,
                                       SettingColorPicker, getPorts, hitLine,
                                       polToCar, urlOpen)
 from assets.libraries.createFile import generateFile
@@ -52,6 +52,7 @@ class Parametrage(BoxLayout):
     def __init__(self, *args, **kwargs):
         super(Parametrage, self).__init__(*args, **kwargs)
         self.settings = App.get_running_app().config
+        self.font = ".\\assets\\seguisym.ttf"
         self.params = {
             "nbPipe": 2,
             "lenPipe" : 1.2,
@@ -64,6 +65,9 @@ class Parametrage(BoxLayout):
             "trace" : [],
             "photos" : []
         }
+        self.mode = "Pipe" # Stores the current mode
+        self.portDropDown = PortDropDown()
+        self.port = -1
 
         self.speed = 8.6 # m per minutes
         self.imageWidth = 1.4 # in meter
@@ -72,28 +76,23 @@ class Parametrage(BoxLayout):
         self.actualHeight = 1.1 # in meter
         self.imageOrigin = (17, 17.2) # in cm
 
-        self.port = -1
-        self.pen_drop_down = PenDropDown()
-        self.mode_drop_down = ModeDropDown()
-
-        self.tuyeau_panel = self.ids.tuyeauInputs
+        # Specific to the mode 'Pipe'
+        self.pipePanel = self.ids.tuyeauInputs
         self.gaps = []
-        self.mode = "Pipe"
-        self.font = ".\\assets\\seguisym.ttf"
 
-        # Specifique au mode 'Free'
+        # Specific to the mode 'Free'
         self.lineWidth = 5
         self.diametre = 20
-        self.dragging = -1
+        self.isDragging = -1
         self.lastTouched = -1
-        self.zoom = 1
-        self.margin = [-self.diametre/2-5, self.diametre/2+5, self.diametre/2+25, -self.diametre/2-25] # Left, Right, Top, Down
+        self.zoomFactor = 1
+        self.innerScreenMargin = [-self.diametre/2-5, self.diametre/2+5, self.diametre/2+25, -self.diametre/2-25] # Left, Right, Top, Down
         self.corners = [(88, 82), (88, -72), (-75, 82), (-75, -72)] # Right-Top, Right-Down, Left-Top, Left-Down
 
-        # Specifique au mode 'direct'
+        # Specific to the mode 'direct'
         self.board = -1
-        self.clock = -1
-        self.position = (0, 0)
+        self.readingClock = -1
+        self.systemPosition = (0, 0)
         self.hasGoodProgram = False
 
         Clock.schedule_once(self.binding)
@@ -109,9 +108,6 @@ class Parametrage(BoxLayout):
         self.ids.changeTab.bind(on_touch_up = self.changedTab)
         self.updateColors()
         self.tuyeauGap()
-
-    def poplb_update(self, *args):
-        self.poplb.text_size = self.popup.size
 
     def updateColors(self):
         self.pipeColor = utils.get_color_from_hex(self.settings.get('colors', 'pipeColor'))
@@ -138,20 +134,19 @@ class Parametrage(BoxLayout):
             self.poplb = MyLabel(text=directHelp)
 
         self.poplb.bind(on_ref_press=urlOpen)
-        self.popup.bind(size=self.poplb_update)
 
         self.popbox.add_widget(self.poplb)
         self.popup.content = self.popbox
         self.popup.open()
 
     def show_port(self):
-        self.pen_drop_down.open(self.ids.port_button)
-        self.pen_drop_down.clear_widgets()
+        self.portDropDown.open(self.ids.port_button)
+        self.portDropDown.clear_widgets()
 
-        self.pen_drop_down.add_widget(Button(text=_("No port"), height=48, size_hint_y= None, on_release=lambda a:self.change_port(-1)))
+        self.portDropDown.add_widget(Button(text=_("No port"), height=48, size_hint_y= None, on_release=lambda a:self.change_port(-1)))
         arduinoPorts = getPorts()
         for port in arduinoPorts:
-            self.pen_drop_down.add_widget(Button(text="COM"+str(arduinoPorts[port]), height=48, size_hint_y= None, on_release=lambda a:self.change_port(arduinoPorts[port])))
+            self.portDropDown.add_widget(Button(text="COM"+str(arduinoPorts[port]), height=48, size_hint_y= None, on_release=lambda a:self.change_port(arduinoPorts[port])))
 
     def change_port(self, nb):
         self.port = nb
@@ -163,12 +158,12 @@ class Parametrage(BoxLayout):
                 response = self.board.readline().decode("utf-8").rstrip()
                 if response == "DaphnieMaton":
                     self.hasGoodProgram = True
-                    self.clock = Clock.schedule_interval(self.readFromSerial, 0.2)
+                    self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
                     self.update_rect()
 
         else:
             self.ids.port_button.text = _("Port")
-        self.pen_drop_down.dismiss()
+        self.portDropDown.dismiss()
 
     # Saving and loading system
     def dismiss_popup(self):
@@ -236,7 +231,7 @@ class Parametrage(BoxLayout):
             self.moveDirect(bytes([7]))
             x = self.board.readline().decode("utf-8").rstrip()
             y = self.board.readline().decode("utf-8").rstrip()
-            self.position = (x, y)
+            self.systemPosition = (x, y)
             self.update_rect()
 
     def getCallibrationAsync(self, *args):
@@ -258,9 +253,9 @@ class Parametrage(BoxLayout):
     def update(self, callibration=False, callback=None, *args):
         self.popup = Popup(title=_('Upload'), content=AsyncImage(source='.\\assets\\logo.png', size=(100, 100)), size_hint=(None, None), size=(400, 300), auto_dismiss=False)
         self.popup.open()
-        if self.clock != -1:
-            self.clock.cancel()
-            self.clock = -1
+        if self.readingClock != -1:
+            self.readingClock.cancel()
+            self.readingClock = -1
 
         threading.Thread(target=lambda: self.updateAsync(callibration=callibration, callback=callback)).start()
 
@@ -299,7 +294,7 @@ class Parametrage(BoxLayout):
                     osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
                     self.hasGoodProgram = True
                     self.update_rect()
-                    self.clock = Clock.schedule_interval(self.readFromSerial, 0.2)
+                    self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
 
                 print("DONE !")
                 self.popup.dismiss()
@@ -316,11 +311,11 @@ class Parametrage(BoxLayout):
     def changedTab(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
 
-        if self.clock != -1:
-            self.clock.cancel()
-            self.clock = -1
+        if self.readingClock != -1:
+            self.readingClock.cancel()
+            self.readingClock = -1
 
-        self.zoom = float('inf')
+        self.zoomFactor = float('inf')
 
         if self.mode == "Direct":
             self.moveDirect(bytes([9]))
@@ -328,7 +323,7 @@ class Parametrage(BoxLayout):
                 response = self.board.readline().decode("utf-8").rstrip()
                 if response == "DaphnieMaton":
                     self.hasGoodProgram = True
-                    self.clock = Clock.schedule_interval(self.readFromSerial, 0.2)
+                    self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
 
         self.update_rect()
 
@@ -450,16 +445,16 @@ class Parametrage(BoxLayout):
             self.ids.libreDrawing.canvas.before.clear()
 
             self.ids.libreSplitter.min_size = int(round(self.size[0]/2))
-            zoomedTrace = np.multiply(self.params["trace"], self.zoom).tolist()
+            zoomedTrace = np.multiply(self.params["trace"], self.zoomFactor).tolist()
 
             with self.ids.libreDrawing.canvas.before:
-                width = 200 * self.zoom
+                width = 200 * self.zoomFactor
                 Rectangle(source='.\\assets\\topDownView.png', pos = (middle[0]-width/2, middle[1]-width/2), size = (width, width))
 
                 if keyboard.is_pressed("shift"):
                     for corner in self.corners:
                         Color(0, 1, 0, 0.8)
-                        Ellipse(pos=(corner[0]*self.zoom+middle[0]-self.diametre/2, corner[1]*self.zoom+middle[1]-self.diametre/2), size=(self.diametre, self.diametre))
+                        Ellipse(pos=(corner[0]*self.zoomFactor+middle[0]-self.diametre/2, corner[1]*self.zoomFactor+middle[1]-self.diametre/2), size=(self.diametre, self.diametre))
 
                 if len(zoomedTrace) > 0:
                     if len(zoomedTrace) > 4:
@@ -538,8 +533,8 @@ class Parametrage(BoxLayout):
             self.ids.directDrawing.add_widget(down)
 
             with self.ids.directDrawing.canvas.before:
-                text = "X: " + str(self.position[0]) + " "+_("step") + \
-                        "\nY: " + str(self.position[1]) + " "+("step")
+                text = "X: " + str(self.systemPosition[0]) + " "+_("step") + \
+                        "\nY: " + str(self.systemPosition[1]) + " "+("step")
 
                 Color(1,1,1, .2)
                 Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +95)), size = (200, 70))
@@ -575,7 +570,7 @@ class Parametrage(BoxLayout):
         if self.mode == "Free":
             x = touch.x
             y = touch.y
-            zoomedTrace = np.multiply(self.params["trace"], self.zoom).tolist()
+            zoomedTrace = np.multiply(self.params["trace"], self.zoomFactor).tolist()
 
             if self.ids.libreDrawing.collide_point(x, y):
                 for i in range(int(len(zoomedTrace)/2)):
@@ -587,11 +582,11 @@ class Parametrage(BoxLayout):
                             self.lastTouched = -1
                             self.update_rect()
                         elif touch.button == 'left':
-                            self.dragging = i
+                            self.isDragging = i
                         return
                 if touch.button == 'left':
-                    coordX = (x-self.ids.libreDrawing.center_x)/self.zoom
-                    coordY = (y-self.ids.libreDrawing.center_y)/self.zoom
+                    coordX = (x-self.ids.libreDrawing.center_x)/self.zoomFactor
+                    coordY = (y-self.ids.libreDrawing.center_y)/self.zoomFactor
 
                     height = self.corners[0][1] - self.corners[1][1]
                     width = self.corners[0][0] - self.corners[2][0]
@@ -604,7 +599,7 @@ class Parametrage(BoxLayout):
                     self.params["trace"].append(coordY)
                     self.params["photos"].append(False)
                     self.lastTouched = len(self.params["photos"])-1
-                    self.dragging = len(self.params["photos"])-1
+                    self.isDragging = len(self.params["photos"])-1
                     self.update_rect()
                     return
                 elif touch.button == 'right':
@@ -625,15 +620,15 @@ class Parametrage(BoxLayout):
                             self.update_rect()
                 elif touch.is_mouse_scrolling:
                     dist = 0.1 if touch.button == 'scrollup' else -0.1
-                    self.zoom += dist
+                    self.zoomFactor += dist
                     self.zoomClamp()
                     self.update_rect()
 
     def clickedUp(self, touch):
         if self.mode == "Free":
             if touch.button == 'left':
-                self.dragging = -1
-            if self.zoom == 0.05:
+                self.isDragging = -1
+            if self.zoomFactor == 0.05:
                 self.positionClamp()
                 self.update_rect()
             UndoRedo.do([self.params["trace"].copy(), self.params["photos"].copy()])
@@ -641,12 +636,12 @@ class Parametrage(BoxLayout):
     def clickedMove(self, touch):
         if self.mode == "Free":
             newPosition = -1
-            if touch.button == 'left' and self.dragging != -1:
-                thisX = (touch.x-self.ids.libreDrawing.center_x)/self.zoom
-                thisY = (touch.y-self.ids.libreDrawing.center_y)/self.zoom
+            if touch.button == 'left' and self.isDragging != -1:
+                thisX = (touch.x-self.ids.libreDrawing.center_x)/self.zoomFactor
+                thisY = (touch.y-self.ids.libreDrawing.center_y)/self.zoomFactor
 
                 if keyboard.is_pressed("ctrl") and len(self.params["trace"]) > 2: # To clamp relative to last one (right angles)
-                    fromWhich = self.dragging-1 % len(self.params["trace"])
+                    fromWhich = self.isDragging-1 % len(self.params["trace"])
                     previousPoint = (self.params["trace"][(fromWhich)*2], self.params["trace"][(fromWhich)*2+1])
                     dist = distance.euclidean(previousPoint, (thisX, thisY))
                     angle = round(atan2(thisY-previousPoint[1], thisX-previousPoint[0])/ (pi/4)) * (pi/4)
@@ -674,10 +669,10 @@ class Parametrage(BoxLayout):
                     self.ids.coord.input.text = str(round(((newPosition[0]-self.corners[3][0])*(self.actualWidth*1000))/width)/10) + " : " + str(round(((newPosition[1]-self.corners[3][1])*(self.actualHeight*1000))/height)/10)
                     self.ids.coord.bindThis()
 
-                    self.params["trace"][self.dragging*2] = newPosition[0]
-                    self.params["trace"][self.dragging*2+1] = newPosition[1]
+                    self.params["trace"][self.isDragging*2] = newPosition[0]
+                    self.params["trace"][self.isDragging*2+1] = newPosition[1]
 
-                    self.lastTouched = self.dragging
+                    self.lastTouched = self.isDragging
 
                 self.update_rect()
 
@@ -709,10 +704,10 @@ class Parametrage(BoxLayout):
             self.update_rect()
 
     def positionClamp(self):
-        maxPosLeft = (-self.ids.libreSplitter.size[0]/2-self.margin[0])/(self.zoom)
-        maxPosRight = (self.ids.libreSplitter.size[0]/2-self.margin[1])/(self.zoom)
-        maxPosTop = (self.ids.libreSplitter.size[1]/2-self.margin[2])/(self.zoom)
-        maxPosDown = (-self.ids.libreSplitter.size[1]/2-self.margin[3])/(self.zoom)
+        maxPosLeft = (-self.ids.libreSplitter.size[0]/2-self.innerScreenMargin[0])/(self.zoomFactor)
+        maxPosRight = (self.ids.libreSplitter.size[0]/2-self.innerScreenMargin[1])/(self.zoomFactor)
+        maxPosTop = (self.ids.libreSplitter.size[1]/2-self.innerScreenMargin[2])/(self.zoomFactor)
+        maxPosDown = (-self.ids.libreSplitter.size[1]/2-self.innerScreenMargin[3])/(self.zoomFactor)
 
         for i in range(int(len(self.params["trace"])/2)):
             self.params["trace"][i*2] = min(max(self.params["trace"][i*2], maxPosLeft), maxPosRight)
@@ -734,33 +729,33 @@ class Parametrage(BoxLayout):
             elif self.params["trace"][i*2+1] < worstMY:
                 worstMY = self.params["trace"][i*2+1]
 
-        if worstX*self.zoom > size[0]/2 - self.margin[1]:
-            self.zoom = (size[0]/2 - self.margin[1])/float(worstX)
-        if worstY*self.zoom > size[1]/2 - self.margin[2]:
-            self.zoom = min((size[1]/2 - self.margin[2])/float(worstY), self.zoom)
-        if worstMX*self.zoom < -size[0]/2 - self.margin[0]:
-            self.zoom = min((-size[0]/2 - self.margin[0])/float(worstMX), self.zoom)
-        if worstMY*self.zoom < -size[1]/2 - self.margin[3]:
-            self.zoom = min((-size[1]/2 - self.margin[3])/float(worstMY), self.zoom)
+        if worstX*self.zoomFactor > size[0]/2 - self.innerScreenMargin[1]:
+            self.zoomFactor = (size[0]/2 - self.innerScreenMargin[1])/float(worstX)
+        if worstY*self.zoomFactor > size[1]/2 - self.innerScreenMargin[2]:
+            self.zoomFactor = min((size[1]/2 - self.innerScreenMargin[2])/float(worstY), self.zoomFactor)
+        if worstMX*self.zoomFactor < -size[0]/2 - self.innerScreenMargin[0]:
+            self.zoomFactor = min((-size[0]/2 - self.innerScreenMargin[0])/float(worstMX), self.zoomFactor)
+        if worstMY*self.zoomFactor < -size[1]/2 - self.innerScreenMargin[3]:
+            self.zoomFactor = min((-size[1]/2 - self.innerScreenMargin[3])/float(worstMY), self.zoomFactor)
 
-        if 100*self.zoom > size[0]/2:
-            self.zoom = min((size[0]/2)/float(100), self.zoom)
-        if 100*self.zoom > size[1]/2 - 20:
-            self.zoom = min((size[1]/2 - 20)/float(100), self.zoom)
+        if 100*self.zoomFactor > size[0]/2:
+            self.zoomFactor = min((size[0]/2)/float(100), self.zoomFactor)
+        if 100*self.zoomFactor > size[1]/2 - 20:
+            self.zoomFactor = min((size[1]/2 - 20)/float(100), self.zoomFactor)
 
-        self.zoom = max(self.zoom, 0.05)
+        self.zoomFactor = max(self.zoomFactor, 0.05)
     
     def tuyeauGap(self, *args):
         if self.gaps != []:
             for gap in self.gaps:
-                self.tuyeau_panel.remove_widget(gap)
+                self.pipePanel.remove_widget(gap)
 
         if self.sanitize(self.ids.nbPipe.input.text) < 2:
             return
 
         if bool(self.ids.sameGap.input.active):
             self.gaps = [Input(inputName=_('Gap between pipes')+" (cm)", input_filter="float", default_text=str(self.params["gaps"][0]), callback=self.update_rect)]
-            self.tuyeau_panel.add_widget(self.gaps[0])
+            self.pipePanel.add_widget(self.gaps[0])
         else:
             self.gaps = []
             for pipe in range(max(self.sanitize(self.ids.nbPipe.input.text), 2)-1):
@@ -770,7 +765,7 @@ class Parametrage(BoxLayout):
                     default = str(self.params["gaps"][0])   
 
                 self.gaps.append(Input(inputName=_('Gap between pipes ')+str(pipe+1)+"-"+str(pipe+2)+" (cm)", input_filter="float", default_text=default, callback=self.update_rect))
-                self.tuyeau_panel.add_widget(self.gaps[pipe])
+                self.pipePanel.add_widget(self.gaps[pipe])
         self.update_rect()
 
     def sanitize(self, number):
@@ -794,7 +789,7 @@ class Parametrage(BoxLayout):
     def copyToClipboard(self):
         if self.mode == "Direct":
             print("Copied")
-            pyperclip.copy(str(self.position))
+            pyperclip.copy(str(self.systemPosition))
 
     def undo(self):
         last = UndoRedo.undo([self.params["trace"].copy(), self.params["photos"].copy()])

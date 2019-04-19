@@ -25,17 +25,17 @@ class LoadDialog(FloatLayout):
     cancel = ObjectProperty(None)
     path = StringProperty("C:/")
 
+
 class SaveDialog(FloatLayout):
     save = ObjectProperty(None)
     text_input = ObjectProperty(None)
     cancel = ObjectProperty(None)
     path = StringProperty("C:/")
 
-class PenDropDown(ActionDropDown):
+
+class PortDropDown(ActionDropDown):
     pass
 
-class ModeDropDown(ActionDropDown):
-    pass
 
 class SettingButtons(SettingItem):
     def __init__(self, **kwargs):
@@ -108,6 +108,7 @@ class SettingColorPicker(SettingItem):
         # all done, open the popup !
         popup.open()
 
+
 class MyLabel(Image):
     text = StringProperty('')
 
@@ -117,6 +118,7 @@ class MyLabel(Image):
         l.texture_update()
         # Set it to image, it'll be scaled to image size automatically:
         self.texture = l.texture
+
 
 class Input(BoxLayout):
     """Custom input to handle parameters.
@@ -198,6 +200,7 @@ class Input(BoxLayout):
         except:
             pass
 
+
 def getPorts():
     """Used to gather every connected devices on usb.
 
@@ -212,6 +215,7 @@ def getPorts():
 
     return arduinoPorts
 
+
 def urlOpen(instance, url):
     """Opens a browser window with specified url.
 
@@ -219,6 +223,7 @@ def urlOpen(instance, url):
     """
     import webbrowser
     webbrowser.open(url, new=2)
+
 
 def hitLine(lineA, lineB, point, lineWidth):
     """Checks whether the point is in line or out.
@@ -238,6 +243,7 @@ def hitLine(lineA, lineB, point, lineWidth):
         if distance.euclidean(lineA, point) < distance.euclidean(lineA, lineB) and distance.euclidean(lineB, point) < distance.euclidean(lineA, lineB):
             return True
     return False
+
 
 def polToCar(center, dist, angle):
     """Converts polar coordinates to cartesian.
