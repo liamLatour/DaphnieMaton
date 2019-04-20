@@ -31,7 +31,7 @@ from scipy.spatial import distance
 import assets.libraries.undoRedo as UndoRedo
 from assets.helpMsg import directHelp, freeHelp, pipeHelp
 from assets.libraries.classes import (Input, LoadDialog, MyLabel,
-                                      PortDropDown, SaveDialog, SettingButtons,
+                                      MenuDropDown, SaveDialog, SettingButtons,
                                       SettingColorPicker, getPorts, hitLine,
                                       polToCar, urlOpen)
 from assets.libraries.createFile import generateFile
@@ -53,20 +53,9 @@ class Parametrage(BoxLayout):
         super(Parametrage, self).__init__(*args, **kwargs)
         self.settings = App.get_running_app().config
         self.font = ".\\assets\\seguisym.ttf"
-        self.params = {
-            "nbPipe": 2,
-            "lenPipe" : 1.2,
-            "photoPipe" : 50,
-            "distOriginX" : 50,
-            "distOriginY" : 50,
-            "sameGap" : True,
-            "gaps" : [20],
-            "loop" : False,
-            "trace" : [],
-            "photos" : []
-        }
         self.mode = "Pipe" # Stores the current mode
-        self.portDropDown = PortDropDown()
+        self.portDropDown = MenuDropDown()
+        self.fileDropDown = MenuDropDown()
         self.port = -1
 
         self.speed = 8.6 # m per minutes
@@ -98,18 +87,17 @@ class Parametrage(BoxLayout):
         Clock.schedule_once(self.binding)
         Clock.schedule_interval(partial(self.save, -1, -1), int(self.settings.get('general', 'autoSave'))*60)
         keyboard.on_release_key('shift', self.update_rect)
-        self.filePath = -1
-        self.fileName = _("configuration")
 
     def binding(self, *args):
         self.ids.pipeDrawing.bind(size=self.update_rect, pos=self.update_rect)
         self.ids.directDrawing.bind(size=self.update_rect, pos=self.update_rect)
         self.ids.libreDrawing.bind(size=self.update_rect, pos=self.update_rect)
         self.ids.changeTab.bind(on_touch_up = self.changedTab)
-        self.updateColors()
+        self.newFile(False)
+        self.updateColors(refresh=False)
         self.tuyeauGap()
 
-    def updateColors(self):
+    def updateColors(self, refresh=True):
         self.pipeColor = utils.get_color_from_hex(self.settings.get('colors', 'pipeColor'))
         self.background = utils.get_color_from_hex(self.settings.get('colors', 'background'))
         self.nodeColor = utils.get_color_from_hex(self.settings.get('colors', 'nodeColor'))
@@ -117,7 +105,8 @@ class Parametrage(BoxLayout):
         self.pathColor = utils.get_color_from_hex(self.settings.get('colors', 'pathColor'))
         self.pathHighlight = utils.get_color_from_hex(self.settings.get('colors', 'pathHighlight'))
 
-        self.update_rect()
+        if refresh:
+            self.update_rect()
 
     def help(self, *args):
         try: self.popup.dismiss()
@@ -138,6 +127,63 @@ class Parametrage(BoxLayout):
         self.popbox.add_widget(self.poplb)
         self.popup.content = self.popbox
         self.popup.open()
+
+    def newFile(self, refresh, *args):
+        self.filePath = -1
+        self.fileName = _("configuration")
+        self.params = {
+            "nbPipe": 2,
+            "lenPipe" : 0.9,
+            "photoPipe" : 10,
+            "distOriginX" : 5,
+            "distOriginY" : 5,
+            "sameGap" : True,
+            "horizontal" : False,
+            "gaps" : [20],
+            "loop" : True,
+            "trace" : [],
+            "photos" : []
+        }
+
+        self.ids.loop.unbindThis()
+        self.ids.nbPipe.unbindThis()
+        self.ids.lenPipe.unbindThis()
+        self.ids.photoPipe.unbindThis()
+        self.ids.distOriginX.unbindThis()
+        self.ids.distOriginY.unbindThis()
+        self.ids.horizontal.unbindThis()
+        self.ids.sameGap.unbindThis()
+
+        self.ids.loop.input.active = self.params["loop"]
+        self.ids.nbPipe.input.text = str(self.params["nbPipe"])
+        self.ids.lenPipe.input.text = str(self.params["lenPipe"])
+        self.ids.photoPipe.input.text = str(self.params["photoPipe"])
+        self.ids.distOriginX.input.text = str(self.params["distOriginX"])
+        self.ids.distOriginY.input.text = str(self.params["distOriginY"])
+        self.ids.horizontal.input.active = self.params["horizontal"]
+        self.ids.sameGap.input.active = self.params["sameGap"]
+
+        self.ids.loop.bindThis()
+        self.ids.nbPipe.bindThis()
+        self.ids.lenPipe.bindThis()
+        self.ids.photoPipe.bindThis()
+        self.ids.distOriginX.bindThis()
+        self.ids.distOriginY.bindThis()
+        self.ids.horizontal.bindThis()
+        self.ids.sameGap.bindThis()
+
+        if refresh:
+            self.update_rect()
+
+    def show_file(self):
+        self.fileDropDown.open(self.ids.fileButton)
+        self.fileDropDown.clear_widgets()
+
+        self.fileDropDown.add_widget(Button(text=_("New"), height=48, size_hint_y= None, on_release=lambda a: self.newFile(True)))
+        if self.filePath != -1:
+            self.fileDropDown.add_widget(Button(text=_("Save"), height=48, size_hint_y= None, on_release=lambda a: self.save(-1, -1)))
+        self.fileDropDown.add_widget(Button(text=_("Save as"), height=48, size_hint_y= None, on_release=self.show_save))
+        self.fileDropDown.add_widget(Button(text=_("Open"), height=48, size_hint_y= None, on_release=self.show_load))
 
     def show_port(self):
         self.portDropDown.open(self.ids.port_button)
@@ -169,7 +215,7 @@ class Parametrage(BoxLayout):
     def dismiss_popup(self):
         self._popup.dismiss()
 
-    def show_load(self):
+    def show_load(self, *args):
         if self.filePath != -1:
             content = LoadDialog(load=self.load, cancel=self.dismiss_popup, path=self.filePath)
         else:
@@ -178,7 +224,7 @@ class Parametrage(BoxLayout):
                             size_hint=(0.9, 0.9))
         self._popup.open()
 
-    def show_save(self):
+    def show_save(self, *args):
         content = SaveDialog(save=self.save, cancel=self.dismiss_popup, path=self.settings.get('general', 'savePath'))
         self._popup = Popup(title=_("Save file"), content=content,
                             size_hint=(0.9, 0.9))
@@ -401,11 +447,12 @@ class Parametrage(BoxLayout):
             self.ids.pipeDrawing.canvas.before.clear()
 
             gapsValue = []
-            if bool(self.ids.sameGap.input.active):
-                gapsValue = np.ones(max(self.sanitize(self.ids.nbPipe.input.text), 1)-1) * self.sanitize(self.gaps[0].input.text)
-            else:
-                for gap in self.gaps:
-                    gapsValue.append(max(self.sanitize(gap.input.text), 0))
+            if max(self.sanitize(self.ids.nbPipe.input.text), 1) > 1:
+                if bool(self.ids.sameGap.input.active):
+                    gapsValue = np.ones(max(self.sanitize(self.ids.nbPipe.input.text), 1)-1) * self.sanitize(self.gaps[0].input.text)
+                else:
+                    for gap in self.gaps:
+                        gapsValue.append(max(self.sanitize(gap.input.text), 0))
 
             if len(gapsValue) == 0:
                 if len(self.params["gaps"]) > 0:
