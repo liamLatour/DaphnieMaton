@@ -6,7 +6,8 @@ Originally made to watch for the evolution of a Daphnie population in different 
 
 ## Getting Started
 
-- [Download](https://github.com/liamLatour/DaphnieMaton/archive/master.zip) the repo and click on "DaphnieMaton.exe"
+- [Download](https://github.com/liamLatour/DaphnieMaton/archive/master.zip) the repo and unzip it
+- Find and click on the file "DaphnieMaton.exe"
 - Read the help messages to get started
 - Change the designed path to suit your needs
 - Click 'update' and voilà !
