@@ -6,8 +6,8 @@ Originally made to watch for the evolution of a Daphnie population in different 
 
 ## Getting Started
 
-- Clone the repo and open "DaphnieMaton.exe"
-- Connect the arduino Mega to an usb port and select it under "Port" section in the menu
+- Download the repo and click on "DaphnieMaton.exe"
+- Read the help messages to get started
 - Change the designed path to suit your needs
 - Click 'update' and voilà !
 
