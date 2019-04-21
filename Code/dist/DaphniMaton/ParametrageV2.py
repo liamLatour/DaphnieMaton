@@ -39,7 +39,7 @@ from assets.libraries.localization import (_, change_language_to,
                                            translation_to_language_code)
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
-Config.set('kivy','window_icon','..\\..\\Images\\kivyLogo.ico')
+Config.set('kivy','window_icon','assets/logoDark.ico')
 
 
 #https://stackoverflow.com/questions/47729340/how-to-change-default-kivy-logo-with-another-image-logo
@@ -246,7 +246,8 @@ class Parametrage(BoxLayout):
 
             self.tuyeauGap()
             self.dismiss_popup()
-        except:
+        except Exception as e:
+            print(e)
             print("wrong file")
 
     def save(self, path, filename, *args):
@@ -931,7 +932,7 @@ class Parametrage(BoxLayout):
 class DaphnieMatonApp(App):
     def build(self):
         self.settings_cls = SettingsWithSidebar
-        self.icon = '..\\Images\\kivyLogo.png'
+        self.icon = 'assets/logoDark.png'
         self.update_language_from_config()
         self.app = Parametrage()
 
@@ -964,7 +965,7 @@ class DaphnieMatonApp(App):
             'copy': 'ctrl+c',
             'undo': 'ctrl+z'})
         config.setdefaults('colors', {
-            'background': '#010101',
+            'background': '#373737ff',
             'pipeColor': '#72f7ff',
             'imagePath': ".\\assets\\topDownView.png",
             'nodeColor': "#e0e028",
