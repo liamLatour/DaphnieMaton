@@ -130,6 +130,4 @@ def generateFile(waypoints, photos):
         }\n \
     }"
 
-    f = open(".\\currentFile\\currentFile.ino","w+")
-    f.write(top + setup + loop)
-    f.close()
+    return top + setup + loop

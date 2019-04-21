@@ -11,62 +11,83 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.8\n"
 
-msgid "Centimeter per picture"
-msgstr ""
-
-msgid "Option"
-msgstr ""
-
-msgid "Load"
+msgid "Direct"
 msgstr ""
 
 msgid "Open"
 msgstr ""
 
-msgid "Distance of origin"
-msgstr ""
-
 msgid "Save"
 msgstr ""
 
-msgid "DaphnieMaton"
+msgid "No serial port was specified"
+msgstr ""
+
+msgid "Distance of origin"
 msgstr ""
 
 msgid "Upload"
 msgstr ""
 
-msgid "Number of pipes"
+msgid "Loop"
 msgstr ""
 
 msgid "Time for one pipe (sec)"
 msgstr ""
 
-msgid "Direct"
+msgid "Success !"
 msgstr ""
 
-msgid "Free"
+msgid "Gap between pipes"
 msgstr ""
 
-msgid "Loop"
-msgstr ""
-
-msgid "Port"
-msgstr ""
-
-msgid "No port"
-msgstr ""
-
-msgid "Pipe lenght (m)"
+msgid "Load"
 msgstr ""
 
 msgid "Pipe"
 msgstr ""
 
+msgid "Pipe lenght (m)"
+msgstr ""
+
+msgid "Free"
+msgstr ""
+
+msgid "Option"
+msgstr ""
+
+msgid "Centimeter per picture"
+msgstr ""
+
+msgid "Port"
+msgstr ""
+
 msgid "Constant gap"
+msgstr ""
+
+msgid "No port detected"
+msgstr ""
+
+msgid "General"
 msgstr ""
 
 msgid "Help"
 msgstr ""
 
+msgid "No port"
+msgstr ""
+
 msgid "Cancel"
+msgstr ""
+
+msgid "Upload finished successfully !"
+msgstr ""
+
+msgid "DaphnieMaton"
+msgstr ""
+
+msgid "Number of pipes"
+msgstr ""
+
+msgid "Reset"
 msgstr ""

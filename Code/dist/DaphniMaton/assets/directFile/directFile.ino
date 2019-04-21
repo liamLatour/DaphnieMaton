@@ -39,33 +39,42 @@ void loop() {
   if (Serial.available() > 0) {
     int incomingByte = Serial.read();
 
-    if(incomingByte == 1){
-      runningY = 1;
-    }
-    else if(incomingByte == 2){
-      runningY = -1;
-    }
-    else if(incomingByte == 3){
-      runningX = 1;
-    }
-    else if(incomingByte == 4){
-      runningX = -1;
-    }
-    else if(incomingByte == 5){
-      runningY = 0;
-    }
-    else if(incomingByte == 6){
-      runningY = 0;
-    }
-    else if(incomingByte == 7){
-      runningX = 0;
-    }
-    else if(incomingByte == 8){
-      runningX = 0;
-    }
-    else if(incomingByte == 9){
-      Serial.println(Xaxis.currentPosition());
-      Serial.println(Y1axis.currentPosition());
+    switch (incomingByte) {
+      case 1:
+        runningY = 1;
+        break;
+      case 2:
+        runningY = -1;
+        break;
+      case 3:
+        runningX = 1;
+        break;
+      case 4:
+        runningX = -1;
+        break;
+      case 5:
+        runningY = 0;
+        break;
+      case 6:
+        runningX = 0;
+        break;
+      case 7:
+        Serial.println(Xaxis.currentPosition());
+        Serial.println(Y1axis.currentPosition());
+        break;
+      case 8:
+        // remise à zero
+        break;
+      case 9:
+        Serial.println("DaphnieMaton");
+        break;
+      case 10:
+        // callibrate
+        delay(5000);
+        Serial.println("300"); // step to cm
+        break;
+      default:
+        break;
     }
   }
   if(runningX == 1){

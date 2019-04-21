@@ -246,7 +246,8 @@ class Parametrage(BoxLayout):
 
             self.tuyeauGap()
             self.dismiss_popup()
-        except:
+        except Exception as e:
+            print(e)
             print("wrong file")
 
     def save(self, path, filename, *args):

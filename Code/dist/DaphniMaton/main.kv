@@ -9,6 +9,7 @@
         FileChooserListView:
             id: filechooser
             path: root.path
+            filters: ['*.json']
         BoxLayout:
             size_hint_y: None
             height: 30
@@ -29,7 +30,7 @@
             id: filechooser
             on_selection: text_input.text = self.selection and self.selection[0] or ''
             path: root.path
-
+            filters: ['*.json']
         TextInput:
             id: text_input
             size_hint_y: None
@@ -44,12 +45,6 @@
             Button:
                 text: _('Save')
                 on_release: root.save(filechooser.path, text_input.text)
-
-<PenDropDown>:
-    Button:
-        text: _('No port')
-        height: 48
-        size_hint_y : None
 
 <Input>:
     size_hint: (1, None)
@@ -66,13 +61,11 @@
             ActionPrevious:
                 title: _('DaphnieMaton')
                 with_previous: False
-                app_icon: '..\Images\kivyLogo.ico'
+                app_icon: '..\..\Images\kivyLogo.ico'
             ActionButton:
-                text: _('Save')
-                on_release: root.show_save()
-            ActionButton:
-                text: _('Open')
-                on_release: root.show_load()
+                id: fileButton
+                text: _('File')
+                on_release: root.show_file()
             ActionButton:
                 id: port_button
                 text: _('Port')
@@ -88,11 +81,12 @@
         do_default_tab: False
         id: tabbedPanel
         TabbedPanelItem:
-            text: _('Pipe')
-            name: 'Tuyeau'
+            text: _('Pipe template')
+            name: 'Pipe'
             id: changeTab
             BoxLayout:
                 BoxLayout:
+                    id: pipeBack
                     ScrollView:
                         size_hint: (1, 1)
                         BoxLayout:
@@ -105,35 +99,41 @@
                                 id: nbPipe
                                 inputName: _('Number of pipes')
                                 input_filter: 'int'
-                                default_text: '0' 
+                                default_text: '2' 
                                 callback: lambda *args: root.tuyeauGap()
                             Input:
                                 id: lenPipe
                                 inputName: _('Pipe lenght (m)')
                                 input_filter: 'float'
-                                default_text: '0' 
-                                callback: lambda *args: root.update_rect()
-                            Input:
-                                id: timePipe
-                                inputName: _('Time for one pipe (sec)')
-                                input_filter: 'float'
-                                default_text: '0' 
+                                default_text: '1' 
                                 callback: lambda *args: root.update_rect()
                             Input:
                                 id: photoPipe
                                 inputName: _('Centimeter per picture')
                                 input_filter: 'float'
-                                default_text: '0' 
+                                default_text: '5' 
                                 callback: lambda *args: root.update_rect()
                             Input:
-                                id: distOrigin
-                                inputName: _('Distance of origin')
+                                id: distOriginX
+                                inputName: _('Distance from origin X (cm)')
                                 input_filter: 'float'
-                                default_text: '0' 
+                                default_text: '5'
+                                callback: lambda *args: root.update_rect()
+                            Input:
+                                id: distOriginY
+                                inputName: _('Distance from origin Y (cm)')
+                                input_filter: 'float'
+                                default_text: '5' 
+                                callback: lambda *args: root.update_rect()
+                            Input:
+                                id: horizontal
+                                inputName: _('Pipes are horizontal')
+                                inputType: 1
+                                default_text: 'False'
                                 callback: lambda *args: root.update_rect()
                             Input:
                                 id: sameGap
-                                inputName: _('Constant gap')
+                                inputName: _('Constant gap between pipes')
                                 inputType: 1
                                 default_text: 'False' 
                                 callback: lambda *args: root.tuyeauGap()
@@ -154,11 +154,15 @@
                             Button:
                                 text: _('Upload')
                                 on_release: root.update()
+                            Button:
+                                text: _('Copy to Free mode')
+                                on_release: root.generatePathFromPipe(True)
         TabbedPanelItem:
-            text: _('Free')
-            name: 'Libre'
+            text: _('Free path')
+            name: 'Free'
             BoxLayout:
                 BoxLayout:
+                    id: freeBack
                     ScrollView:
                         size_hint: (1, 1)
                         BoxLayout:
@@ -171,8 +175,19 @@
                                 id: loop
                                 inputName: _('Loop')
                                 inputType: 1
-                                default_text: 'False' #root.params['loop']
+                                default_text: 'False'
                                 callback: lambda *args: root.update_rect()
+                            Input:
+                                id: coord
+                                inputName: _('Coordinates (cm)')
+                                default_text: '0 : 0'
+                                callback: lambda *args: root.inputMove()
+                            Input:
+                                id: clear
+                                inputName: _('Clear all nodes')
+                                inputType: 2
+                                default_text: 'Clear'
+                                callback: lambda *args: root.removeAllNodes()
                 Splitter:
                     sizable_from: 'left'
                     strip_size: '5pt'
@@ -194,11 +209,12 @@
                                 text: _('Upload')
                                 on_release: root.update()
         TabbedPanelItem:
-            text: _('Direct')
+            text: _('Direct control')
             name: 'Direct'
             BoxLayout:
                 id: directSplitter
                 BoxLayout:
+                    id: directBack
                     orientation: 'vertical'
                     Widget:
                         id: directDrawing
