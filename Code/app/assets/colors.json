@@ -1,6 +1,17 @@
 [
    {
       "type":"title",
+      "title": "Global"
+   },
+   {
+      "type":"color",
+      "title":"Background",
+      "desc":"Color of the background",
+      "section":"colors",
+      "key":"background"
+   },
+   {
+      "type":"title",
       "title": "Pipe Mode"
    },
    {
@@ -11,11 +22,12 @@
       "key":"pipeColor"
    },
    {
-      "type":"color",
-      "title":"Background",
-      "desc":"Color of the background",
+      "type":"path",
+      "title":"Systems's image",
+      "desc":"Path to the top-down view of the system",
+      "dirselect": "False",
       "section":"colors",
-      "key":"background"
+      "key":"imagePath"
    },
    {
       "type":"title",

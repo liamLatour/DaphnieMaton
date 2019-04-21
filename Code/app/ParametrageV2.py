@@ -261,7 +261,10 @@ class Parametrage(BoxLayout):
         self.filePath = path
         self.fileName = filename
 
-        with open(osJoinPath(path, filename+".json"), 'w') as stream:
+        if not filename.endswith(".json"):
+            filename = filename+".json"
+
+        with open(osJoinPath(path, filename), 'w') as stream:
             paramsCopy = self.params.copy()
 
             for item in paramsCopy: # Converts numpy arrays into python list
@@ -477,17 +480,24 @@ class Parametrage(BoxLayout):
             self.ids.pipeSplitter.max_size = self.size[0] - 400
             self.ids.pipeSplitter.min_size = int(round(self.size[0]/2))
 
+            self.ids.pipeBack.canvas.before.clear()
+
+            with self.ids.pipeBack.canvas.before:
+                Color(self.background[0], self.background[1], self.background[2], self.background[3])
+                Rectangle(pos = self.pos, size = (self.size[0], self.ids.pipeSplitter.size[1]))
+
             with self.ids.pipeDrawing.canvas.before:
                 width = min(self.ids.pipeSplitter.size[0]-50, self.ids.pipeSplitter.size[1]-50)
                 height = self.params["lenPipe"]/self.imageHeight *width
 
-                Rectangle(source='.\\assets\\topDownView.png', pos = (middle[0]-width/2, middle[1]-width/2), size = (width, width))
+                Color(1,1,1,1)
+                Rectangle(source=self.settings.get('colors', 'imagePath'), pos = (middle[0]-width/2, middle[1]-width/2), size = (width, width))
 
                 text = _("Total time") + ": " + str(round( ((self.params["nbPipe"]*self.params["lenPipe"])/self.speed)*600 )/10) + " sec" + \
                                         "\n"+_("Photo number") + ": " + str( round((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100))) + \
                                         "\n"+_("Photo every") +" "+ str( round( ((self.speed*self.params["nbPipe"]) / ((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100)))*10 )/10 ) + " sec"
 
-                Color(1,1,1, .2)
+                Color(0.5,0.5,0.5, .6)
                 Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +95)), size = (200, 70))
 
                 label = CoreLabel(text=text, font_size=30, halign='left', valign='top', padding=(5, 5))
@@ -531,9 +541,15 @@ class Parametrage(BoxLayout):
             self.ids.libreSplitter.min_size = int(round(self.size[0]/2))
             zoomedTrace = np.multiply(self.params["trace"], self.zoomFactor).tolist()
 
+            self.ids.freeBack.canvas.before.clear()
+
+            with self.ids.freeBack.canvas.before:
+                Color(self.background[0], self.background[1], self.background[2], self.background[3])
+                Rectangle(pos = self.pos, size = (self.size[0], self.ids.libreSplitter.size[1]))
+
             with self.ids.libreDrawing.canvas.before:
                 width = 200 * self.zoomFactor
-                Rectangle(source='.\\assets\\topDownView.png', pos = (middle[0]-width/2, middle[1]-width/2), size = (width, width))
+                Rectangle(source=self.settings.get('colors', 'imagePath'), pos = (middle[0]-width/2, middle[1]-width/2), size = (width, width))
 
                 if keyboard.is_pressed("shift"):
                     for corner in self.corners:
@@ -615,6 +631,12 @@ class Parametrage(BoxLayout):
             self.ids.directDrawing.add_widget(left)
             self.ids.directDrawing.add_widget(up)
             self.ids.directDrawing.add_widget(down)
+
+            self.ids.directBack.canvas.before.clear()
+
+            with self.ids.directBack.canvas.before:
+                Color(self.background[0], self.background[1], self.background[2], self.background[3])
+                Rectangle(pos = self.pos, size = (self.size[0], self.ids.directSplitter.size[1]))
 
             with self.ids.directDrawing.canvas.before:
                 text = "X: " + str(self.systemPosition[0]) + " "+_("step") + \
@@ -922,7 +944,7 @@ class DaphnieMatonApp(App):
         self.configFiles = {
             ".\\assets\\config.json": 'General',
             ".\\assets\\shortcuts.json": 'Shortcuts',
-            ".\\assets\\colors.json": 'Colours'
+            ".\\assets\\colors.json": 'Aspect'
         }
 
         for short in self.shortcuts:
@@ -942,8 +964,9 @@ class DaphnieMatonApp(App):
             'copy': 'ctrl+c',
             'undo': 'ctrl+z'})
         config.setdefaults('colors', {
-            'pipeColor': '#72f7ff',
             'background': '#010101',
+            'pipeColor': '#72f7ff',
+            'imagePath': ".\\assets\\topDownView.png",
             'nodeColor': "#e0e028",
             'nodeHighlight': "#d32828",
             'pathColor': "#72f7ff",
@@ -983,20 +1006,3 @@ class DaphnieMatonApp(App):
 
 if __name__ == '__main__':
     DaphnieMatonApp().run()
-
-
-
-"""
-,
-   {
-      "type":"options",
-      "title":"Language",
-      "desc":"Choose the app language",
-      "section":"general",
-      "key":"language",
-      "options":[
-         "Français",
-         "English"
-      ]
-   }
-"""

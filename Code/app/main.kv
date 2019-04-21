@@ -9,6 +9,7 @@
         FileChooserListView:
             id: filechooser
             path: root.path
+            filters: ['*.json']
         BoxLayout:
             size_hint_y: None
             height: 30
@@ -29,7 +30,7 @@
             id: filechooser
             on_selection: text_input.text = self.selection and self.selection[0] or ''
             path: root.path
-
+            filters: ['*.json']
         TextInput:
             id: text_input
             size_hint_y: None
@@ -85,6 +86,7 @@
             id: changeTab
             BoxLayout:
                 BoxLayout:
+                    id: pipeBack
                     ScrollView:
                         size_hint: (1, 1)
                         BoxLayout:
@@ -160,6 +162,7 @@
             name: 'Free'
             BoxLayout:
                 BoxLayout:
+                    id: freeBack
                     ScrollView:
                         size_hint: (1, 1)
                         BoxLayout:
@@ -211,6 +214,7 @@
             BoxLayout:
                 id: directSplitter
                 BoxLayout:
+                    id: directBack
                     orientation: 'vertical'
                     Widget:
                         id: directDrawing
