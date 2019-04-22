@@ -16,8 +16,11 @@ Originally made to watch for the evolution of a Daphnie population in different 
 
 To build from source you'll need:
   - [Kivy](https://kivy.org/#download)
-  - pyserial ```pip install pyserial```
-  - keyboard '''pip install keyboard'''
+  - PySerial ```pip install pyserial```
+  - keyboard ```pip install keyboard```
+  - [NumPy and SciPy](https://scipy.org/install.html)
+  - Pyperclip ```pip install pyperclip```
+  - Gettext ```pip install python-gettext```
 
 ### Building on top
 
@@ -35,3 +38,8 @@ Just submit a pull request specifying which part is affected and if it is an enh
 
 * **Louis Quaire--Merlin** - *student at Blaise-Pascal*
 * **Liam Latour** - *student at Blaise-Pascal*
+
+## Acknowledgments
+* [Kniteditor](https://blog.fossasia.org/tag/language-localization/) by Fossasia for the translation template
+* [Alexander Wolf](https://gist.github.com/AWolf81) for the [ColorPicker](https://gist.github.com/AWolf81/421976e65099d3e58a32) type in the Settings
+* Thica for the [Button](https://github.com/kivy/kivy/wiki/Buttons-in-Settings-panel) type in the Settings
