@@ -1,0 +1,73 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.2.1\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr\n"
+
+msgid "Centimeter per picture"
+msgstr "Centimètre par image"
+
+msgid "Option"
+msgstr "Option"
+
+msgid "Load"
+msgstr "Charger"
+
+msgid "Open"
+msgstr "Ouvrir"
+
+msgid "Distance of origin"
+msgstr "Distance à l'origine"
+
+msgid "Save"
+msgstr "Sauvegarder"
+
+msgid "DaphnieMaton"
+msgstr "DaphnieMaton"
+
+msgid "Upload"
+msgstr "Téléverser"
+
+msgid "Number of pipes"
+msgstr "Nombre de tuyaux"
+
+msgid "Time for one pipe (sec)"
+msgstr "Temps pour un tuyau (sec)"
+
+msgid "Direct"
+msgstr "Direct"
+
+msgid "Free"
+msgstr "Libre"
+
+msgid "Loop"
+msgstr "Boucle"
+
+msgid "Port"
+msgstr "Port"
+
+msgid "No port"
+msgstr "Aucun port"
+
+msgid "Pipe lenght (m)"
+msgstr "Longueur des tuyaux (m)"
+
+msgid "Pipe"
+msgstr "Tuyau"
+
+msgid "Constant gap"
+msgstr "Ecart constant"
+
+msgid "Help"
+msgstr "Aide"
+
+msgid "Cancel"
+msgstr "Annuler"
