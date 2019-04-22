@@ -21,6 +21,7 @@ To build from source you'll need:
   - [NumPy and SciPy](https://scipy.org/install.html)
   - Pyperclip ```pip install pyperclip```
   - Gettext ```pip install python-gettext```
+  - [PyInstaller](https://www.pyinstaller.org/) - To build an executable
 
 ### Building on top
 
@@ -29,6 +30,7 @@ Not implemented yet
 ## Built With
 
 * [Kivy](https://kivy.org) - The gui framework used
+* [PyInstaller](https://www.pyinstaller.org/) - Software used to create the executable
 
 ## Contributing
 
