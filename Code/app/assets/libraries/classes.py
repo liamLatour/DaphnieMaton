@@ -5,7 +5,7 @@ import kivy.utils as utils
 import serial.tools.list_ports
 from kivy.clock import Clock
 from kivy.core.window import Window
-from kivy.properties import (NumericProperty, ObjectProperty, StringProperty)
+from kivy.properties import NumericProperty, ObjectProperty, StringProperty
 from kivy.uix.actionbar import ActionDropDown
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button

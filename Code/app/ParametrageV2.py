@@ -1,3 +1,4 @@
+import os
 import re
 import threading
 import time
@@ -30,8 +31,8 @@ from scipy.spatial import distance
 
 import assets.libraries.undoRedo as UndoRedo
 from assets.helpMsg import directHelp, freeHelp, pipeHelp
-from assets.libraries.classes import (Input, LoadDialog, MyLabel,
-                                      MenuDropDown, SaveDialog, SettingButtons,
+from assets.libraries.classes import (Input, LoadDialog, MenuDropDown, MyLabel,
+                                      SaveDialog, SettingButtons,
                                       SettingColorPicker, getPorts, hitLine,
                                       polToCar, urlOpen)
 from assets.libraries.createFile import generateFile
@@ -64,6 +65,10 @@ class Parametrage(BoxLayout):
         self.actualWidth = 1.144 # in meter
         self.actualHeight = 1.1 # in meter
         self.imageOrigin = (17, 17.2) # in cm
+
+        # Search for arduino installation
+        if not os.path.isfile(self.settings.get('general', 'arduinoPath') + '/arduino_debug.exe'):
+            threading.Thread(target=lambda: self.findFile("arduino.exe", "C:\\")).start()
 
         # Specific to the mode 'Pipe'
         self.pipePanel = self.ids.tuyeauInputs
@@ -107,6 +112,14 @@ class Parametrage(BoxLayout):
 
         if refresh:
             self.update_rect()
+
+    def findFile(self, name, path):
+        for root, dirs, files in os.walk(path):
+            if name in files:
+                print("Found arduino path: " + root)
+                self.settings.set("general", "arduinoPath", str(root))
+                self.settings.write()
+                return
 
     def help(self, *args):
         try: self.popup.dismiss()
@@ -310,8 +323,14 @@ class Parametrage(BoxLayout):
         threading.Thread(target=lambda: self.updateAsync(callibration=callibration, callback=callback)).start()
 
     def updateAsync(self, callibration, callback):
+        arduinoPath = self.settings.get('general', 'arduinoPath')
+
+        if not os.path.isfile(arduinoPath + '/arduino_debug.exe'):
+            self.popup.dismiss()
+            Popup(title=_('Arduino dir missing'), content=Label(text=_('The specified arduino path is not correct \n (under Option -> Arduino.exe path)'), text_size=self.popup.size, strip=True, valign='middle', halign='center', padding= (15, 35)), size_hint=(None, None), size=(400, 300)).open()
+            return
+
         try:
-            arduinoPath = self.settings.get('general', 'arduinoPath')
             if self.port != -1:
                 try:
                     self.board.close()
@@ -884,7 +903,6 @@ class Parametrage(BoxLayout):
             return
 
         if bool(self.ids.sameGap.input.active):
-            
             self.gaps = [Input(inputName=_('Gap between pipes')+" (cm)", input_filter="float", default_text=str(self.params["gaps"][0]), callback=self.update_rect)]
             self.pipePanel.add_widget(self.gaps[0])
         else:
@@ -912,10 +930,7 @@ class Parametrage(BoxLayout):
             try:
                 return float(number)
             except:
-                try:
-                    return bool(number)
-                except:
-                    return 0
+                return 0
 
     def copyToClipboard(self):
         if self.mode == "Direct":
