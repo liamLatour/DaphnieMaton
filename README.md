@@ -7,6 +7,7 @@ Originally made to watch for the evolution of a Daphnie population in different 
 ## Getting Started
 
 - [Download](https://github.com/liamLatour/DaphnieMaton/archive/master.zip) the repository and unzip it
+- [Download](https://www.arduino.cc/en/Main/Software) the last version of the arduino software
 - Find and click on the file "DaphnieMaton.exe"
 - Read the help messages to get started
 - Click 'upload' and voilà !
@@ -16,6 +17,7 @@ Originally made to watch for the evolution of a Daphnie population in different 
 To build from source you'll need:
   - [Kivy](https://kivy.org/#download)
   - pyserial ```pip install pyserial```
+  - keyboard '''pip install keyboard'''
 
 ### Building on top
 
