@@ -71,11 +71,14 @@ class Parametrage(BoxLayout):
         # Specific to the mode 'direct'
         self.board = -1
         self.readingClock = -1
+        self.checkKeyClock = -1
         self.systemPosition = (0, 0)
         self.hasGoodProgram = False
+        self.uploading = False
 
         Clock.schedule_once(self.binding)
         Clock.schedule_interval(partial(self.save, -1, -1), int(self.settings.get('general', 'autoSave'))*60)
+
         keyboard.on_release_key('shift', self.update_rect)
 
     def binding(self, *args):
@@ -196,18 +199,20 @@ class Parametrage(BoxLayout):
         self.port = port
         if port != -1:
             self.ids.port_button.text = _("Port") + " " + port
-
-            self.moveDirect(bytes([9]))
-            if self.board != -1:
-                response = self.board.readline().decode("utf-8").rstrip()
-                if response == "DaphnieMaton":
-                    self.hasGoodProgram = True
-                    self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
-                    self.update_rect()
-
+            threading.Thread(target=lambda: self.checkItHasGoodProgram()).start()
         else:
             self.ids.port_button.text = _("Port")
         self.portDropDown.dismiss()
+
+    def checkItHasGoodProgram(self):
+        self.moveDirect(bytes([9]))
+        if self.board != -1:
+            response = self.board.readline()
+            response = response.decode("utf-8").rstrip()
+            if response == "DaphnieMaton":
+                self.hasGoodProgram = True
+                self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
+                self.update_rect()
 
     # Saving and loading system
     def dismiss_popup(self):
@@ -308,6 +313,7 @@ class Parametrage(BoxLayout):
 
     def updateAsync(self, callibration, callback):
         arduinoPath = self.settings.get('general', 'arduinoPath')
+        self.uploading = True
 
         if not os.path.isfile(arduinoPath + '/arduino_debug.exe'):
             self.popup.dismiss()
@@ -322,7 +328,7 @@ class Parametrage(BoxLayout):
                 except: pass
 
                 if callibration:
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+self.port+" --upload .\\assets\\directFile\\directFile.ino")            
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
                     self.hasGoodProgram = True
                     self.update_rect()
 
@@ -332,7 +338,7 @@ class Parametrage(BoxLayout):
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+self.port+" --upload .\\assets\\currentFile\\currentFile.ino")
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
                     self.hasGoodProgram = False
 
                 elif self.mode == "Free":
@@ -340,11 +346,11 @@ class Parametrage(BoxLayout):
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+self.port+" --upload .\\assets\\currentFile\\currentFile.ino")
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
                     self.hasGoodProgram = False
 
                 elif self.mode == "Direct":
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+self.port+" --upload .\\assets\\directFile\\directFile.ino")            
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
                     self.hasGoodProgram = True
                     self.update_rect()
                     self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
@@ -360,6 +366,7 @@ class Parametrage(BoxLayout):
         except Exception as e:
             self.popup.dismiss()
             Popup(title=_('Oopsie...'), content=Label(text=_('Something went wrong, try again or report a bug') + "\n" + str(e)), size_hint=(None, None), size=(400, 300)).open()
+        self.uploading = False
 
     def changedTab(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
@@ -369,14 +376,6 @@ class Parametrage(BoxLayout):
             self.readingClock = -1
 
         self.zoomFactor = float('inf')
-
-        if self.mode == "Direct":
-            self.moveDirect(bytes([9]))
-            if self.board != -1:
-                response = self.board.readline().decode("utf-8").rstrip()
-                if response == "DaphnieMaton":
-                    self.hasGoodProgram = True
-                    self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
 
         self.update_rect()
 
@@ -665,7 +664,24 @@ class Parametrage(BoxLayout):
                     Color(0, 0, 0, 1)
                     Rectangle(pos=(middle[0]-dimensionX/2, middle[1]-(dimensionX*(3/16))/2), size=(dimensionX, dimensionX*(3/16)), texture=text)
 
-    def moveDirect(self, direction, *args):
+    def checkKeyHolding(self, *args):
+        stopX = False
+        stopY = False
+
+        if not (keyboard.is_pressed(self.settings.get('shortcuts', 'moveLeft')) or keyboard.is_pressed(self.settings.get('shortcuts', 'moveRight'))):
+            stopX = True
+            self.moveDirect(bytes([5]))
+        if not (keyboard.is_pressed(self.settings.get('shortcuts', 'moveUp')) or keyboard.is_pressed(self.settings.get('shortcuts', 'moveDown'))):
+            stopY = True
+            self.moveDirect(bytes([6]))
+
+        if stopX and stopY:
+            if self.checkKeyClock != -1:
+                self.checkKeyClock.cancel()
+                self.checkKeyClock = -1
+
+    def moveDirect(self, direction, shortcut=False, *args):
+        if self.uploading: return
         if self.port != -1:
             try:
                 self.board.write(direction)
@@ -673,7 +689,12 @@ class Parametrage(BoxLayout):
                 self.board = serial.Serial(str(self.port), 9600, timeout=0.5)
                 time.sleep(2)
                 self.board.write(direction)
-    
+            if shortcut == True:
+                if self.checkKeyClock != -1:
+                    self.checkKeyClock.cancel()
+                    self.checkKeyClock = -1
+                self.checkKeyClock = Clock.schedule_interval(self.checkKeyHolding, 0.2)
+
     def clickedDown(self, touch):
         if self.mode == "Free":
             x = touch.x

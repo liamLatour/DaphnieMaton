@@ -37,10 +37,10 @@ class DaphnieMatonApp(App):
             'clear': [self.app.removeAllNodes],
 
             'copy': [self.app.copyToClipboard],
-            'moveRight': [lambda: self.app.moveDirect(bytes([1])), lambda: self.app.moveDirect(bytes([5]))],
-            'moveLeft': [lambda: self.app.moveDirect(bytes([2])), lambda: self.app.moveDirect(bytes([5]))],
-            'moveUp': [lambda: self.app.moveDirect(bytes([3])), lambda: self.app.moveDirect(bytes([6]))],
-            'moveDown': [lambda: self.app.moveDirect(bytes([4])), lambda: self.app.moveDirect(bytes([6]))]
+            'moveRight': [lambda: self.app.moveDirect(bytes([1]), shortcut=True)],
+            'moveLeft': [lambda: self.app.moveDirect(bytes([2]), shortcut=True)],
+            'moveUp': [lambda: self.app.moveDirect(bytes([3]), shortcut=True)],
+            'moveDown': [lambda: self.app.moveDirect(bytes([4]), shortcut=True)]
         }
 
         self.configFiles = {
