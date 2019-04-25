@@ -1,0 +1,91 @@
+[
+   {
+      "type":"title",
+      "title": "File"
+   },
+   {
+      "type":"shortcut",
+      "title":"Save",
+      "desc":"To save current file",
+      "section":"shortcuts",
+      "key":"save"
+   },
+   {
+      "type":"shortcut",
+      "title":"Save as",
+      "desc":"To save current file under a new name",
+      "section":"shortcuts",
+      "key":"saveas"
+   },
+   {
+      "type":"shortcut",
+      "title":"Open",
+      "desc":"To open a file",
+      "section":"shortcuts",
+      "key":"open"
+   },
+   {
+      "type":"shortcut",
+      "title":"New",
+      "desc":"To create a new file",
+      "section":"shortcuts",
+      "key":"new"
+   },
+   {
+      "type":"title",
+      "title": "Free path"
+   },
+   {
+      "type":"shortcut",
+      "title":"Undo",
+      "desc":"Undoes the last action in Free mode",
+      "section":"shortcuts",
+      "key":"undo"
+   },
+   {
+      "type":"shortcut",
+      "title":"Clear",
+      "desc":"Clear all nodes",
+      "section":"shortcuts",
+      "key":"clear"
+   },
+   {
+      "type":"title",
+      "title": "Direct control"
+   },
+   {
+      "type":"shortcut",
+      "title":"Copy coordinates",
+      "desc":"To copy the coordinates in Direct mode",
+      "section":"shortcuts",
+      "key":"copy"
+   },
+   {
+      "type":"shortcut",
+      "title":"Move left",
+      "desc":"To move the system left",
+      "section":"shortcuts",
+      "key":"moveLeft"
+   },
+   {
+      "type":"shortcut",
+      "title":"Move right",
+      "desc":"To move the system right",
+      "section":"shortcuts",
+      "key":"moveRight"
+   },
+   {
+      "type":"shortcut",
+      "title":"Move up",
+      "desc":"To move the system up",
+      "section":"shortcuts",
+      "key":"moveUp"
+   },
+   {
+      "type":"shortcut",
+      "title":"Move down",
+      "desc":"To move the system down",
+      "section":"shortcuts",
+      "key":"moveDown"
+   }
+]

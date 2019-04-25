@@ -48,7 +48,11 @@ void loop() {
 }
 '''
 
-def generateFile(waypoints, photos):
+import numpy as np
+
+def generateFile(waypoints, photos, ratio):
+    waypoints = np.rint(np.multiply(waypoints, ratio)).tolist()
+
     top = "#include <AccelStepper.h>\n \
     AccelStepper Xaxis(AccelStepper::DRIVER, 54, 55);\n \
     AccelStepper Y1axis(AccelStepper::DRIVER, 60, 61);\n \
@@ -60,7 +64,7 @@ def generateFile(waypoints, photos):
     \n \
     const int waypointNb = 2;\n \
     int currentWaypoint = 0;\n \
-    const int waypoints[] = "+str(waypoints).replace("[", "{").replace("]", "}")+";\n \
+    const int waypoints[] = "+str(waypoints).replace("[", "{").replace("]", "}").replace(".0", "")+";\n \
     const bool photo[] = "+str(photos).replace("[", "{").replace("]", "}").replace("F", "f").replace("T", "t")+";\n \
     \n \
     bool hasStarted = false;\n\n" # Min, Max

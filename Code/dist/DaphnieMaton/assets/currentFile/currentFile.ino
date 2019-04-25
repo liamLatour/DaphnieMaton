@@ -9,8 +9,8 @@
      
      const int waypointNb = 2;
      int currentWaypoint = 0;
-     const int waypoints[] = {4.722222238779068, 46.770833333333336, 39.72222223877907, 18.645833333333336, -26.111111094554268, -23.43749999999999, 3.6805555721124015, 46.5625, -30.902777761220932, 15.937500000000025, 34.72222223877907, -25.52083333333332, 3.888888905445735, 46.5625};
-     const bool photo[] = {false, false, false, true, true, true, false};
+     const int waypoints[] = {-20363, -19500, -20363, 18300, -11814, -19500, -11814, 18300};
+     const bool photo[] = {true, false, true, false};
      
      bool hasStarted = false;
 
