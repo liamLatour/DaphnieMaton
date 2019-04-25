@@ -207,7 +207,14 @@ class Parametrage(BoxLayout):
     def checkItHasGoodProgram(self):
         self.moveDirect(bytes([9]))
         if self.board != -1:
-            response = self.board.readline()
+            try:
+                response = self.board.readline()
+            except:
+                try: self.popup.dismiss()
+                except: pass
+                self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
+                self.popup.open()
+
             response = response.decode("utf-8").rstrip()
             if response == "DaphnieMaton":
                 self.hasGoodProgram = True
@@ -281,20 +288,37 @@ class Parametrage(BoxLayout):
     def readFromSerial(self, *args):
         if self.port != -1:
             self.moveDirect(bytes([7]))
-            x = self.board.readline().decode("utf-8").rstrip()
-            y = self.board.readline().decode("utf-8").rstrip()
-            self.systemPosition = (x, y)
-            self.update_rect()
+            try:
+                x = self.board.readline().decode("utf-8").rstrip()
+                y = self.board.readline().decode("utf-8").rstrip()
+                self.systemPosition = (x, y)
+                self.update_rect()
+            except:
+                if self.readingClock != -1:
+                    self.readingClock.cancel()
+                    self.readingClock = -1
+                try: self.popup.dismiss()
+                except: pass
+                self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
+                self.popup.open()
 
     def getCallibrationAsync(self, *args):
         if self.port != -1 and self.board != -1:
             if self.board.in_waiting > 0:
-                data_str = self.board.readline().decode("utf-8").rstrip()
+                try:
+                    data_str = self.board.readline().decode("utf-8").rstrip()
+                except:
+                    try: self.popup.dismiss()
+                    except: pass
+                    self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
+                    self.popup.open()
                 self.settings.set("general", "stepToCm", str(data_str))
                 self.settings.write()
                 self.callibrateClock.cancel()
-                self.popup.dismiss()
-                Popup(title=_('Callibration successful'), content=Label(text=_('The DaphnieMaton has found it\'s ratio: ') + str(data_str) + " step/cm"), size_hint=(None, None), size=(400, 300)).open()
+                try: self.popup.dismiss()
+                except: pass
+                self.popup = Popup(title=_('Callibration successful'), content=Label(text=_('The DaphnieMaton has found it\'s ratio: ') + str(data_str) + " step/cm"), size_hint=(None, None), size=(400, 300))
+                self.popup.open()
                 print("Callibrated to " + str(data_str))
 
     def callibrate(self):
@@ -303,6 +327,8 @@ class Parametrage(BoxLayout):
             self.callibrateClock = Clock.schedule_interval(self.getCallibrationAsync, 0.5)
 
     def update(self, callibration=False, callback=None, *args):
+        try: self.popup.dismiss()
+        except: pass
         self.popup = Popup(title=_('Upload'), content=AsyncImage(source='.\\assets\\logo.png', size=(100, 100)), size_hint=(None, None), size=(400, 300), auto_dismiss=False)
         self.popup.open()
         if self.readingClock != -1:
@@ -316,8 +342,10 @@ class Parametrage(BoxLayout):
         self.uploading = True
 
         if not os.path.isfile(arduinoPath + '/arduino_debug.exe'):
-            self.popup.dismiss()
-            Popup(title=_('Arduino dir missing'), content=Label(text=_('The specified arduino path is not correct \n (under Option -> Arduino.exe path)'), text_size=self.popup.size, strip=True, valign='middle', halign='center', padding= (15, 35)), size_hint=(None, None), size=(400, 300)).open()
+            try: self.popup.dismiss()
+            except: pass
+            self.popup = Popup(title=_('Arduino dir missing'), content=Label(text=_('The specified arduino path is not correct \n (under Option -> Arduino.exe path)'), text_size=self.popup.size, strip=True, valign='middle', halign='center', padding= (15, 35)), size_hint=(None, None), size=(400, 300))
+            self.popup.open()
             return
 
         try:
@@ -356,16 +384,22 @@ class Parametrage(BoxLayout):
                     self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
 
                 print("DONE !")
-                self.popup.dismiss()
-                Popup(title=_('Success !'), content=Label(text=_('Upload finished successfully !')), size_hint=(None, None), size=(400, 300)).open()
+                try: self.popup.dismiss()
+                except: pass
+                self.popup = Popup(title=_('Success !'), content=Label(text=_('Upload finished successfully !')), size_hint=(None, None), size=(400, 300))
+                self.popup.open()
                 if callback != None:
                     callback()
             else:
-                self.popup.dismiss()
-                Popup(title=_('No port detected'), content=Label(text=_('No serial port was specified')), size_hint=(None, None), size=(400, 300)).open()
+                try: self.popup.dismiss()
+                except: pass
+                self.popup = Popup(title=_('No port detected'), content=Label(text=_('No serial port was specified')), size_hint=(None, None), size=(400, 300))
+                self.popup.open()
         except Exception as e:
-            self.popup.dismiss()
-            Popup(title=_('Oopsie...'), content=Label(text=_('Something went wrong, try again or report a bug') + "\n" + str(e)), size_hint=(None, None), size=(400, 300)).open()
+            try: self.popup.dismiss()
+            except: pass
+            self.popup = Popup(title=_('Oopsie...'), content=Label(text=_('Something went wrong, try again or report a bug') + "\n" + str(e)), size_hint=(None, None), size=(400, 300))
+            self.popup.open()
         self.uploading = False
 
     def changedTab(self, *args):
@@ -686,9 +720,16 @@ class Parametrage(BoxLayout):
             try:
                 self.board.write(direction)
             except:
-                self.board = serial.Serial(str(self.port), 9600, timeout=0.5)
-                time.sleep(2)
-                self.board.write(direction)
+                try:
+                    self.board = serial.Serial(str(self.port), 9600, timeout=0.5)
+                    time.sleep(2)
+                    self.board.write(direction)
+                except:
+                    try: self.popup.dismiss()
+                    except: pass
+                    self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
+                    self.popup.open()
+
             if shortcut == True:
                 if self.checkKeyClock != -1:
                     self.checkKeyClock.cancel()
