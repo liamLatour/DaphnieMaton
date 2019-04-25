@@ -190,12 +190,12 @@ class Parametrage(BoxLayout):
         self.portDropDown.add_widget(Button(text=_("No port"), height=48, size_hint_y= None, on_release=lambda a:self.change_port(-1)))
         arduinoPorts = getPorts()
         for port in arduinoPorts:
-            self.portDropDown.add_widget(Button(text="COM"+str(arduinoPorts[port]), height=48, size_hint_y= None, on_release=lambda a:self.change_port(arduinoPorts[port])))
+            self.portDropDown.add_widget(Button(text=port, height=48, size_hint_y= None, on_release=lambda a:self.change_port(port)))
 
-    def change_port(self, nb):
-        self.port = nb
-        if nb>= 0:
-            self.ids.port_button.text = _("Port") + " " + str(nb)
+    def change_port(self, port):
+        self.port = port
+        if port != -1:
+            self.ids.port_button.text = _("Port") + " " + port
 
             self.moveDirect(bytes([9]))
             if self.board != -1:
@@ -322,7 +322,7 @@ class Parametrage(BoxLayout):
                 except: pass
 
                 if callibration:
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+self.port+" --upload .\\assets\\directFile\\directFile.ino")            
                     self.hasGoodProgram = True
                     self.update_rect()
 
@@ -332,7 +332,7 @@ class Parametrage(BoxLayout):
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+self.port+" --upload .\\assets\\currentFile\\currentFile.ino")
                     self.hasGoodProgram = False
 
                 elif self.mode == "Free":
@@ -340,11 +340,11 @@ class Parametrage(BoxLayout):
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+self.port+" --upload .\\assets\\currentFile\\currentFile.ino")
                     self.hasGoodProgram = False
 
                 elif self.mode == "Direct":
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port COM"+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
+                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+self.port+" --upload .\\assets\\directFile\\directFile.ino")            
                     self.hasGoodProgram = True
                     self.update_rect()
                     self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
@@ -670,7 +670,7 @@ class Parametrage(BoxLayout):
             try:
                 self.board.write(direction)
             except:
-                self.board = serial.Serial('COM'+str(self.port), 9600, timeout=0.5)
+                self.board = serial.Serial(str(self.port), 9600, timeout=0.5)
                 time.sleep(2)
                 self.board.write(direction)
     

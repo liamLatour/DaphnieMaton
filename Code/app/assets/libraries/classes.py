@@ -21,7 +21,7 @@ from kivy.uix.switch import Switch
 from kivy.uix.textinput import TextInput
 from scipy.spatial import distance
 from .localization import _
-
+import os
 
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
@@ -278,12 +278,15 @@ def getPorts():
 
     returns: list of found devices on COM ports.
     """
+    """
     ports = list(serial.tools.list_ports.comports())
     arduinoPorts = {}
     for p in ports:
         match = re.search(r'COM(\d+)', str(p))
         if match:
             arduinoPorts[str(p)] = int(match.group(1))
+    """
+    arduinoPorts = os.popen("python -m serial.tools.list_ports").read().strip().replace(' ', '').split('\n')
 
     return arduinoPorts
 

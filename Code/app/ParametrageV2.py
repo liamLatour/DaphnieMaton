@@ -1,6 +1,6 @@
 import ctypes
 from io import open as openFile
-
+import traceback
 import keyboard
 from kivy.app import App
 from kivy.config import Config
@@ -130,4 +130,5 @@ if __name__ == '__main__':
     try:
         DaphnieMatonApp().run()
     except Exception as e:
+        traceback.print_tb(e.__traceback__)
         ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n" + str(e), u"DaphnieMaton Error", 0)
