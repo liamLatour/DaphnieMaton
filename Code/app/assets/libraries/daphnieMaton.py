@@ -74,7 +74,7 @@ class Parametrage(BoxLayout):
         self.checkKeyClock = -1
         self.systemPosition = (0, 0)
         self.hasGoodProgram = False
-        self.uploading = False
+        self.boardBusy = False
 
         Clock.schedule_once(self.binding)
         Clock.schedule_interval(partial(self.save, -1, -1), int(self.settings.get('general', 'autoSave'))*60)
@@ -205,7 +205,7 @@ class Parametrage(BoxLayout):
         self.portDropDown.dismiss()
 
     def checkItHasGoodProgram(self):
-        self.moveDirect(bytes([9]))
+        self.moveDirect(bytes([9]), urgent=True)
         if self.board != -1:
             try:
                 response = self.board.readline()
@@ -220,6 +220,7 @@ class Parametrage(BoxLayout):
                 self.hasGoodProgram = True
                 self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
                 self.update_rect()
+        self.boardBusy = False        
 
     # Saving and loading system
     def dismiss_popup(self):
@@ -289,8 +290,8 @@ class Parametrage(BoxLayout):
         if self.port != -1:
             self.moveDirect(bytes([7]))
             try:
-                x = self.board.readline().decode("utf-8").rstrip()
                 y = self.board.readline().decode("utf-8").rstrip()
+                x = self.board.readline().decode("utf-8").rstrip()
                 self.systemPosition = (x, y)
                 self.update_rect()
             except:
@@ -339,7 +340,7 @@ class Parametrage(BoxLayout):
 
     def updateAsync(self, callibration, callback):
         arduinoPath = self.settings.get('general', 'arduinoPath')
-        self.uploading = True
+        self.boardBusy = True
 
         if not os.path.isfile(arduinoPath + '/arduino_debug.exe'):
             try: self.popup.dismiss()
@@ -400,7 +401,7 @@ class Parametrage(BoxLayout):
             except: pass
             self.popup = Popup(title=_('Oopsie...'), content=Label(text=_('Something went wrong, try again or report a bug') + "\n" + str(e)), size_hint=(None, None), size=(400, 300))
             self.popup.open()
-        self.uploading = False
+        self.boardBusy = False
 
     def changedTab(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
@@ -410,6 +411,14 @@ class Parametrage(BoxLayout):
             self.readingClock = -1
 
         self.zoomFactor = float('inf')
+
+        if self.mode == "Direct":
+                self.moveDirect(bytes([9]))
+                if self.board != -1:
+                    response = self.board.readline().decode("utf-8").rstrip()
+                    if response == "DaphnieMaton":
+                        self.hasGoodProgram = True
+                        self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
 
         self.update_rect()
 
@@ -714,8 +723,11 @@ class Parametrage(BoxLayout):
                 self.checkKeyClock.cancel()
                 self.checkKeyClock = -1
 
-    def moveDirect(self, direction, shortcut=False, *args):
-        if self.uploading: return
+    def moveDirect(self, direction, shortcut=False, urgent=False, *args):
+        if self.boardBusy:
+            return
+        if urgent:
+            self.boardBusy = True
         if self.port != -1:
             try:
                 self.board.write(direction)
