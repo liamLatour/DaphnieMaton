@@ -1,6 +1,8 @@
 import re
+import threading
 from math import cos, pow, sin, sqrt
-
+import time
+import keyboard
 import kivy.utils as utils
 import serial.tools.list_ports
 from kivy.clock import Clock
@@ -18,6 +20,7 @@ from kivy.uix.settings import SettingItem
 from kivy.uix.switch import Switch
 from kivy.uix.textinput import TextInput
 from scipy.spatial import distance
+from .localization import _
 
 
 class LoadDialog(FloatLayout):
@@ -50,6 +53,74 @@ class SettingButtons(SettingItem):
 
     def On_ButtonPressed(self,instance):
         self.panel.settings.dispatch('on_config_change',self.panel.config, self.section, self.key, instance.ID)
+
+
+class SettingShortcut(SettingItem):
+    popup = ObjectProperty(None, allownone=True)
+    textinput = ObjectProperty(None)
+
+    def __init__(self, **kwargs):
+        super(SettingShortcut, self).__init__(**kwargs)
+
+        try:
+            self.value
+        except NameError:
+            self.value = "Not defined"
+
+        self.curentShortcut = Label(text=self.value)
+        self.curValue = self.value
+        self.add_widget(self.curentShortcut)
+
+    def on_panel(self, instance, value):
+        if value is None:
+            return
+        self.bind(on_release=self._create_popup)
+
+    def _dismiss(self, *largs):
+        self.running = False
+        if self.textinput:
+            self.textinput.focus = False
+        if self.popup:
+            self.popup.dismiss()
+        self.popup = None
+
+    def _validate(self, instance):
+        self._dismiss()
+        self.running = False
+        self.value = self.curValue
+        self.curentShortcut.text = self.value
+
+    def _inputget(self, *args):
+        while self.running and threading.main_thread().is_alive():
+            hotkey = keyboard.read_hotkey(False)
+            self.curValue = hotkey
+            self.shortcutPicker.text = _("Press any key combination") + "\n" + hotkey
+            time.sleep(0.5)
+
+    def _create_popup(self, instance):
+        # create popup layout
+        content = BoxLayout(orientation='vertical', spacing='5dp')
+        self.popup = popup = Popup(title=self.title, content=content, size_hint=(0.7, 0.6))
+
+        self.shortcutPicker = shortcutPicker = Label(text=_("Press any key combination") + "\n" + self.value, valign='middle', halign='center')
+        content.add_widget(shortcutPicker)
+
+        # 2 buttons are created for accept or cancel the current value
+        btnlayout = BoxLayout(size_hint_y=None, height='50dp', spacing='5dp')
+        btn = Button(text='Ok')
+        btn.bind(on_release=self._validate)
+        btnlayout.add_widget(btn)
+        btn = Button(text='Cancel')
+        btn.bind(on_release=self._dismiss)
+        btnlayout.add_widget(btn)
+        content.add_widget(btnlayout)
+
+        # all done, open the popup !
+        popup.open()
+
+        # start to listen for hotkey press
+        self.running = True
+        threading.Thread(target=self._inputget).start()
 
 
 class SettingColorPicker(SettingItem):

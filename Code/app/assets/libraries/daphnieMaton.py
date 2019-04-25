@@ -1,3 +1,4 @@
+import ctypes
 import os
 import re
 import threading
@@ -244,8 +245,7 @@ class Parametrage(BoxLayout):
             self.tuyeauGap()
             self.dismiss_popup()
         except Exception as e:
-            print(e)
-            print("wrong file")
+            ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n" + str(e), u"Wrong File Error", 0)
 
     def save(self, path, filename, *args):
         if path == -1:
@@ -328,7 +328,7 @@ class Parametrage(BoxLayout):
 
                 elif self.mode == "Pipe":
                     parcours = self.generatePathFromPipe()
-                    genFile = generateFile(parcours[0], parcours[1])
+                    genFile = generateFile(parcours[0], parcours[1], float(self.settings.get('general', 'stepToCm')))
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
@@ -336,7 +336,7 @@ class Parametrage(BoxLayout):
                     self.hasGoodProgram = False
 
                 elif self.mode == "Free":
-                    genFile = generateFile(self.params["trace"], self.params["photos"])
+                    genFile = generateFile(self.params["trace"], self.params["photos"], float(self.settings.get('general', 'stepToCm')))
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
@@ -436,8 +436,6 @@ class Parametrage(BoxLayout):
                 path.append(xPosition)
                 path.append(yPosition + length*ratioY)
                 photos.append(False)
-
-        
 
         if copy:
             self.params["trace"] = path
@@ -643,8 +641,8 @@ class Parametrage(BoxLayout):
                 Rectangle(pos = self.pos, size = (self.size[0], self.ids.directSplitter.size[1]))
 
             with self.ids.directDrawing.canvas.before:
-                text = "X: " + str(self.systemPosition[0]) + " "+_("step") + \
-                        "\nY: " + str(self.systemPosition[1]) + " "+("step")
+                text = "X: " + str(round(float(self.systemPosition[0])/float(self.settings.get('general', 'stepToCm'))*100)/100) + " "+_("cm") + \
+                        "\nY: " + str(round(float(self.systemPosition[1])/float(self.settings.get('general', 'stepToCm'))*100)/100) + " "+("cm")
 
                 Color(1,1,1, .2)
                 Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +95)), size = (200, 70))
