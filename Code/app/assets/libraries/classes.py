@@ -335,8 +335,7 @@ def checkUpdates(versionFile):
     """
     url = 'https://raw.githubusercontent.com/liamLatour/DaphnieMaton/master/version'
     req = requests.get(url).text
-    print(req)
-
+    
     if os.path.isfile(versionFile):
         # Store configuration file values
         f = open(versionFile, "r")

@@ -91,13 +91,12 @@ class Parametrage(BoxLayout):
         self.tuyeauGap()
 
         newVersion = checkUpdates("../../version")
-        print(newVersion)
-
+        textPopup = "[u]A new version is available ![/u]\n\n \
+You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/master.zip][color=0083ff][u]here[/u][/color][/ref]"
         if newVersion != False:
             self.popup = Popup(title=_('New Version ' + newVersion), size_hint=(0.7, 0.7))
             self.popbox = BoxLayout()
-            self.poplb = MyLabel(text="[u]A new version is available ![/u]\n\n \
-    You can download it [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]here[/u][/color][/ref]")
+            self.poplb = Label(text=textPopup, markup = True)
             self.poplb.bind(on_ref_press=urlOpen)
             self.popbox.add_widget(self.poplb)
             self.popup.content = self.popbox
