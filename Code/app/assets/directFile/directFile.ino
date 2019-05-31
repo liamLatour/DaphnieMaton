@@ -70,8 +70,7 @@ void loop() {
         break;
       case 10:
         // callibrate
-        delay(5000);
-        Serial.println("300"); // step to cm
+        callibrate();
         break;
       default:
         break;
@@ -97,4 +96,26 @@ void loop() {
     Y1axis.runSpeed();
     Y2axis.runSpeed();
   }
+}
+
+void callibrate() {
+  // Going to the end
+  Xaxis.setSpeed(500);
+  while(!digitalRead(X_Stops[1])){
+    Xaxis.runSpeed();
+  }
+
+  // It arrived
+  Xaxis.setCurrentPosition(0);
+
+  // Go to the origin
+  Xaxis.setSpeed(-500);
+  while(!digitalRead(X_Stops[0])){
+    Xaxis.runSpeed();
+  }
+
+  Serial.println(Xaxis.currentPosition()); // cm * 300 = step (nb of steps in 1 cm)
+
+  //Reset origin
+  Xaxis.setCurrentPosition(0);
 }

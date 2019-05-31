@@ -13,6 +13,10 @@ from assets.libraries.daphnieMaton import Parametrage
 from assets.libraries.localization import (change_language_to,
                                            translation_to_language_code)
 
+
+import requests
+import base64
+
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Config.set('kivy','window_icon','assets/logoDark.ico')
 
@@ -127,6 +131,18 @@ class DaphnieMatonApp(App):
         change_language_to(translation_to_language_code(config_language))
 
 if __name__ == '__main__':
+    # Check if there is a new version
+    url = 'https://api.github.com/repos/{user}/{repo_name}/contents/{path_to_file}'
+    req = requests.get(url)
+    if req.status_code == requests.codes.ok:
+        req = req.json()  # the response is a JSON
+        # req is now a dict with keys: name, encoding, url, size ...
+        # and content. But it is encoded with base64.
+        content = base64.decodestring(req['content'])
+        print(content)
+    else:
+        print('Content was not found.')
+
     try:
         DaphnieMatonApp().run()
     except Exception as e:
