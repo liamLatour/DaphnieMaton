@@ -28,7 +28,7 @@ from scipy.spatial import distance
 
 from . import undoRedo as UndoRedo
 from .classes import (Input, LoadDialog, MenuDropDown, MyLabel, SaveDialog,
-                      getPorts, hitLine, polToCar, urlOpen)
+                      getPorts, hitLine, polToCar, urlOpen, checkUpdates)
 from .createFile import generateFile
 from .helpMsg import directHelp, freeHelp, pipeHelp
 from .localization import _
@@ -89,6 +89,19 @@ class Parametrage(BoxLayout):
         self.newFile(False)
         self.updateColors(refresh=False)
         self.tuyeauGap()
+
+        newVersion = checkUpdates("../../version")
+        print(newVersion)
+
+        if newVersion != False:
+            self.popup = Popup(title=_('New Version ' + newVersion), size_hint=(0.7, 0.7))
+            self.popbox = BoxLayout()
+            self.poplb = MyLabel(text="[u]A new version is available ![/u]\n\n \
+    You can download it [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]here[/u][/color][/ref]")
+            self.poplb.bind(on_ref_press=urlOpen)
+            self.popbox.add_widget(self.poplb)
+            self.popup.content = self.popbox
+            self.popup.open()
 
     def updateColors(self, refresh=True):
         self.pipeColor = utils.get_color_from_hex(self.settings.get('colors', 'pipeColor'))
