@@ -1,68 +1,22 @@
-'''
-File will look like this:
-
-
-
-#include <AccelStepper.h>
-
-AccelStepper Xaxis(AccelStepper::DRIVER, 54, 55); // pin 54 = step, pin 55 = direction, pin 38 = enable
-AccelStepper Y1axis(AccelStepper::DRIVER, 60, 61); // pin 60 = step, pin 61 = direction, pin 56 = enable
-AccelStepper Y2axis(AccelStepper::DRIVER, 46, 48); // pin 46 = step, pin 48 = direction, pin 62 = enable
-
-waypoints = [x1, y1, x2, y2, x3, y3, ...]   // size = n
-takePhotos = [true, false, false, ...]      // size = n/2; it defines at the same time speed and photo taking
-/* Other constants */
-
-
-void setup(){
-    Xaxis.setEnablePin(38);
-    Y1axis.setEnablePin(56);
-    Y2axis.setEnablePin(62);
-
-    Xaxis.setPinsInverted(false, false, true);
-    Y1axis.setPinsInverted(false, false, true);
-    Y2axis.setPinsInverted(false, false, true);
-
-    Xaxis.enableOutputs();
-    Y1axis.enableOutputs();
-    Y2axis.enableOutputs();
-    
-    Xaxis.setMaxSpeed(850);
-    Y1axis.setMaxSpeed(850);
-    Y2axis.setMaxSpeed(850);
-
-    Xaxis.setAcceleration(800);
-    Y1axis.setAcceleration(800);
-    Y2axis.setAcceleration(800);
-    
-    Xaxis.setSpeed(500);
-    Y1axis.setSpeed(500);
-    Y2axis.setSpeed(500);
-}
-
-void loop() {
-   Xaxis.moveTo(5000); // For acceleration
-   Xaxis.run();
-   Y1axis.runSpeed();   // For constant speed
-   Y2axis.runSpeed();
-}
-'''
-
 import numpy as np
 
 def generateFile(waypoints, photos, ratio):
-    waypoints = np.rint(np.multiply(waypoints, ratio)).tolist()
+    waypoints = list(np.rint(np.multiply(waypoints, ratio)).tolist())
 
     top = "#include <AccelStepper.h>\n \
-    AccelStepper Xaxis(AccelStepper::DRIVER, 54, 55);\n \
-    AccelStepper Y1axis(AccelStepper::DRIVER, 60, 61);\n \
+    #define LED_PIN            13\n \
+    AccelStepper Xaxis(AccelStepper::DRIVER, 60, 61);\n \
+    AccelStepper Y1axis(AccelStepper::DRIVER, 54, 55);\n \
     AccelStepper Y2axis(AccelStepper::DRIVER, 46, 48);\n \
     \n \
-    const int X_Stops[] = {3, 2};\n \
-    const int Y1_Stops[] = {14, 15};\n \
-    const int Y2_Stops[] = {18, 19};\n \
+    const int A = 3;\n \
+    const int B = 15;\n \
+    const int C = 18;\n \
+    const int D = 2;\n \
+    const int MA = 19;\n \
+    const int MD = 14;\n \
     \n \
-    const int waypointNb = 2;\n \
+    const int waypointNb = "+str(round(len(waypoints)/2))+";\n \
     int currentWaypoint = 0;\n \
     const int waypoints[] = "+str(waypoints).replace("[", "{").replace("]", "}").replace(".0", "")+";\n \
     const bool photo[] = "+str(photos).replace("[", "{").replace("]", "}").replace("F", "f").replace("T", "t")+";\n \
@@ -86,50 +40,56 @@ def generateFile(waypoints, photos, ratio):
         Xaxis.setAcceleration(800);\n \
         Y1axis.setAcceleration(800);\n \
         Y2axis.setAcceleration(800);\n \
-        Xaxis.setSpeed(-500);\n \
-        Y1axis.setSpeed(-500);\n \
-        Y2axis.setSpeed(-500);\n \
+        pinMode(40, INPUT_PULLUP);\n \
     }\n\n"
 
     loop = "void loop() {\n \
-        if(hasStarted){\n \
-            if(!digitalRead(X_Stops[0]) && !digitalRead(X_Stops[1])){\n \
-                Xaxis.moveTo(waypoints[currentWaypoint*2]);\n \
-                Xaxis.run();\n \
-                if(photo[currentWaypoint]){\n \
-                    Xaxis.setSpeed(850);\n \
-                }\n \
-            }\n \
-            if(!digitalRead(Y1_Stops[0]) && !digitalRead(Y2_Stops[0]) && !digitalRead(Y1_Stops[1]) && !digitalRead(Y2_Stops[1])){\n \
-                Y1axis.moveTo(waypoints[currentWaypoint*2+1]);\n \
-                Y1axis.run();\n \
-                Y2axis.moveTo(waypoints[currentWaypoint*2+1]);\n \
-                Y2axis.run();\n \
-                if(photo[currentWaypoint]){\n \
-                    Y1axis.setSpeed(850);\n \
-                    Y2axis.setSpeed(850);\n \
-                }\n \
-            }\n \
-            if(Xaxis.distanceToGo()==0 && (Y1axis.distanceToGo()==0 || Y2axis.distanceToGo()==0)){\n \
-                currentWaypoint = (currentWaypoint+1)%waypointNb;\n \
-            }\n \
-        }\n \
-        else{\n \
-            if(!digitalRead(X_Stops[0])){\n \
-                Xaxis.runSpeed();\n \
-            }\n \
-            if(!digitalRead(Y1_Stops[0]) && !digitalRead(Y2_Stops[0])){\n \
-                Y1axis.runSpeed();\n \
-                Y2axis.runSpeed();\n \
-            }\n \
-            if(digitalRead(X_Stops[0]) && (digitalRead(Y1_Stops[0]) || digitalRead(Y2_Stops[0]))){\n \
-                hasStarted = true;\n \
-                Xaxis.setCurrentPosition(0);\n \
-                Y1axis.setCurrentPosition(0);\n \
-                Y2axis.setCurrentPosition(0);\n \
+        if(digitalRead(40) == 1){\n \
+            if(hasStarted){\n \
                 Xaxis.setSpeed(500);\n \
                 Y1axis.setSpeed(500);\n \
                 Y2axis.setSpeed(500);\n \
+                Xaxis.moveTo(waypoints[currentWaypoint*2]);\n \
+                Y1axis.moveTo(waypoints[currentWaypoint*2+1]);\n \
+                Y2axis.moveTo(waypoints[currentWaypoint*2+1]);\n \
+                if( (Xaxis.speed()>0 && digitalRead(MD)) || (Xaxis.speed()<0 && digitalRead(MA)) ){\n \
+                    Xaxis.runSpeedToPosition();\n \
+                    if(photo[currentWaypoint]){\n \
+                        //Gotta take them\n \
+                    }\n \
+                }\n \
+                if( (Y1axis.speed()>0 && digitalRead(B) && digitalRead(C)) || (Y1axis.speed()<0 && digitalRead(A) && digitalRead(D)) ){\n \
+                    Y1axis.runSpeedToPosition();\n \
+                    Y2axis.runSpeedToPosition();\n \
+                    if(photo[currentWaypoint]){\n \
+                        //Gotta take them\n \
+                    }\n \
+                }\n \
+                if(Xaxis.distanceToGo()==0 && (Y1axis.distanceToGo()==0 || Y2axis.distanceToGo()==0)){\n \
+                    currentWaypoint = (currentWaypoint+1)%waypointNb;\n \
+                    delay(500);\n \
+                }\n \
+            }\n \
+            else{\n \
+                Xaxis.setSpeed(-500);\n \
+                Y1axis.setSpeed(-500);\n \
+                Y2axis.setSpeed(-500);\n \
+                if(digitalRead(MA)){\n \
+                    Xaxis.runSpeed();\n \
+                }\n \
+                if(digitalRead(A) && digitalRead(D)){\n \
+                    Y1axis.runSpeed();\n \
+                    Y2axis.runSpeed();\n \
+                }\n \
+                if(!digitalRead(MA) && (!digitalRead(A) || !digitalRead(D))){\n \
+                    hasStarted = true;\n \
+                    Xaxis.setCurrentPosition(0);\n \
+                    Y1axis.setCurrentPosition(0);\n \
+                    Y2axis.setCurrentPosition(0);\n \
+                    Xaxis.setSpeed(500);\n \
+                    Y1axis.setSpeed(500);\n \
+                    Y2axis.setSpeed(500);\n \
+                }\n \
             }\n \
         }\n \
     }"

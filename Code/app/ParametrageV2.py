@@ -64,6 +64,8 @@ class DaphnieMatonApp(App):
             'arduinoPath': 'C:\\',
             'savePath': 'C:\\',
             'stepToCm': 100,
+            'yDist': 100,
+            'xDist': 100,
             'autoSave': 5,
             'language': "English"})
         config.setdefaults('shortcuts', {

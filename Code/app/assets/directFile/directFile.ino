@@ -2,13 +2,16 @@
 
 #define LED_PIN            13
 
-AccelStepper Xaxis(AccelStepper::DRIVER, 54, 55);
-AccelStepper Y1axis(AccelStepper::DRIVER, 60, 61);
+AccelStepper Xaxis(AccelStepper::DRIVER, 60, 61);
+AccelStepper Y1axis(AccelStepper::DRIVER, 54, 55);
 AccelStepper Y2axis(AccelStepper::DRIVER, 46, 48);
- 
-const int X_Stops[] = {3, 2};
-const int Y1_Stops[] = {14, 15};
-const int Y2_Stops[] = {18, 19};
+
+const int A = 3;
+const int B = 15;
+const int C = 18;
+const int D = 2;
+const int MA = 19; //Milieu coté A
+const int MD = 14; //Milieu coté A
 
 int runningX = 0;
 int runningY = 0;
@@ -29,9 +32,7 @@ void setup(){
   Xaxis.setAcceleration(800);
   Y1axis.setAcceleration(800);
   Y2axis.setAcceleration(800);
-  Xaxis.setSpeed(-500);
-  Y1axis.setSpeed(-500);
-  Y2axis.setSpeed(-500);
+
   Serial.begin(9600);
 }
 
@@ -42,15 +43,21 @@ void loop() {
     switch (incomingByte) {
       case 1:
         runningY = 1;
+        Y1axis.setSpeed(500);
+        Y2axis.setSpeed(500);
         break;
       case 2:
-        runningY = -1;
+        runningY = 1;
+        Y1axis.setSpeed(-500);
+        Y2axis.setSpeed(-500);
         break;
       case 3:
         runningX = 1;
+        Xaxis.setSpeed(500);
         break;
       case 4:
-        runningX = -1;
+        runningX = 1;
+        Xaxis.setSpeed(-500);
         break;
       case 5:
         runningY = 0;
@@ -59,40 +66,27 @@ void loop() {
         runningX = 0;
         break;
       case 7:
-        Serial.println(Xaxis.currentPosition());
-        Serial.println(Y1axis.currentPosition());
-        break;
-      case 8:
-        // remise à zero
-        break;
-      case 9:
-        Serial.println("DaphnieMaton");
-        break;
-      case 10:
-        // callibrate
-        callibrate();
+        String tosend = "{\"X\":" + String(Xaxis.currentPosition()) + ", \"Y\":" + String(Y1axis.currentPosition()) + ", \"A\":" + digitalRead(A) + ", \"B\":" + digitalRead(B) + ", \"C\":" + digitalRead(C) + ", \"D\":" + digitalRead(D) + ", \"MA\":" + digitalRead(MA) + ", \"MD\":" + digitalRead(MD) + "}"; 
+        Serial.println(tosend);
         break;
       default:
         break;
     }
+
+    if (incomingByte == 8){
+      // remise à zero
+    }
+    else if (incomingByte == 9){
+      Serial.println("DaphnieMaton");
+    }
+    else if (incomingByte == 10){
+      callibrate();
+    }
   }
-  if(runningX == 1){
-    Xaxis.setSpeed(500);
+  if(runningX == 1 && ((Xaxis.speed()>0 && digitalRead(MD)) || (Xaxis.speed()<0 && digitalRead(MA)))){
     Xaxis.runSpeed();
   }
-  if(runningX == -1){
-    Xaxis.setSpeed(-500);
-    Xaxis.runSpeed();
-  }
-  if(runningY == 1){
-    Y1axis.setSpeed(500);
-    Y2axis.setSpeed(500);
-    Y1axis.runSpeed();
-    Y2axis.runSpeed();
-  }
-  if(runningY == -1){
-    Y1axis.setSpeed(-500);
-    Y2axis.setSpeed(-500);
+  if(runningY == 1 && ((Y1axis.speed()>0 && digitalRead(B) && digitalRead(C)) || (Y1axis.speed()<0 && digitalRead(A) && digitalRead(D)))){
     Y1axis.runSpeed();
     Y2axis.runSpeed();
   }
@@ -101,7 +95,7 @@ void loop() {
 void callibrate() {
   // Going to the end
   Xaxis.setSpeed(500);
-  while(!digitalRead(X_Stops[1])){
+  while(digitalRead(MD)){
     Xaxis.runSpeed();
   }
 
@@ -110,11 +104,11 @@ void callibrate() {
 
   // Go to the origin
   Xaxis.setSpeed(-500);
-  while(!digitalRead(X_Stops[0])){
+  while(digitalRead(MA)){
     Xaxis.runSpeed();
   }
 
-  Serial.println(Xaxis.currentPosition()); // cm * 300 = step (nb of steps in 1 cm)
+  Serial.println(abs(Xaxis.currentPosition()));
 
   //Reset origin
   Xaxis.setCurrentPosition(0);

@@ -17,6 +17,20 @@
    },
    {
       "type":"numeric",
+      "title":"Y's distance",
+      "desc":"Distance in cm between the two switchs of the Y axis",
+      "section":"general",
+      "key":"yDist"
+   },
+   {
+      "type":"numeric",
+      "title":"X's distance",
+      "desc":"Distance in cm between two of the switchs of the X axis",
+      "section":"general",
+      "key":"xDist"
+   },
+   {
+      "type":"numeric",
       "title":"Step to cm",
       "desc":"Number of steps in one cm",
       "section":"general",
