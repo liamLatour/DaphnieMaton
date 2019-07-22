@@ -80,7 +80,7 @@ void loop() {
       Serial.println("DaphnieMaton");
     }
     else if (incomingByte == 10){
-      callibrate();
+      calibrate();
     }
   }
   if(runningX == 1 && ((Xaxis.speed()>0 && digitalRead(MD)) || (Xaxis.speed()<0 && digitalRead(MA)))){
@@ -92,7 +92,7 @@ void loop() {
   }
 }
 
-void callibrate() {
+void calibrate() {
   // Going to the end
   Xaxis.setSpeed(500);
   while(digitalRead(MD)){

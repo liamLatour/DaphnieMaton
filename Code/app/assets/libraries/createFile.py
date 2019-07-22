@@ -1,10 +1,11 @@
 import numpy as np
 
-def generateFile(waypoints, photos, ratio):
+def generateFile(waypoints, photos, ratio, action):
     waypoints = list(np.rint(np.multiply(waypoints, ratio)).tolist())
 
     top = "#include <AccelStepper.h>\n \
-    #define LED_PIN            13\n \
+    #include <"+str(action)+">\n \
+    #define LED_PIN 13\n \
     AccelStepper Xaxis(AccelStepper::DRIVER, 60, 61);\n \
     AccelStepper Y1axis(AccelStepper::DRIVER, 54, 55);\n \
     AccelStepper Y2axis(AccelStepper::DRIVER, 46, 48);\n \

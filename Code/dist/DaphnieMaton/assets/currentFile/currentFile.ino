@@ -1,16 +1,20 @@
 #include <AccelStepper.h>
-     AccelStepper Xaxis(AccelStepper::DRIVER, 54, 55);
-     AccelStepper Y1axis(AccelStepper::DRIVER, 60, 61);
+     #define LED_PIN            13
+     AccelStepper Xaxis(AccelStepper::DRIVER, 60, 61);
+     AccelStepper Y1axis(AccelStepper::DRIVER, 54, 55);
      AccelStepper Y2axis(AccelStepper::DRIVER, 46, 48);
      
-     const int X_Stops[] = {3, 2};
-     const int Y1_Stops[] = {14, 15};
-     const int Y2_Stops[] = {18, 19};
+     const int A = 3;
+     const int B = 15;
+     const int C = 18;
+     const int D = 2;
+     const int MA = 19;
+     const int MD = 14;
      
-     const int waypointNb = 2;
+     const int waypointNb = 6;
      int currentWaypoint = 0;
-     const int waypoints[] = {-20363, -19500, -20363, 18300, -11814, -19500, -11814, 18300};
-     const bool photo[] = {true, false, true, false};
+     const int waypoints[] = {315, 315, 5985, 315, 315, 1575, 5985, 1575, 315, 2835, 5985, 2835};
+     const bool photo[] = {true, false, true, false, true, false};
      
      bool hasStarted = false;
 
@@ -30,50 +34,56 @@ void setup(){
          Xaxis.setAcceleration(800);
          Y1axis.setAcceleration(800);
          Y2axis.setAcceleration(800);
-         Xaxis.setSpeed(-500);
-         Y1axis.setSpeed(-500);
-         Y2axis.setSpeed(-500);
+         pinMode(40, INPUT_PULLUP);
      }
 
 void loop() {
-         if(hasStarted){
-             if(!digitalRead(X_Stops[0]) && !digitalRead(X_Stops[1])){
-                 Xaxis.moveTo(waypoints[currentWaypoint*2]);
-                 Xaxis.run();
-                 if(photo[currentWaypoint]){
-                     Xaxis.setSpeed(850);
-                 }
-             }
-             if(!digitalRead(Y1_Stops[0]) && !digitalRead(Y2_Stops[0]) && !digitalRead(Y1_Stops[1]) && !digitalRead(Y2_Stops[1])){
-                 Y1axis.moveTo(waypoints[currentWaypoint*2+1]);
-                 Y1axis.run();
-                 Y2axis.moveTo(waypoints[currentWaypoint*2+1]);
-                 Y2axis.run();
-                 if(photo[currentWaypoint]){
-                     Y1axis.setSpeed(850);
-                     Y2axis.setSpeed(850);
-                 }
-             }
-             if(Xaxis.distanceToGo()==0 && (Y1axis.distanceToGo()==0 || Y2axis.distanceToGo()==0)){
-                 currentWaypoint = (currentWaypoint+1)%waypointNb;
-             }
-         }
-         else{
-             if(!digitalRead(X_Stops[0])){
-                 Xaxis.runSpeed();
-             }
-             if(!digitalRead(Y1_Stops[0]) && !digitalRead(Y2_Stops[0])){
-                 Y1axis.runSpeed();
-                 Y2axis.runSpeed();
-             }
-             if(digitalRead(X_Stops[0]) && (digitalRead(Y1_Stops[0]) || digitalRead(Y2_Stops[0]))){
-                 hasStarted = true;
-                 Xaxis.setCurrentPosition(0);
-                 Y1axis.setCurrentPosition(0);
-                 Y2axis.setCurrentPosition(0);
+         if(digitalRead(40) == 1){
+             if(hasStarted){
                  Xaxis.setSpeed(500);
                  Y1axis.setSpeed(500);
                  Y2axis.setSpeed(500);
+                 Xaxis.moveTo(waypoints[currentWaypoint*2]);
+                 Y1axis.moveTo(waypoints[currentWaypoint*2+1]);
+                 Y2axis.moveTo(waypoints[currentWaypoint*2+1]);
+                 if( (Xaxis.speed()>0 && digitalRead(MD)) || (Xaxis.speed()<0 && digitalRead(MA)) ){
+                     Xaxis.runSpeedToPosition();
+                     if(photo[currentWaypoint]){
+                         //Gotta take them
+                     }
+                 }
+                 if( (Y1axis.speed()>0 && digitalRead(B) && digitalRead(C)) || (Y1axis.speed()<0 && digitalRead(A) && digitalRead(D)) ){
+                     Y1axis.runSpeedToPosition();
+                     Y2axis.runSpeedToPosition();
+                     if(photo[currentWaypoint]){
+                         //Gotta take them
+                     }
+                 }
+                 if(Xaxis.distanceToGo()==0 && (Y1axis.distanceToGo()==0 || Y2axis.distanceToGo()==0)){
+                     currentWaypoint = (currentWaypoint+1)%waypointNb;
+                     delay(500);
+                 }
+             }
+             else{
+                 Xaxis.setSpeed(-500);
+                 Y1axis.setSpeed(-500);
+                 Y2axis.setSpeed(-500);
+                 if(digitalRead(MA)){
+                     Xaxis.runSpeed();
+                 }
+                 if(digitalRead(A) && digitalRead(D)){
+                     Y1axis.runSpeed();
+                     Y2axis.runSpeed();
+                 }
+                 if(!digitalRead(MA) && (!digitalRead(A) || !digitalRead(D))){
+                     hasStarted = true;
+                     Xaxis.setCurrentPosition(0);
+                     Y1axis.setCurrentPosition(0);
+                     Y2axis.setCurrentPosition(0);
+                     Xaxis.setSpeed(500);
+                     Y1axis.setSpeed(500);
+                     Y2axis.setSpeed(500);
+                 }
              }
          }
      }

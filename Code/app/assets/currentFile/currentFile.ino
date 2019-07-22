@@ -13,7 +13,7 @@
      
      const int waypointNb = 4;
      int currentWaypoint = 0;
-     const int waypoints[] = {5989, 315, 315, 315, 315, 1576, 5989, 1576};
+     const int waypoints[] = {315, 315, 5985, 315, 315, 1575, 5985, 1575};
      const bool photo[] = {true, false, true, false};
      
      bool hasStarted = false;

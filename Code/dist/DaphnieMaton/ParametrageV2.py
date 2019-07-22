@@ -1,6 +1,7 @@
 import ctypes
-from io import open as openFile
 import traceback
+from io import open as openFile
+
 import keyboard
 from kivy.app import App
 from kivy.config import Config
@@ -51,10 +52,10 @@ class DaphnieMatonApp(App):
 
         for short in self.shortcuts:
             if len(self.shortcuts[short]) == 2:
-                self.shortcuts[short].append(keyboard.add_hotkey(self.config.get('shortcuts', short), self.shortcuts[short][0], suppress=True, trigger_on_release=False))
-                self.shortcuts[short].append(keyboard.add_hotkey(self.config.get('shortcuts', short), self.shortcuts[short][1], suppress=True, trigger_on_release=True))
+                self.shortcuts[short].append(keyboard.add_hotkey(self.config.get('shortcuts', short), self.shortcuts[short][0], suppress=False, trigger_on_release=False))
+                self.shortcuts[short].append(keyboard.add_hotkey(self.config.get('shortcuts', short), self.shortcuts[short][1], suppress=False, trigger_on_release=True))
             else:
-                self.shortcuts[short].append(keyboard.add_hotkey(self.config.get('shortcuts', short), self.shortcuts[short][0], suppress=True))
+                self.shortcuts[short].append(keyboard.add_hotkey(self.config.get('shortcuts', short), self.shortcuts[short][0], suppress=False))
 
         return self.app
 
@@ -63,6 +64,8 @@ class DaphnieMatonApp(App):
             'arduinoPath': 'C:\\',
             'savePath': 'C:\\',
             'stepToCm': 100,
+            'yDist': 100,
+            'xDist': 100,
             'autoSave': 5,
             'language': "English"})
         config.setdefaults('shortcuts', {
@@ -104,7 +107,7 @@ class DaphnieMatonApp(App):
             change_language_to(translation_to_language_code(value))
             print("Language changed")
         if section == "general" and key == "calibrate":
-            self.app.update(callibration=True, callback=self.app.callibrate)
+            self.app.update(calibration=True, callback=self.app.calibrate)
             print("Calibrate")
 
         if section == "shortcuts":
@@ -112,11 +115,11 @@ class DaphnieMatonApp(App):
                 if short == key:
                     if len(self.shortcuts[short]) == 4:
                         keyboard.remove_hotkey(self.shortcuts[short][2])
-                        self.shortcuts[short][2] = keyboard.add_hotkey(value, self.shortcuts[short][0], suppress=True, trigger_on_release=False)
-                        self.shortcuts[short][3] = keyboard.add_hotkey(value, self.shortcuts[short][1], suppress=True, trigger_on_release=True)
+                        self.shortcuts[short][2] = keyboard.add_hotkey(value, self.shortcuts[short][0], suppress=False, trigger_on_release=False)
+                        self.shortcuts[short][3] = keyboard.add_hotkey(value, self.shortcuts[short][1], suppress=False, trigger_on_release=True)
                     else:
                         keyboard.remove_hotkey(self.shortcuts[short][1])
-                        self.shortcuts[short][1] = keyboard.add_hotkey(value, self.shortcuts[short][0], suppress=True)
+                        self.shortcuts[short][1] = keyboard.add_hotkey(value, self.shortcuts[short][0], suppress=False)
                     return
 
         if section == "colors":

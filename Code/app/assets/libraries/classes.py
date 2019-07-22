@@ -334,13 +334,13 @@ def checkUpdates(versionFile):
     returns: the new version tag if one exists
     """
     url = 'https://raw.githubusercontent.com/liamLatour/DaphnieMaton/master/version'
-    req = requests.get(url).text
+    req = requests.get(url).text.strip()
     
     if os.path.isfile(versionFile):
         # Store configuration file values
         f = open(versionFile, "r")
         if f.mode == 'r':
-            contents = f.read()
+            contents = f.read().strip()
             f.close()
             if req != contents:
                 return req

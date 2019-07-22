@@ -6,6 +6,7 @@ import time
 from functools import partial
 from json import dumps as jsDumps
 from json import load as jsLoad
+import json
 from math import atan2, hypot, pi
 from os import system as osSystem
 from os.path import join as osJoinPath
@@ -28,9 +29,9 @@ from scipy.spatial import distance
 
 from . import undoRedo as UndoRedo
 from .classes import (Input, LoadDialog, MenuDropDown, MyLabel, SaveDialog,
-                      getPorts, hitLine, polToCar, urlOpen)
+                      getPorts, hitLine, polToCar, urlOpen, checkUpdates)
 from .createFile import generateFile
-from .helpMsg import directHelp, freeHelp, pipeHelp
+from .helpMsg import directHelp, freeHelp, pipeHelp, aboutPanel
 from .localization import _
 
 
@@ -70,9 +71,18 @@ class Parametrage(BoxLayout):
 
         # Specific to the mode 'direct'
         self.board = -1
+        self.switchDiameter = 30.
         self.readingClock = -1
         self.checkKeyClock = -1
         self.systemPosition = (0, 0)
+        self.systemSwitchs = {
+            'A': False,
+            'B': False,
+            'C': False,
+            'D': False,
+            'MA': False,
+            'MD': False,
+        }
         self.hasGoodProgram = False
         self.boardBusy = False
 
@@ -89,6 +99,18 @@ class Parametrage(BoxLayout):
         self.newFile(False)
         self.updateColors(refresh=False)
         self.tuyeauGap()
+
+        newVersion = checkUpdates("../../version")
+        textPopup = "[u]A new version is available ![/u]\n\n \
+You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/master.zip][color=0083ff][u]here[/u][/color][/ref]"
+        if newVersion != False:
+            self.popup = Popup(title=_('New Version ' + newVersion), size_hint=(0.7, 0.7))
+            self.popbox = BoxLayout()
+            self.poplb = Label(text=textPopup, markup = True)
+            self.poplb.bind(on_ref_press=urlOpen)
+            self.popbox.add_widget(self.poplb)
+            self.popup.content = self.popbox
+            self.popup.open()
 
     def updateColors(self, refresh=True):
         self.pipeColor = utils.get_color_from_hex(self.settings.get('colors', 'pipeColor'))
@@ -176,6 +198,20 @@ class Parametrage(BoxLayout):
         if refresh:
             self.update_rect()
 
+    def about_panel(self):
+        try: self.popup.dismiss()
+        except: pass
+
+        self.popup = Popup(title=_('About'), size_hint=(0.7, 0.7))
+        self.popbox = BoxLayout()
+
+        self.poplb = MyLabel(text=aboutPanel)
+        self.poplb.bind(on_ref_press=urlOpen)
+
+        self.popbox.add_widget(self.poplb)
+        self.popup.content = self.popbox
+        self.popup.open()
+
     def show_file(self):
         self.fileDropDown.open(self.ids.fileButton)
         self.fileDropDown.clear_widgets()
@@ -209,6 +245,7 @@ class Parametrage(BoxLayout):
         if self.board != -1:
             try:
                 response = self.board.readline()
+                print(response)
             except:
                 try: self.popup.dismiss()
                 except: pass
@@ -220,6 +257,8 @@ class Parametrage(BoxLayout):
                 self.hasGoodProgram = True
                 self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
                 self.update_rect()
+            else:
+                print("wrong program")
         self.boardBusy = False        
 
     # Saving and loading system
@@ -290,9 +329,15 @@ class Parametrage(BoxLayout):
         if self.port != -1:
             self.moveDirect(bytes([7]))
             try:
-                y = self.board.readline().decode("utf-8").rstrip()
-                x = self.board.readline().decode("utf-8").rstrip()
-                self.systemPosition = (x, y)
+                received = json.loads(self.board.readline().decode("utf-8").rstrip())
+
+                self.systemPosition = (received['X'], received['Y'])
+                self.systemSwitchs['A'] = received['A']
+                self.systemSwitchs['B'] = received['B']
+                self.systemSwitchs['C'] = received['C']
+                self.systemSwitchs['D'] = received['D']
+                self.systemSwitchs['MA'] = received['MA']
+                self.systemSwitchs['MD'] = received['MD']
                 self.update_rect()
             except:
                 if self.readingClock != -1:
@@ -303,7 +348,7 @@ class Parametrage(BoxLayout):
                 self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
                 self.popup.open()
 
-    def getCallibrationAsync(self, *args):
+    def getCalibrationAsync(self, *args):
         if self.port != -1 and self.board != -1:
             if self.board.in_waiting > 0:
                 try:
@@ -313,21 +358,26 @@ class Parametrage(BoxLayout):
                     except: pass
                     self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
                     self.popup.open()
-                self.settings.set("general", "stepToCm", str(data_str))
+                self.settings.set("general", "stepToCm", str(round((float(data_str)/(float(self.settings.get('general', 'yDist'))-5.5))*10) / 10))
                 self.settings.write()
-                self.callibrateClock.cancel()
+                self.calibrateClock.cancel()
+                self.calibrateClock = -1
                 try: self.popup.dismiss()
                 except: pass
-                self.popup = Popup(title=_('Callibration successful'), content=Label(text=_('The DaphnieMaton has found it\'s ratio: ') + str(data_str) + " step/cm"), size_hint=(None, None), size=(400, 300))
+                self.popup = Popup(title=_('Calibration successful'), content=Label(text=_('The DaphnieMaton has found it\'s ratio: ') + str(self.settings.get('general', 'stepToCm')) + " step/cm"), size_hint=(None, None), size=(400, 300))
                 self.popup.open()
-                print("Callibrated to " + str(data_str))
+                print("calibrated to " + str(self.settings.get('general', 'stepToCm')))
+        elif self.board == -1:
+            print("new board")
+            self.board = serial.Serial(str(self.port), 9600, timeout=1)
 
-    def callibrate(self):
+    def calibrate(self):
         if self.port != -1:
+            self.boardBusy = False # to be sure to launch the command
             self.moveDirect(bytes([10]))
-            self.callibrateClock = Clock.schedule_interval(self.getCallibrationAsync, 0.5)
+            self.calibrateClock = Clock.schedule_interval(self.getCalibrationAsync, 0.5)
 
-    def update(self, callibration=False, callback=None, *args):
+    def update(self, calibration=False, callback=None, *args):
         try: self.popup.dismiss()
         except: pass
         self.popup = Popup(title=_('Upload'), content=AsyncImage(source='.\\assets\\logo.png', size=(100, 100)), size_hint=(None, None), size=(400, 300), auto_dismiss=False)
@@ -336,9 +386,9 @@ class Parametrage(BoxLayout):
             self.readingClock.cancel()
             self.readingClock = -1
 
-        threading.Thread(target=lambda: self.updateAsync(callibration=callibration, callback=callback)).start()
+        threading.Thread(target=lambda: self.updateAsync(calibration=calibration, callback=callback)).start()
 
-    def updateAsync(self, callibration, callback):
+    def updateAsync(self, calibration, callback):
         arduinoPath = self.settings.get('general', 'arduinoPath')
         self.boardBusy = True
 
@@ -351,19 +401,30 @@ class Parametrage(BoxLayout):
 
         try:
             if self.port != -1:
-                try:
-                    self.board.close()
-                    self.board = -1
-                except: pass
+                if not (calibration and self.hasGoodProgram):
+                    try:
+                        self.board.close()
+                        self.board = -1
+                    except: pass
 
-                if callibration:
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
-                    self.hasGoodProgram = True
+                if calibration:
+                    if not self.hasGoodProgram:
+                        osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
+                        self.hasGoodProgram = True
                     self.update_rect()
 
                 elif self.mode == "Pipe":
                     parcours = self.generatePathFromPipe()
-                    genFile = generateFile(parcours[0], parcours[1], float(self.settings.get('general', 'stepToCm')))
+
+                    # Convertir "trace" de px en cm
+                    cmValues = []
+
+                    for i in range(round(len(parcours[0])/2)):
+                        curent = self.pixelToCM(parcours[0][i*2], parcours[0][i*2+1])
+                        cmValues.append(curent[1])
+                        cmValues.append(curent[0])
+
+                    genFile = generateFile(cmValues, parcours[1], float(self.settings.get('general', 'stepToCm')))
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
@@ -371,7 +432,15 @@ class Parametrage(BoxLayout):
                     self.hasGoodProgram = False
 
                 elif self.mode == "Free":
-                    genFile = generateFile(self.params["trace"], self.params["photos"], float(self.settings.get('general', 'stepToCm')))
+                    # Convertir "trace" de px en cm
+                    cmValues = []
+
+                    for i in range(round(len(self.params["trace"])/2)):
+                        curent = self.pixelToCM(self.params["trace"][i*2], self.params["trace"][i*2+1])
+                        cmValues.append(curent[1])
+                        cmValues.append(curent[0])
+
+                    genFile = generateFile(cmValues, self.params["photos"], float(self.settings.get('general', 'stepToCm')))
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
@@ -643,7 +712,11 @@ class Parametrage(BoxLayout):
                 Rectangle(pos=(self.size[0]-200, self.size[1] - (70 +95)), size=(200, 70), texture=text)
 
         elif self.mode == "Direct":
-            middle = (self.ids.directDrawing.center_x, self.ids.directDrawing.center_y)
+            #self.ids.directDrawing.center_x
+            realMiddle = (self.ids.directDrawing.center_x, self.ids.directDrawing.center_y)
+            middle = (self.ids.directSplitter.size[0]-(self.ids.directSplitter.size[0]*(3/5))/2, self.ids.directDrawing.center_y)
+            switchMiddle = ((self.ids.directSplitter.size[0]*(2/5))/2, self.ids.directDrawing.center_y)
+
             self.ids.directDrawing.clear_widgets()
             self.ids.directDrawing.canvas.before.clear()
             self.ids.directDrawing.canvas.after.clear()
@@ -668,13 +741,14 @@ class Parametrage(BoxLayout):
             up.bind(on_release=partial(self.moveDirect, bytes([6])))
             down.bind(on_press=partial(self.moveDirect, bytes([4])))
             down.bind(on_release=partial(self.moveDirect, bytes([6])))
-
+            
             self.ids.directDrawing.add_widget(raz)
 
             self.ids.directDrawing.add_widget(right)
             self.ids.directDrawing.add_widget(left)
             self.ids.directDrawing.add_widget(up)
             self.ids.directDrawing.add_widget(down)
+            
 
             self.ids.directBack.canvas.before.clear()
 
@@ -683,8 +757,8 @@ class Parametrage(BoxLayout):
                 Rectangle(pos = self.pos, size = (self.size[0], self.ids.directSplitter.size[1]))
 
             with self.ids.directDrawing.canvas.before:
-                text = "X: " + str(round(float(self.systemPosition[0])/float(self.settings.get('general', 'stepToCm'))*100)/100) + " "+_("cm") + \
-                        "\nY: " + str(round(float(self.systemPosition[1])/float(self.settings.get('general', 'stepToCm'))*100)/100) + " "+("cm")
+                text = "X: " + str(round(float(self.systemPosition[0])/float(self.settings.get('general', 'stepToCm'))*10)/10) + " "+_("cm") + \
+                        "\nY: " + str(round(float(self.systemPosition[1])/float(self.settings.get('general', 'stepToCm'))*10)/10) + " "+("cm")
 
                 Color(1,1,1, .2)
                 Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +95)), size = (200, 70))
@@ -695,17 +769,37 @@ class Parametrage(BoxLayout):
                 Color(1, 1, 1, 1)
                 Rectangle(pos=(self.size[0]-200, self.size[1] - (70 +95)), size=(200, 70), texture=text)
 
+                if not self.systemSwitchs['A']: Color(1, 1, 0)
+                else: Color(0, 0, 0)
+                Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 + switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2 - switchMiddle[1]/2), size=(self.switchDiameter, self.switchDiameter))
+                if not self.systemSwitchs['B']: Color(1, 1, 0)
+                else: Color(0, 0, 0)
+                Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 + switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2 + switchMiddle[1]/2), size=(self.switchDiameter, self.switchDiameter))
+                if not self.systemSwitchs['C']: Color(1, 1, 0)
+                else: Color(0, 0, 0)
+                Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 - switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2 + switchMiddle[1]/2), size=(self.switchDiameter, self.switchDiameter))
+                if not self.systemSwitchs['D']: Color(1, 1, 0)
+                else: Color(0, 0, 0)
+                Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 - switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2 - switchMiddle[1]/2), size=(self.switchDiameter, self.switchDiameter))
+                if not self.systemSwitchs['MA']: Color(1, 1, 0)
+                else: Color(0, 0, 0)
+                Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 + switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2), size=(self.switchDiameter, self.switchDiameter))
+                if not self.systemSwitchs['MD']: Color(1, 1, 0)
+                else: Color(0, 0, 0)
+                Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 - switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2), size=(self.switchDiameter, self.switchDiameter))
+            
             if not self.hasGoodProgram:
                 with self.ids.directDrawing.canvas.after:
                     dimensionX = self.ids.directSplitter.size[0]
                     dimensionY = self.ids.directSplitter.size[1] - 50
                     Color(1, 1, 1, 0.7)
-                    Rectangle(pos=(middle[0]-dimensionX/2, middle[1]-dimensionY/2), size=(dimensionX, dimensionY))
+                    Rectangle(pos=(realMiddle[0]-dimensionX/2, realMiddle[1]-dimensionY/2), size=(dimensionX, dimensionY))
                     label = CoreLabel(text=_("Click on 'Upload' before sending serial data"), font_size=100, halign='middle', valign='middle', padding=(12, 12))
                     label.refresh()
                     text = label.texture
                     Color(0, 0, 0, 1)
-                    Rectangle(pos=(middle[0]-dimensionX/2, middle[1]-(dimensionX*(3/16))/2), size=(dimensionX, dimensionX*(3/16)), texture=text)
+                    Rectangle(pos=(realMiddle[0]-dimensionX/2, realMiddle[1]-(dimensionX*(3/16))/2), size=(dimensionX, dimensionX*(3/16)), texture=text)
+            
 
     def checkKeyHolding(self, *args):
         stopX = False
@@ -725,6 +819,8 @@ class Parametrage(BoxLayout):
 
     def moveDirect(self, direction, shortcut=False, urgent=False, *args):
         if self.boardBusy:
+            print("Cannot")
+            print(direction)
             return
         if urgent:
             self.boardBusy = True
@@ -733,14 +829,15 @@ class Parametrage(BoxLayout):
                 self.board.write(direction)
             except:
                 try:
-                    self.board = serial.Serial(str(self.port), 9600, timeout=0.5)
+                    self.board = serial.Serial(str(self.port), 9600, timeout=1)
                     time.sleep(2)
                     self.board.write(direction)
                 except:
-                    try: self.popup.dismiss()
-                    except: pass
-                    self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
-                    self.popup.open()
+                    if not self.boardBusy:
+                        try: self.popup.dismiss()
+                        except: pass
+                        self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
+                        self.popup.open()
 
             if shortcut == True:
                 if self.checkKeyClock != -1:
@@ -871,12 +968,16 @@ class Parametrage(BoxLayout):
 
                 self.update_rect()
 
-    def printCoords(self, X, Y):
+    def pixelToCM(self, X, Y):
         height = self.corners[0][1] - self.corners[1][1]
         width = self.corners[0][0] - self.corners[2][0]
+        return (round(((X-self.corners[3][0])*(self.actualWidth*1000))/width)/10, round(((Y-self.corners[3][1])*(self.actualHeight*1000))/height)/10)
+
+    def printCoords(self, X, Y):
+        toCm = self.pixelToCM(X, Y)
 
         self.ids.coord.unbindThis()
-        self.ids.coord.input.text = str(round(((X-self.corners[3][0])*(self.actualWidth*1000))/width)/10) + " : " + str(round(((Y-self.corners[3][1])*(self.actualHeight*1000))/height)/10)
+        self.ids.coord.input.text = str(toCm[0]) + " : " + str(toCm[1])
         self.ids.coord.bindThis()
     
 

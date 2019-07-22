@@ -29,3 +29,12 @@ directHelp = "[u]Usage in Direct mode[/u]\n\n \
     5) You can now click on the arrows to move the system\n \
     6) If you want to copy the current coordinates hold ctrl+c\n \
     Code available in [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]github[/u][/color][/ref] to report a bug or help to translate"
+
+aboutPanel = "[u]The DaphnieMaton[/u]\n\n \
+    The DaphnieMaton is a two-axis system to film continously\n \
+    and in a pre-created custom path. Originally made to watch\n \
+    for the evolution of a Daphnie population in different tubes\n \
+    (testing for temperature), it can be used for all sorts of\n \
+    autonomous systemes and can also be mounted with something\n \
+    else than a camera.\n \
+    Code available in [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]github[/u][/color][/ref] to report a bug or help to translate"

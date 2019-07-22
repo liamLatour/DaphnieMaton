@@ -31,7 +31,7 @@ from . import undoRedo as UndoRedo
 from .classes import (Input, LoadDialog, MenuDropDown, MyLabel, SaveDialog,
                       getPorts, hitLine, polToCar, urlOpen, checkUpdates)
 from .createFile import generateFile
-from .helpMsg import directHelp, freeHelp, pipeHelp
+from .helpMsg import directHelp, freeHelp, pipeHelp, aboutPanel
 from .localization import _
 
 
@@ -198,6 +198,20 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
         if refresh:
             self.update_rect()
 
+    def about_panel(self):
+        try: self.popup.dismiss()
+        except: pass
+
+        self.popup = Popup(title=_('About'), size_hint=(0.7, 0.7))
+        self.popbox = BoxLayout()
+
+        self.poplb = MyLabel(text=aboutPanel)
+        self.poplb.bind(on_ref_press=urlOpen)
+
+        self.popbox.add_widget(self.poplb)
+        self.popup.content = self.popbox
+        self.popup.open()
+
     def show_file(self):
         self.fileDropDown.open(self.ids.fileButton)
         self.fileDropDown.clear_widgets()
@@ -334,7 +348,7 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
                 self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
                 self.popup.open()
 
-    def getCallibrationAsync(self, *args):
+    def getCalibrationAsync(self, *args):
         if self.port != -1 and self.board != -1:
             if self.board.in_waiting > 0:
                 try:
@@ -344,26 +358,26 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
                     except: pass
                     self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
                     self.popup.open()
-                self.settings.set("general", "stepToCm", str(float(data_str)/(float(self.settings.get('general', 'yDist'))-5.5)))
+                self.settings.set("general", "stepToCm", str(round((float(data_str)/(float(self.settings.get('general', 'yDist'))-5.5))*10) / 10))
                 self.settings.write()
-                self.callibrateClock.cancel()
-                self.callibrateClock = -1
+                self.calibrateClock.cancel()
+                self.calibrateClock = -1
                 try: self.popup.dismiss()
                 except: pass
-                self.popup = Popup(title=_('Callibration successful'), content=Label(text=_('The DaphnieMaton has found it\'s ratio: ') + str(self.settings.get('general', 'stepToCm')) + " step/cm"), size_hint=(None, None), size=(400, 300))
+                self.popup = Popup(title=_('Calibration successful'), content=Label(text=_('The DaphnieMaton has found it\'s ratio: ') + str(self.settings.get('general', 'stepToCm')) + " step/cm"), size_hint=(None, None), size=(400, 300))
                 self.popup.open()
-                print("Callibrated to " + str(self.settings.get('general', 'stepToCm')))
+                print("calibrated to " + str(self.settings.get('general', 'stepToCm')))
         elif self.board == -1:
             print("new board")
             self.board = serial.Serial(str(self.port), 9600, timeout=1)
 
-    def callibrate(self):
+    def calibrate(self):
         if self.port != -1:
             self.boardBusy = False # to be sure to launch the command
             self.moveDirect(bytes([10]))
-            self.callibrateClock = Clock.schedule_interval(self.getCallibrationAsync, 0.5)
+            self.calibrateClock = Clock.schedule_interval(self.getCalibrationAsync, 0.5)
 
-    def update(self, callibration=False, callback=None, *args):
+    def update(self, calibration=False, callback=None, *args):
         try: self.popup.dismiss()
         except: pass
         self.popup = Popup(title=_('Upload'), content=AsyncImage(source='.\\assets\\logo.png', size=(100, 100)), size_hint=(None, None), size=(400, 300), auto_dismiss=False)
@@ -372,9 +386,9 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
             self.readingClock.cancel()
             self.readingClock = -1
 
-        threading.Thread(target=lambda: self.updateAsync(callibration=callibration, callback=callback)).start()
+        threading.Thread(target=lambda: self.updateAsync(calibration=calibration, callback=callback)).start()
 
-    def updateAsync(self, callibration, callback):
+    def updateAsync(self, calibration, callback):
         arduinoPath = self.settings.get('general', 'arduinoPath')
         self.boardBusy = True
 
@@ -387,13 +401,13 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
 
         try:
             if self.port != -1:
-                if not (callibration and self.hasGoodProgram):
+                if not (calibration and self.hasGoodProgram):
                     try:
                         self.board.close()
                         self.board = -1
                     except: pass
 
-                if callibration:
+                if calibration:
                     if not self.hasGoodProgram:
                         osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
                         self.hasGoodProgram = True
@@ -407,8 +421,8 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
 
                     for i in range(round(len(parcours[0])/2)):
                         curent = self.pixelToCM(parcours[0][i*2], parcours[0][i*2+1])
-                        cmValues.append(curent[0])
                         cmValues.append(curent[1])
+                        cmValues.append(curent[0])
 
                     genFile = generateFile(cmValues, parcours[1], float(self.settings.get('general', 'stepToCm')))
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
@@ -423,8 +437,8 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
 
                     for i in range(round(len(self.params["trace"])/2)):
                         curent = self.pixelToCM(self.params["trace"][i*2], self.params["trace"][i*2+1])
-                        cmValues.append(curent[0])
                         cmValues.append(curent[1])
+                        cmValues.append(curent[0])
 
                     genFile = generateFile(cmValues, self.params["photos"], float(self.settings.get('general', 'stepToCm')))
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")

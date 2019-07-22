@@ -22,6 +22,7 @@ from kivy.uix.textinput import TextInput
 from scipy.spatial import distance
 from .localization import _
 import os
+import requests
 
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
@@ -323,3 +324,26 @@ def polToCar(center, dist, angle):
     returns: a tuple representing the X and Y -> (x, y)
     """
     return (cos(angle)*dist+center[0], sin(angle)*dist + center[1])
+
+
+def checkUpdates(versionFile):
+    """Checks if a new version exists and updates the current one.
+
+    versionFile string: User's file holding current version
+
+    returns: the new version tag if one exists
+    """
+    url = 'https://raw.githubusercontent.com/liamLatour/DaphnieMaton/master/version'
+    req = requests.get(url).text.strip()
+    
+    if os.path.isfile(versionFile):
+        # Store configuration file values
+        f = open(versionFile, "r")
+        if f.mode == 'r':
+            contents = f.read().strip()
+            f.close()
+            if req != contents:
+                return req
+    else:
+        return req
+    return False
