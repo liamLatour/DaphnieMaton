@@ -57,6 +57,7 @@ def generateFile(waypoints, photos, ratio, action):
                     Xaxis.runSpeedToPosition();\n \
                     if(photo[currentWaypoint]){\n \
                         //Gotta take them\n \
+                        action();\n \
                     }\n \
                 }\n \
                 if( (Y1axis.speed()>0 && digitalRead(B) && digitalRead(C)) || (Y1axis.speed()<0 && digitalRead(A) && digitalRead(D)) ){\n \
@@ -64,6 +65,7 @@ def generateFile(waypoints, photos, ratio, action):
                     Y2axis.runSpeedToPosition();\n \
                     if(photo[currentWaypoint]){\n \
                         //Gotta take them\n \
+                        action();\n \
                     }\n \
                 }\n \
                 if(Xaxis.distanceToGo()==0 && (Y1axis.distanceToGo()==0 || Y2axis.distanceToGo()==0)){\n \

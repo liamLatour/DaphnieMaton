@@ -52,6 +52,13 @@
    },
    {
       "type":"path",
+      "title":"Action program path",
+      "desc":"Path to the \".ino\" file responsible for the head action",
+      "section":"general",
+      "key":"actionPath"
+   },
+   {
+      "type":"path",
       "title":"Default save path",
       "desc":"Path where you most often save",
       "section":"general",

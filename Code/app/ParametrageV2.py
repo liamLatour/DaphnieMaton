@@ -62,6 +62,7 @@ class DaphnieMatonApp(App):
     def build_config(self, config):
         config.setdefaults('general', {
             'arduinoPath': 'C:\\',
+            'actionPath': 'action.ino',
             'savePath': 'C:\\',
             'stepToCm': 100,
             'yDist': 100,

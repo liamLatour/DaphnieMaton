@@ -139,7 +139,7 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
         self.popbox = BoxLayout()
 
         if self.mode == "Pipe":
-            self.poplb = MyLabel(text=pipeHelp)#Label(text=pipeHelp, text_size=self.popup.size, strip=True, valign='middle', halign='center', padding= (15, 35), markup = True)
+            self.poplb = MyLabel(text=pipeHelp)
         elif self.mode == "Free":
             self.poplb = MyLabel(text=freeHelp)
         elif self.mode == "Direct":
@@ -249,7 +249,10 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
             except:
                 try: self.popup.dismiss()
                 except: pass
-                self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
+                self.popup = Popup( title=_('Disconnected'),
+                                    content=Label(text=_('The system has been disconnected')),
+                                    size_hint=(None, None),
+                                    size=(400, 300))
                 self.popup.open()
 
             response = response.decode("utf-8").rstrip()
@@ -364,7 +367,10 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
                 self.calibrateClock = -1
                 try: self.popup.dismiss()
                 except: pass
-                self.popup = Popup(title=_('Calibration successful'), content=Label(text=_('The DaphnieMaton has found it\'s ratio: ') + str(self.settings.get('general', 'stepToCm')) + " step/cm"), size_hint=(None, None), size=(400, 300))
+                self.popup = Popup( title=_('Calibration successful'),
+                                    content=Label(text=_('The DaphnieMaton has found it\'s ratio: ') + str(self.settings.get('general', 'stepToCm')) + " step/cm"),
+                                        size_hint=(None, None),
+                                        size=(400, 300))
                 self.popup.open()
                 print("calibrated to " + str(self.settings.get('general', 'stepToCm')))
         elif self.board == -1:
@@ -395,7 +401,14 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
         if not os.path.isfile(arduinoPath + '/arduino_debug.exe'):
             try: self.popup.dismiss()
             except: pass
-            self.popup = Popup(title=_('Arduino dir missing'), content=Label(text=_('The specified arduino path is not correct \n (under Option -> Arduino.exe path)'), text_size=self.popup.size, strip=True, valign='middle', halign='center', padding= (15, 35)), size_hint=(None, None), size=(400, 300))
+            self.popup = Popup( title=_('Arduino dir missing'),
+                                content=Label(text=_('The specified arduino path is not correct \n (under Option -> Arduino.exe path)'),
+                                text_size=self.popup.size,
+                                strip=True,
+                                valign='middle',
+                                halign='center',
+                                padding= (15, 35)),
+                                size_hint=(None, None), size=(400, 300))
             self.popup.open()
             return
 
@@ -406,47 +419,20 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
                         self.board.close()
                         self.board = -1
                     except: pass
+                
+                if self.mode == "Pipe" or self.mode == "Free":
+                    # prompt .ino thing
+                    content = LoadDialog(load=lambda path, filename: self.chooseAction(path, filename, callback=callback), cancel=self.abortUpload)#TODO: change cancel callback
+                    self._popup = Popup(title=_("Action program"), content=content,
+                                        size_hint=(0.9, 0.9))
+                    self._popup.open()
+                    return
 
                 if calibration:
                     if not self.hasGoodProgram:
                         osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
                         self.hasGoodProgram = True
                     self.update_rect()
-
-                elif self.mode == "Pipe":
-                    parcours = self.generatePathFromPipe()
-
-                    # Convertir "trace" de px en cm
-                    cmValues = []
-
-                    for i in range(round(len(parcours[0])/2)):
-                        curent = self.pixelToCM(parcours[0][i*2], parcours[0][i*2+1])
-                        cmValues.append(curent[1])
-                        cmValues.append(curent[0])
-
-                    genFile = generateFile(cmValues, parcours[1], float(self.settings.get('general', 'stepToCm')))
-                    f = open(".\\assets\\currentFile\\currentFile.ino","w+")
-                    f.write(genFile)
-                    f.close()
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
-                    self.hasGoodProgram = False
-
-                elif self.mode == "Free":
-                    # Convertir "trace" de px en cm
-                    cmValues = []
-
-                    for i in range(round(len(self.params["trace"])/2)):
-                        curent = self.pixelToCM(self.params["trace"][i*2], self.params["trace"][i*2+1])
-                        cmValues.append(curent[1])
-                        cmValues.append(curent[0])
-
-                    genFile = generateFile(cmValues, self.params["photos"], float(self.settings.get('general', 'stepToCm')))
-                    f = open(".\\assets\\currentFile\\currentFile.ino","w+")
-                    f.write(genFile)
-                    f.close()
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
-                    self.hasGoodProgram = False
-
                 elif self.mode == "Direct":
                     osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
                     self.hasGoodProgram = True
@@ -471,6 +457,67 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
             self.popup = Popup(title=_('Oopsie...'), content=Label(text=_('Something went wrong, try again or report a bug') + "\n" + str(e)), size_hint=(None, None), size=(400, 300))
             self.popup.open()
         self.boardBusy = False
+
+    def chooseAction(self, path, filename, callback=None):
+        try:
+            if ".ino" not in filename[0]:
+                ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n The file has to be '.ino'", u"Wrong File Error", 0)
+            else:
+                self.settings.set("general", "actionPath", str(osJoinPath(path, filename[0])))
+                self.settings.write()
+
+                print(str(osJoinPath(path, filename[0])))
+
+                if self.mode == "Pipe":
+                    parcours = self.generatePathFromPipe()
+
+                    # Convertir "trace" de px en cm
+                    cmValues = []
+
+                    for i in range(round(len(parcours[0])/2)):
+                        curent = self.pixelToCM(parcours[0][i*2], parcours[0][i*2+1])
+                        cmValues.append(curent[1])
+                        cmValues.append(curent[0])
+
+                    genFile = generateFile(cmValues, parcours[1], float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename[0])))
+                    f = open(".\\assets\\currentFile\\currentFile.ino","w+")
+                    f.write(genFile)
+                    f.close()
+                    osSystem(self.settings.get('general', 'arduinoPath') + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
+                    self.hasGoodProgram = False
+                elif self.mode == "Free":
+                    # Convertir "trace" de px en cm
+                    cmValues = []
+
+                    for i in range(round(len(self.params["trace"])/2)):
+                        curent = self.pixelToCM(self.params["trace"][i*2], self.params["trace"][i*2+1])
+                        cmValues.append(curent[1])
+                        cmValues.append(curent[0])
+
+                    genFile = generateFile(cmValues, self.params["photos"], float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename[0])))
+                    f = open(".\\assets\\currentFile\\currentFile.ino","w+")
+                    f.write(genFile)
+                    f.close()
+                    osSystem(self.settings.get('general', 'arduinoPath') + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
+                    self.hasGoodProgram = False
+
+                print("DONE !")
+                self._popup.dismiss()
+                try: self.popup.dismiss()
+                except: pass
+                self.popup = Popup(title=_('Success !'), content=Label(text=_('Upload finished successfully !')), size_hint=(None, None), size=(400, 300))
+                self.popup.open()
+                if callback != None:
+                    callback()
+        except Exception as e:
+            ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n" + str(e), u"Wrong File Error", 0)
+
+    def abortUpload(self):
+        self._popup.dismiss()
+        try: self.popup.dismiss()
+        except: pass
+        self.popup = Popup(title=_('Upload aborted'), content=Label(text=_('Upload has been aborted')), size_hint=(None, None), size=(400, 300))
+        self.popup.open()
 
     def changedTab(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
@@ -852,6 +899,13 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
             zoomedTrace = np.multiply(self.params["trace"], self.zoomFactor).tolist()
 
             if self.ids.libreDrawing.collide_point(x, y):
+                # Updates zooming depending on the mouse wheel
+                if touch.is_mouse_scrolling:
+                    dist = 0.1 if touch.button == 'scrollup' else -0.1
+                    self.zoomFactor += dist
+                    self.zoomClamp()
+                    self.update_rect()
+
                 # Checks if the user right clicked on a node, if yes remove it
                 for i in range(int(len(zoomedTrace)/2)):
                     if hypot(zoomedTrace[i*2]+self.ids.libreDrawing.center_x - x, zoomedTrace[i*2+1]+self.ids.libreDrawing.center_y - y) <= self.diametre/2:
@@ -913,13 +967,6 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
                     self.isDragging = len(self.params["photos"])-1
                     self.update_rect()
                     return
-
-                # Updates zooming depending on the mouse wheel
-                if touch.is_mouse_scrolling:
-                    dist = 0.1 if touch.button == 'scrollup' else -0.1
-                    self.zoomFactor += dist
-                    self.zoomClamp()
-                    self.update_rect()
 
     def clickedUp(self, touch):
         if self.mode == "Free":
