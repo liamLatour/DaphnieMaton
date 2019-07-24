@@ -1,6 +1,6 @@
 import numpy as np
 
-def generateFile(waypoints, photos, ratio, action):
+def generateFile(waypoints, photos, ratio, action, actionOnSpot=False):
     waypoints = list(np.rint(np.multiply(waypoints, ratio)).tolist())
 
     top = "#include <AccelStepper.h>\n \

@@ -494,7 +494,7 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
                         cmValues.append(curent[1])
                         cmValues.append(curent[0])
 
-                    genFile = generateFile(cmValues, self.params["photos"], float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename[0])))
+                    genFile = generateFile(cmValues, self.params["photos"], float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename[0])), actionOnSpot=self.params["nodeAction"])
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
@@ -703,6 +703,8 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
 
             self.ids.freeBack.canvas.before.clear()
 
+            self.params["nodeAction"] = bool(self.ids.nodeAction.input.active)
+
             with self.ids.freeBack.canvas.before:
                 Color(self.background[0], self.background[1], self.background[2], self.background[3])
                 Rectangle(pos = self.pos, size = (self.size[0], self.ids.libreSplitter.size[1]))
@@ -847,7 +849,6 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
                     Color(0, 0, 0, 1)
                     Rectangle(pos=(realMiddle[0]-dimensionX/2, realMiddle[1]-(dimensionX*(3/16))/2), size=(dimensionX, dimensionX*(3/16)), texture=text)
             
-
     def checkKeyHolding(self, *args):
         stopX = False
         stopY = False
