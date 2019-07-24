@@ -25,7 +25,14 @@ To build from source you'll need:
 
 ### Building on top
 
-Not implemented yet
+In order to make the 'head' do something you need to create a separate arduino programm (.ino) without 'setup' and 'loop' function. You also have to create a fucntion named 'action' that the 'head' will run each time it is asked to.
+Minimalistic example:
+```C++
+void action(){
+  pinMode(13, OUTPUT);    // You are obliged to call this every time since there is no setup()
+  digitalWrite(13, HIGH); // In case you want to remember what state the LED is in, you can use EEPROM
+}
+```
 
 ## Built With
 
