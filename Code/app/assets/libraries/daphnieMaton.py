@@ -422,7 +422,7 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
                 
                 if self.mode == "Pipe" or self.mode == "Free":
                     # prompt .ino thing
-                    content = LoadDialog(load=lambda path, filename: self.chooseAction(path, filename, callback=callback), cancel=self.abortUpload)#TODO: change cancel callback
+                    content = LoadDialog(load=lambda path, filename: self.chooseAction(path, filename, callback=callback), cancel=self.abortUpload)
                     self._popup = Popup(title=_("Action program"), content=content,
                                         size_hint=(0.9, 0.9))
                     self._popup.open()
@@ -479,7 +479,7 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
                         cmValues.append(curent[1])
                         cmValues.append(curent[0])
 
-                    genFile = generateFile(cmValues, parcours[1], float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename[0])))
+                    genFile = generateFile(cmValues, parcours[1], float(self.settings.get('general', 'stepToCm')), self.params["photoPipe"], str(osJoinPath(path, filename[0])))
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
@@ -494,7 +494,7 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
                         cmValues.append(curent[1])
                         cmValues.append(curent[0])
 
-                    genFile = generateFile(cmValues, self.params["photos"], float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename[0])), actionOnSpot=self.params["nodeAction"])
+                    genFile = generateFile(cmValues, self.params["photos"], float(self.settings.get('general', 'stepToCm')), self.params["photoPipe"], str(osJoinPath(path, filename[0])), actionOnSpot=self.params["nodeAction"])
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
