@@ -113,7 +113,7 @@
                                 inputName: _('Centimeter per picture')
                                 input_filter: 'float'
                                 default_text: '5' 
-                                callback: lambda *args: root.update_rect()
+                                callback: lambda *args: root.pipeToFree()
                             Input:
                                 id: distOriginX
                                 inputName: _('Distance from origin X (cm)')
@@ -184,6 +184,12 @@
                                 inputType: 1
                                 default_text: 'False'
                                 callback: lambda *args: root.update_rect()
+                            Input:
+                                id: freePhotoPipe
+                                inputName: _('Centimeter per picture')
+                                input_filter: 'float'
+                                default_text: '5' 
+                                callback: lambda *args: root.freeToPipe()
                             Input:
                                 id: coord
                                 inputName: _('Coordinates (cm)')

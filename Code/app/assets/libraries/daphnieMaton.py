@@ -172,6 +172,7 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
         self.ids.nbPipe.unbindThis()
         self.ids.lenPipe.unbindThis()
         self.ids.photoPipe.unbindThis()
+        self.ids.freePhotoPipe.unbindThis()
         self.ids.distOriginX.unbindThis()
         self.ids.distOriginY.unbindThis()
         self.ids.horizontal.unbindThis()
@@ -181,6 +182,7 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
         self.ids.nbPipe.input.text = str(self.params["nbPipe"])
         self.ids.lenPipe.input.text = str(self.params["lenPipe"])
         self.ids.photoPipe.input.text = str(self.params["photoPipe"])
+        self.ids.freePhotoPipe.input.text = str(self.params["photoPipe"])
         self.ids.distOriginX.input.text = str(self.params["distOriginX"])
         self.ids.distOriginY.input.text = str(self.params["distOriginY"])
         self.ids.horizontal.input.active = self.params["horizontal"]
@@ -190,6 +192,7 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
         self.ids.nbPipe.bindThis()
         self.ids.lenPipe.bindThis()
         self.ids.photoPipe.bindThis()
+        self.ids.freePhotoPipe.bindThis()
         self.ids.distOriginX.bindThis()
         self.ids.distOriginY.bindThis()
         self.ids.horizontal.bindThis()
@@ -1121,6 +1124,18 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
                 self.gaps.append(Input(inputName=_('Gap between pipes ')+str(pipe+1)+"-"+str(pipe+2)+" (cm)", input_filter="float", default_text=default, callback=self.update_rect))
                 self.pipePanel.add_widget(self.gaps[pipe])
         self.update_rect()
+
+    def freeToPipe(self):
+        self.ids.photoPipe.unbindThis()
+        self.ids.photoPipe.input.text = str(max(self.sanitize(self.ids.freePhotoPipe.input.text), 1))
+        self.ids.photoPipe.bindThis()
+        self.update_rect()
+
+    def pipeToFree(self):
+        self.ids.freePhotoPipe.unbindThis()
+        self.ids.freePhotoPipe.input.text = str(max(self.sanitize(self.ids.photoPipe.input.text), 1))
+        self.ids.freePhotoPipe.bindThis()
+        self.update_rect()        
 
     def sanitize(self, number):
         """Avoids getting errors on empty inputs.
