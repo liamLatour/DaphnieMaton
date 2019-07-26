@@ -7,7 +7,7 @@ from functools import partial
 from json import dumps as jsDumps
 from json import load as jsLoad
 import json
-from math import atan2, hypot, pi
+from math import atan2, hypot, pi, floor
 from os import system as osSystem
 from os.path import join as osJoinPath
 
@@ -45,7 +45,7 @@ class Parametrage(BoxLayout):
         self.fileDropDown = MenuDropDown()
         self.port = -1
 
-        self.speed = 8.6 # m per minutes
+        self.speed = 8.6 # m per minutes # TODO: Change this
         self.imageWidth = 1.4 # in meter
         self.imageHeight = 1.4 # in meter
         self.actualWidth = 1.144 # in meter
@@ -102,7 +102,7 @@ class Parametrage(BoxLayout):
 
         newVersion = checkUpdates("../../version")
         textPopup = "[u]A new version is available ![/u]\n\n \
-You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/master.zip][color=0083ff][u]here[/u][/color][/ref]"
+                        You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/master.zip][color=0083ff][u]here[/u][/color][/ref]"
         if newVersion != False:
             self.popup = Popup(title=_('New Version ' + newVersion), size_hint=(0.7, 0.7))
             self.popbox = BoxLayout()
@@ -707,6 +707,7 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
             self.ids.freeBack.canvas.before.clear()
 
             self.params["nodeAction"] = bool(self.ids.nodeAction.input.active)
+            self.params["photoPipe"] = max(self.sanitize(self.ids.freePhotoPipe.input.text), 1)
 
             with self.ids.freeBack.canvas.before:
                 Color(self.background[0], self.background[1], self.background[2], self.background[3])
@@ -715,6 +716,7 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
             with self.ids.libreDrawing.canvas.before:
                 width = 200 * self.zoomFactor
                 Rectangle(source=self.settings.get('colors', 'imagePath'), pos = (middle[0]-width/2, middle[1]-width/2), size = (width, width))
+                dist = 0
 
                 if keyboard.is_pressed("shift"):
                     for corner in self.corners:
@@ -731,14 +733,39 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
 
                     for i in range(int(len(zoomedTrace)/2)):
                         if (i+1)*2+1 >= len(zoomedTrace) and isLoop:
-                            if self.params["photos"][i]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
+                            if self.params["photos"][i] and not self.params["nodeAction"]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
                             else: Color(self.pathColor[0], self.pathColor[1], self.pathColor[2], self.pathColor[3])
                             Line(points=[zoomedTrace[i*2]+middle[0], zoomedTrace[i*2+1]+middle[1], zoomedTrace[0]+middle[0], zoomedTrace[1]+middle[1]], width=self.lineWidth)
-                        
+                            thisDist = max(distance.euclidean(self.pixelToCM(self.params["trace"][i*2]+middle[0], self.params["trace"][i*2+1]+middle[1]),
+                                                        self.pixelToCM(self.params["trace"][0]+middle[0], self.params["trace"][1]+middle[1])), 0.0001)
+                            dist += thisDist
+                            if self.params["photos"][i] and not self.params["nodeAction"]:
+                                nb = floor(thisDist/float(self.params["photoPipe"]))
+                                top = (thisDist-nb*float(self.params["photoPipe"]))/(2*thisDist)
+                                ax = top * ((zoomedTrace[i*2]+middle[0]) - (zoomedTrace[0]+middle[0]))
+                                ay = top * ((zoomedTrace[i*2+1]+middle[1]) - (zoomedTrace[1]+middle[1]))
+                                Color(0, 0, 0)
+                                for p in range(nb+1):
+                                    Ellipse(pos=(zoomedTrace[0]+middle[0] + ax-self.lineWidth/2 + ((float(self.params["photoPipe"])/thisDist)*((zoomedTrace[i*2]+middle[0]) - (zoomedTrace[0]+middle[0])))*p,
+                                                 zoomedTrace[1]+middle[1] + ay-self.lineWidth/2 + ((float(self.params["photoPipe"])/thisDist)*((zoomedTrace[i*2+1]+middle[1]) - (zoomedTrace[1]+middle[1])))*p), size=(self.lineWidth, self.lineWidth))
+
                         elif (i+1)*2+1 < len(zoomedTrace):
-                            if self.params["photos"][i]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
+                            if self.params["photos"][i] and not self.params["nodeAction"]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
                             else: Color(self.pathColor[0], self.pathColor[1], self.pathColor[2], self.pathColor[3])
                             Line(points=[zoomedTrace[i*2]+middle[0], zoomedTrace[i*2+1]+middle[1], zoomedTrace[(i+1)*2]+middle[0], zoomedTrace[(i+1)*2+1]+middle[1]], width=self.lineWidth)
+                            thisDist = max(distance.euclidean(self.pixelToCM(self.params["trace"][i*2]+middle[0], self.params["trace"][i*2+1]+middle[1]),
+                                                        self.pixelToCM(self.params["trace"][(i+1)*2]+middle[0], self.params["trace"][(i+1)*2+1]+middle[1])), 0.0001)
+                            dist += thisDist
+                            if self.params["photos"][i] and not self.params["nodeAction"]:
+                                nb = floor(thisDist/float(self.params["photoPipe"]))
+                                top = (thisDist-nb*float(self.params["photoPipe"]))/(2*thisDist)
+                                ax = top * ((zoomedTrace[i*2]+middle[0]) - (zoomedTrace[(i+1)*2]+middle[0]))
+                                ay = top * ((zoomedTrace[i*2+1]+middle[1]) - (zoomedTrace[(i+1)*2+1]+middle[1]))
+                                Color(0, 0, 0)
+                                for p in range(nb+1):
+                                    Ellipse(pos=(zoomedTrace[(i+1)*2]+middle[0] + ax-self.lineWidth/2 + ((float(self.params["photoPipe"])/thisDist)*((zoomedTrace[i*2]+middle[0]) - (zoomedTrace[(i+1)*2]+middle[0])))*p,
+                                                 zoomedTrace[(i+1)*2+1]+middle[1] + ay-self.lineWidth/2 + ((float(self.params["photoPipe"])/thisDist)*((zoomedTrace[i*2+1]+middle[1]) - (zoomedTrace[(i+1)*2+1]+middle[1])))*p), size=(self.lineWidth, self.lineWidth))
+
                     
                     for i in range(int(len(zoomedTrace)/2)):
                         if self.lastTouched == i:
@@ -752,7 +779,7 @@ You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/mast
                         Color(0, 0, 0, 1)
                         Ellipse(pos=(zoomedTrace[i*2]+middle[0]-self.diametre/2, zoomedTrace[i*2+1]+middle[1]-self.diametre/2), size=(self.diametre, self.diametre), texture=text)
 
-                text = ""
+                text = "Total time: 5 sec\nPhoto number: 10\nDistance: "+str(round(dist*10)/10)+" cm"
 
                 Color(1,1,1, .2)
                 Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +95)), size = (200, 70))
