@@ -54,10 +54,10 @@ def generateFile(waypoints, photos, ratio, action):
                 Y1axis.moveTo(waypoints[currentWaypoint*2+1]);\n \
                 Y2axis.moveTo(waypoints[currentWaypoint*2+1]);\n \
                 \n \
-                if( (Xaxis.speed()>0 && digitalRead(MD)) || (Xaxis.speed()<0 && digitalRead(MA)) ){\n \
+                if( (Xaxis.targetPosition() - Xaxis.currentPosition()>0 && digitalRead(MD)) || (Xaxis.targetPosition() - Xaxis.currentPosition()<0 && digitalRead(MA)) ){\n \
                     Xaxis.runSpeedToPosition();\n \
                 }\n \
-                if( (Y1axis.speed()>0 && digitalRead(B) && digitalRead(C)) || (Y1axis.speed()<0 && digitalRead(A) && digitalRead(D)) ){\n \
+                if( (Y1axis.targetPosition() - Y1axis.currentPosition()>0 && digitalRead(B) && digitalRead(C)) || (Y1axis.targetPosition() - Y1axis.currentPosition()<0 && digitalRead(A) && digitalRead(D)) ){\n \
                     Y1axis.runSpeedToPosition();\n \
                     Y2axis.runSpeedToPosition();\n \
                 }\n \

@@ -488,7 +488,7 @@ class Parametrage(BoxLayout):
                         cmValues.append(curent[1])
                         cmValues.append(curent[0])
 
-                    genFile = generateFile(cmValues, parcours[1], float(self.settings.get('general', 'stepToCm')), self.params["photoPipe"], str(osJoinPath(path, filename[0])))
+                    genFile = generateFile(cmValues, parcours[1], float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename[0])))
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
@@ -503,7 +503,7 @@ class Parametrage(BoxLayout):
                         cmValues.append(curent[1])
                         cmValues.append(curent[0])
 
-                    genFile = generateFile(cmValues, self.params["photos"], float(self.settings.get('general', 'stepToCm')), self.params["photoPipe"], str(osJoinPath(path, filename[0])), actionOnSpot=self.params["nodeAction"])
+                    genFile = generateFile(cmValues, self.params["photos"], float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename[0])))
                     f = open(".\\assets\\currentFile\\currentFile.ino","w+")
                     f.write(genFile)
                     f.close()
@@ -764,13 +764,13 @@ class Parametrage(BoxLayout):
                             if self.params["photos"][i] and not self.params["nodeAction"]:
                                 nb = floor(thisDist/float(self.params["photoPipe"]))
                                 top = (thisDist-nb*float(self.params["photoPipe"]))/(2*thisDist)
-                                ax = top * ((zoomedTrace[i*2]+middle[0]) - (zoomedTrace[(i+1)*2]+middle[0]))
-                                ay = top * ((zoomedTrace[i*2+1]+middle[1]) - (zoomedTrace[(i+1)*2+1]+middle[1]))
+                                ax = top * (zoomedTrace[i*2] - zoomedTrace[(i+1)*2])
+                                ay = top * (zoomedTrace[i*2+1] - zoomedTrace[(i+1)*2+1])
                                 Color(0, 0, 0)
                                 for p in range(nb+1):
-                                    Ellipse(pos=(zoomedTrace[(i+1)*2]+middle[0] + ax-self.lineWidth/2 + ((float(self.params["photoPipe"])/thisDist)*((zoomedTrace[i*2]+middle[0]) - (zoomedTrace[(i+1)*2]+middle[0])))*p,
-                                                 zoomedTrace[(i+1)*2+1]+middle[1] + ay-self.lineWidth/2 + ((float(self.params["photoPipe"])/thisDist)*((zoomedTrace[i*2+1]+middle[1]) - (zoomedTrace[(i+1)*2+1]+middle[1])))*p), size=(self.lineWidth, self.lineWidth))
-
+                                    Ellipse(pos=(zoomedTrace[(i+1)*2]+middle[0] + ax-self.lineWidth/2 + ((float(self.params["photoPipe"])/thisDist)*(zoomedTrace[i*2] - zoomedTrace[(i+1)*2]))*p,
+                                                 zoomedTrace[(i+1)*2+1]+middle[1] + ay-self.lineWidth/2 + ((float(self.params["photoPipe"])/thisDist)*(zoomedTrace[i*2+1] - zoomedTrace[(i+1)*2+1]))*p), size=(self.lineWidth, self.lineWidth))
+                                
                     
                     for i in range(int(len(zoomedTrace)/2)):
                         if self.lastTouched == i:
@@ -1055,6 +1055,28 @@ class Parametrage(BoxLayout):
         height = self.corners[0][1] - self.corners[1][1]
         width = self.corners[0][0] - self.corners[2][0]
         return (round(((X-self.corners[3][0])*(self.actualWidth*1000))/width)/10, round(((Y-self.corners[3][1])*(self.actualHeight*1000))/height)/10)
+
+    def lineToPictures(self, b, a):
+        """Transforms a line in a multitude of points where a picture has to be taken.
+
+        a tuple: first point of the line (in cm).
+        b tuple: second point of the line (in cm).
+
+        returns: an array of the NEW points.
+        """
+        thisDist = max(distance.euclidean(a, b), 0.0001)
+        newPoints = []
+
+        nb = floor(thisDist/float(self.params["photoPipe"]))
+        top = (thisDist-nb*float(self.params["photoPipe"]))/(2*thisDist)
+
+        ax = top * (a[0] - b[0])
+        ay = top * (a[1] - b[1])
+        for p in range(nb+1):
+            newPoints.append(round((b[0] + ax + ( (float(self.params["photoPipe"])/thisDist)*(a[0] - b[0]) )*p)*100)/100)
+            newPoints.append(round((b[1] + ay + ( (float(self.params["photoPipe"])/thisDist)*(a[1] - b[1]) )*p)*100)/100)
+
+        return newPoints
 
     def printCoords(self, X, Y):
         toCm = self.pixelToCM(X, Y)
