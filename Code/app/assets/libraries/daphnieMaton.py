@@ -1,4 +1,5 @@
 import ctypes
+import json
 import os
 import re
 import threading
@@ -6,8 +7,7 @@ import time
 from functools import partial
 from json import dumps as jsDumps
 from json import load as jsLoad
-import json
-from math import atan2, hypot, pi, floor
+from math import atan2, floor, hypot, pi
 from os import system as osSystem
 from os.path import join as osJoinPath
 
@@ -29,9 +29,9 @@ from scipy.spatial import distance
 
 from . import undoRedo as UndoRedo
 from .classes import (Input, LoadDialog, MenuDropDown, MyLabel, SaveDialog,
-                      getPorts, hitLine, polToCar, urlOpen, checkUpdates)
+                      checkUpdates, getPorts, hitLine, polToCar, urlOpen)
 from .createFile import generateFile
-from .helpMsg import directHelp, freeHelp, pipeHelp, aboutPanel
+from .helpMsg import aboutPanel, directHelp, freeHelp, pipeHelp
 from .localization import _
 
 
@@ -45,7 +45,7 @@ class Parametrage(BoxLayout):
         self.fileDropDown = MenuDropDown()
         self.port = -1
 
-        self.speed = 8.6 # m per minutes # TODO: Change this
+        self.speed = self.settings.get('general', 'speed') # meters per second
         self.imageWidth = 1.4 # in meter
         self.imageHeight = 1.4 # in meter
         self.actualWidth = 1.144 # in meter
@@ -267,7 +267,6 @@ class Parametrage(BoxLayout):
                 print("wrong program")
         self.boardBusy = False        
 
-    # Saving and loading system
     def dismiss_popup(self):
         self._popup.dismiss()
 
@@ -358,24 +357,31 @@ class Parametrage(BoxLayout):
         if self.port != -1 and self.board != -1:
             if self.board.in_waiting > 0:
                 try:
-                    data_str = self.board.readline().decode("utf-8").rstrip()
-                except:
+                    received = json.loads(self.board.readline().decode("utf-8").rstrip())
+                    print(received)
+                    steps = received['Steps']
+                    speed = float(self.settings.get('general', 'yDist'))/(float(received['Time'])/100) # in m.s^-1
+
+                    self.settings.set("general", "stepToCm", str(round((float(steps)/(float(self.settings.get('general', 'yDist'))-5.5))*10) / 10))
+                    self.settings.set("general", "speed", str(round(speed*10) / 10))
+                    self.settings.write()
+                    try: self.popup.dismiss()
+                    except: pass
+                    self.popup = Popup( title=_('Calibration successful'),
+                                        content=Label(text=_('The DaphnieMaton has found it\'s ratio: ') + str(self.settings.get('general', 'stepToCm')) + " step/cm"),
+                                            size_hint=(None, None),
+                                            size=(400, 300))
+                    self.popup.open()
+                    print("calibrated to " + str(self.settings.get('general', 'stepToCm')))
+                    print("Speed is: " + str(speed) + "m.s^-1")
+                except Exception as e:
+                    print(e)
                     try: self.popup.dismiss()
                     except: pass
                     self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
                     self.popup.open()
-                self.settings.set("general", "stepToCm", str(round((float(data_str)/(float(self.settings.get('general', 'yDist'))-5.5))*10) / 10))
-                self.settings.write()
                 self.calibrateClock.cancel()
                 self.calibrateClock = -1
-                try: self.popup.dismiss()
-                except: pass
-                self.popup = Popup( title=_('Calibration successful'),
-                                    content=Label(text=_('The DaphnieMaton has found it\'s ratio: ') + str(self.settings.get('general', 'stepToCm')) + " step/cm"),
-                                        size_hint=(None, None),
-                                        size=(400, 300))
-                self.popup.open()
-                print("calibrated to " + str(self.settings.get('general', 'stepToCm')))
         elif self.board == -1:
             print("new board")
             self.board = serial.Serial(str(self.port), 9600, timeout=1)
@@ -423,7 +429,7 @@ class Parametrage(BoxLayout):
                         self.board = -1
                     except: pass
                 
-                if self.mode == "Pipe" or self.mode == "Free":
+                if (self.mode == "Pipe" or self.mode == "Free") and not calibration:
                     # prompt .ino thing
                     content = LoadDialog(load=lambda path, filename: self.chooseAction(path, filename, callback=callback), cancel=self.abortUpload)
                     self._popup = Popup(title=_("Action program"), content=content,
@@ -604,7 +610,6 @@ class Parametrage(BoxLayout):
 
         return (path, photos)
 
-    # Drawing on canvas
     def update_rect(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
 
@@ -656,9 +661,9 @@ class Parametrage(BoxLayout):
                 Color(1,1,1,1)
                 Rectangle(source=self.settings.get('colors', 'imagePath'), pos = (middle[0]-width/2, middle[1]-width/2), size = (width, width))
 
-                text = _("Total time") + ": " + str(round( ((self.params["nbPipe"]*self.params["lenPipe"])/self.speed)*600 )/10) + " sec" + \
+                text = _("Total time") + ": " + str(round( ((self.params["nbPipe"]*self.params["lenPipe"])/float(self.speed)) *10)/10) + " sec" + \
                                         "\n"+_("Photo number") + ": " + str( round((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100))) + \
-                                        "\n"+_("Photo every") +" "+ str( round( ((self.speed*self.params["nbPipe"]) / ((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100)))*10 )/10 ) + " sec"
+                                        "\n"+_("Photo every") +" "+ str( round( ((float(self.speed)*self.params["nbPipe"]) / ((self.params["nbPipe"]*self.params["lenPipe"]) / (self.params["photoPipe"]/100)))*10 )/10 ) + " sec"
 
                 Color(0.5,0.5,0.5, .6)
                 Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +95)), size = (200, 70))
@@ -1058,7 +1063,6 @@ class Parametrage(BoxLayout):
         self.ids.coord.input.text = str(toCm[0]) + " : " + str(toCm[1])
         self.ids.coord.bindThis()
     
-
     def removeAllNodes(self):
         self.params["trace"] = []
         self.params["photos"] = []

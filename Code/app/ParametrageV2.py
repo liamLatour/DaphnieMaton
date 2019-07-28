@@ -66,7 +66,7 @@ class DaphnieMatonApp(App):
             'savePath': 'C:\\',
             'stepToCm': 100,
             'yDist': 100,
-            'xDist': 100,
+            'speed': 7,
             'autoSave': 5,
             'language': "English"})
         config.setdefaults('shortcuts', {

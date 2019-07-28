@@ -24,10 +24,10 @@
    },
    {
       "type":"numeric",
-      "title":"X's distance",
-      "desc":"Distance in cm between two of the switchs of the X axis",
+      "title":"Speed of motors",
+      "desc":"The average speed of motors in m/s",
       "section":"general",
-      "key":"xDist"
+      "key":"speed"
    },
    {
       "type":"numeric",

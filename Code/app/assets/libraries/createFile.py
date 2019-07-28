@@ -1,15 +1,11 @@
 import numpy as np
 
-def generateFile(waypoints, photos, ratio, photoPipe, action, actionOnSpot=False):
+def generateFile(waypoints, photos, ratio, action):
     waypoints = list(np.rint(np.multiply(waypoints, ratio)).tolist())
 
     top = "#include <AccelStepper.h>\n \
     #include <"+str(action)+">\n \
     #define LED_PIN 13\n \
-    #define goToIt 1\n \
-    #define firstHalf 2\n \
-    #define middle 3\n \
-    #define lastHalf 4\n \
     AccelStepper Xaxis(AccelStepper::DRIVER, 60, 61);\n \
     AccelStepper Y1axis(AccelStepper::DRIVER, 54, 55);\n \
     AccelStepper Y2axis(AccelStepper::DRIVER, 46, 48);\n \
@@ -22,22 +18,11 @@ def generateFile(waypoints, photos, ratio, photoPipe, action, actionOnSpot=False
     const int MD = 14;\n \
     \n \
     const int waypointNb = "+str(round(len(waypoints)/2))+";\n \
-    float waypointLength = 0;\n \
-    float waypointXLength = 0;\n \
-    float waypointYLength = 0;\n \
     int currentWaypoint = 0;\n \
     const int waypoints[] = "+str(waypoints).replace("[", "{").replace("]", "}").replace(".0", "")+";\n \
     const bool photo[] = "+str(photos).replace("[", "{").replace("]", "}").replace("F", "f").replace("T", "t")+";\n \
     \n \
-    float photoPipe = "+photoPipe+";\n \
-    int state = goToIt;\n \
-    float oldX = waypoints[0];\n \
-    float oldY = waypoints[1];\n \
-    int middleNb = 0;\n \
-    int middleTotal = 0;\n \
-    bool actionOnSpot = "+str(actionOnSpot).lower()+";\n \
     bool hasStarted = false;\n\n" # Min, Max
-
 
     setup = "void setup(){\n \
         Xaxis.setEnablePin(38);\n \
@@ -58,8 +43,6 @@ def generateFile(waypoints, photos, ratio, photoPipe, action, actionOnSpot=False
         pinMode(40, INPUT_PULLUP);\n \
     }\n\n"
 
-#FIXME: at start go to waypoint normally
-
     loop = "void loop() {\n \
         if(digitalRead(40) == 1){\n \
             if(hasStarted){\n \
@@ -67,28 +50,9 @@ def generateFile(waypoints, photos, ratio, photoPipe, action, actionOnSpot=False
                 Y1axis.setSpeed(500);\n \
                 Y2axis.setSpeed(500);\n \
                 \n \
-                if(state == goToIt){\n \
-                    Xaxis.moveTo(oldX);\n \
-                    Y1axis.moveTo(oldY);\n \
-                    Y2axis.moveTo(oldY);\n \\n \
-                }\n \
-                else if(state == firstHalf){\n \
-                    float top = (waypointLength-middleTotal*photoPipe)/(2*waypointLength);\n \
-                    Xaxis.moveTo(oldX + top*waypointXLength);\n \
-                    Y1axis.moveTo(oldY + top*waypointYLength);\n \
-                    Y2axis.moveTo(oldY + top*waypointYLength);\n \
-                }\n \
-                else if(state == middle){\n \
-                    Xaxis.moveTo(oldX + (photoPipe/waypointLength)*waypointXLength);\n \
-                    Y1axis.moveTo(oldY + (photoPipe/waypointLength)*waypointYLength);\n \
-                    Y2axis.moveTo(oldY + (photoPipe/waypointLength)*waypointYLength);\n \
-                }\n \
-                else{\n \
-                    float top = (waypointLength-middleTotal*photoPipe)/(2*waypointLength);\n \
-                    Xaxis.moveTo(oldX + top*waypointXLength);\n \
-                    Y1axis.moveTo(oldY + top*waypointYLength);\n \
-                    Y2axis.moveTo(oldY + top*waypointYLength);\n \
-                }\n \
+                Xaxis.moveTo(waypoints[currentWaypoint*2]);\n \
+                Y1axis.moveTo(waypoints[currentWaypoint*2+1]);\n \
+                Y2axis.moveTo(waypoints[currentWaypoint*2+1]);\n \
                 \n \
                 if( (Xaxis.speed()>0 && digitalRead(MD)) || (Xaxis.speed()<0 && digitalRead(MA)) ){\n \
                     Xaxis.runSpeedToPosition();\n \
@@ -98,47 +62,11 @@ def generateFile(waypoints, photos, ratio, photoPipe, action, actionOnSpot=False
                     Y2axis.runSpeedToPosition();\n \
                 }\n \
                 if(Xaxis.distanceToGo()==0 && (Y1axis.distanceToGo()==0 || Y2axis.distanceToGo()==0)){\n \
-                    if(state == lastHalf){\n \
-                        state = goToIt;\n \
-                        oldX = waypoints[currentWaypoint*2];\n \
-                        oldY = waypoints[currentWaypoint*2+1];\n \
-                        int nextWaypoint = (currentWaypoint+1)%waypointNb;\n \
-                        waypointXLength = waypoints[nextWaypoint*2] - waypoints[currentWaypoint*2];\n \
-                        waypointYLength = waypoints[nextWaypoint*2+1] - waypoints[currentWaypoint*2+1];\n \
-                        waypointLength = sqrt(sq(waypointXLength)+sq(waypointYLength));\n \
-                        currentWaypoint = nextWaypoint;\n \
-                        middleTotal = waypointLength/photoPipe;\n \
-                        if(actionOnSpot){\n \
-                            action();\n \
-                        }\n \
-                        delay(500);\n \
+                    if(photo[currentWaypoint]){\n \
+                        //Gotta take them\n \
+                        action();\n \
                     }\n \
-                    else if(state == firstHalf){\n \
-                        state = middle;\n \
-                        float top = (waypointLength-middleTotal*photoPipe)/(2*waypointLength);\n \
-                        oldX += top*waypointXLength;\n \
-                        oldY += top*waypointYLength;\n \
-                        if(photo[currentWaypoint] & !actionOnSpot){\n \
-                            action();\n \
-                        }\n \
-                    }\n \
-                    else if(state == middle){\n \
-                        if(middleNb == middleTotal){\n \
-                            state = lastHalf;\n \
-                            middleNb = 0;\n \
-                        }\n \
-                        else{\n \
-                            middleNb += 1;\n \
-                        }\n \
-                        oldX += (photoPipe/waypointLength)*waypointXLength;\n \
-                        oldY += (photoPipe/waypointLength)*waypointYLength;\n \
-                        if(photo[currentWaypoint] & !actionOnSpot){\n \
-                            action();\n \
-                        }\n \
-                    }\n \
-                    else{\n \
-                        state = firstHalf;\n \\n \
-                    }\n \
+                    currentWaypoint = (currentWaypoint+1)%waypointNb;\n \
                     delay(500);\n \
                 }\n \
             }\n \

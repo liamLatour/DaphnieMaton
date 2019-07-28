@@ -96,11 +96,16 @@ void calibrate() {
   // Going to the end
   Xaxis.setSpeed(500);
   while(digitalRead(MD)){
-    Xaxis.runSpeed();
+    while(digitalRead(MD)){
+      Xaxis.runSpeed();
+    }
+    delay(2);
   }
 
   // It arrived
   Xaxis.setCurrentPosition(0);
+
+  unsigned long start = millis();
 
   // Go to the origin
   Xaxis.setSpeed(-500);
@@ -108,7 +113,8 @@ void calibrate() {
     Xaxis.runSpeed();
   }
 
-  Serial.println(abs(Xaxis.currentPosition()));
+  String tosend = "{\"Steps\":" + String(abs(Xaxis.currentPosition())) + ", \"Time\":" + String(millis() - start) + "}"; 
+  Serial.println(tosend);
 
   //Reset origin
   Xaxis.setCurrentPosition(0);
