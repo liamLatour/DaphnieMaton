@@ -49,6 +49,13 @@
    },
    {
       "type":"color",
+      "title":"Action node color",
+      "desc":"Color of the nodes on which an action has to be made",
+      "section":"colors",
+      "key":"actionNode"
+   },
+   {
+      "type":"color",
       "title":"Path color",
       "desc":"Color of the lines between nodes",
       "section":"colors",

@@ -36,6 +36,7 @@ class DaphnieMatonApp(App):
 
             'undo': [self.app.undo],
             'clear': [self.app.removeAllNodes],
+            'suppr': [self.app.removeNode],
 
             'copy': [self.app.copyToClipboard],
             'moveRight': [lambda: self.app.moveDirect(bytes([1]), shortcut=True)],
@@ -78,6 +79,7 @@ class DaphnieMatonApp(App):
 
             'undo': 'ctrl+z',
             'clear': 'ctrl+x',
+            'suppr': 'suppr',
 
             'copy': 'ctrl+c',
             'moveLeft': 'left',
@@ -90,6 +92,7 @@ class DaphnieMatonApp(App):
             'imagePath': ".\\assets\\topDownView.png",
             'nodeColor': "#e0e028",
             'nodeHighlight': "#d32828",
+            'actionNode': "#59ff00",
             'pathColor': "#72f7ff",
             'pathHighlight': "#82d883"})
         config.setdefaults('hidden', {

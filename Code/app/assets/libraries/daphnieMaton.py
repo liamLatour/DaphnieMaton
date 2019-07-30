@@ -117,6 +117,7 @@ class Parametrage(BoxLayout):
         self.background = utils.get_color_from_hex(self.settings.get('colors', 'background'))
         self.nodeColor = utils.get_color_from_hex(self.settings.get('colors', 'nodeColor'))
         self.nodeHighlight = utils.get_color_from_hex(self.settings.get('colors', 'nodeHighlight'))
+        self.actionNode = utils.get_color_from_hex(self.settings.get('colors', 'actionNode'))
         self.pathColor = utils.get_color_from_hex(self.settings.get('colors', 'pathColor'))
         self.pathHighlight = utils.get_color_from_hex(self.settings.get('colors', 'pathHighlight'))
 
@@ -165,7 +166,8 @@ class Parametrage(BoxLayout):
             "gaps" : [20],
             "loop" : True,
             "trace" : [],
-            "photos" : []
+            "photos" : [],
+            "actionNodes": []
         }
 
         self.ids.loop.unbindThis()
@@ -540,7 +542,7 @@ class Parametrage(BoxLayout):
                     cmValues.append(curent[0])
 
                 for i in range(round(len(self.params["trace"])/2)):
-                    photos.append(False)
+                    photos.append(self.params["actionNodes"][i])
                     if self.params["photos"][i]:
                         middles = self.lineToPictures((cmValues[i*2], cmValues[i*2+1]), (cmValues[((i+1)*2)%len(cmValues)], cmValues[((i+1)*2+1)%len(cmValues)]))
                         cmValues[(i+1)*2:(i+1)*2] = middles
@@ -650,6 +652,7 @@ class Parametrage(BoxLayout):
         if copy:
             self.params["trace"] = path
             self.params["photos"] = photos
+            self.params["actionNodes"] = [False for i in range(len(photos))]
 
         return (path, photos)
 
@@ -754,7 +757,6 @@ class Parametrage(BoxLayout):
 
             self.ids.freeBack.canvas.before.clear()
 
-            self.params["nodeAction"] = bool(self.ids.nodeAction.input.active)
             self.params["photoPipe"] = max(self.sanitize(self.ids.freePhotoPipe.input.text), 1)
 
             with self.ids.freeBack.canvas.before:
@@ -781,13 +783,13 @@ class Parametrage(BoxLayout):
 
                     for i in range(int(len(zoomedTrace)/2)):
                         if (i+1)*2+1 >= len(zoomedTrace) and isLoop:
-                            if self.params["photos"][i] and not self.params["nodeAction"]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
+                            if self.params["photos"][i]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
                             else: Color(self.pathColor[0], self.pathColor[1], self.pathColor[2], self.pathColor[3])
                             Line(points=[zoomedTrace[i*2]+middle[0], zoomedTrace[i*2+1]+middle[1], zoomedTrace[0]+middle[0], zoomedTrace[1]+middle[1]], width=self.lineWidth)
                             thisDist = max(distance.euclidean(self.pixelToCM(self.params["trace"][i*2]+middle[0], self.params["trace"][i*2+1]+middle[1]),
                                                         self.pixelToCM(self.params["trace"][0]+middle[0], self.params["trace"][1]+middle[1])), 0.0001)
                             dist += thisDist
-                            if self.params["photos"][i] and not self.params["nodeAction"]:
+                            if self.params["photos"][i]:
                                 nb = floor(thisDist/float(self.params["photoPipe"]))
                                 top = (thisDist-nb*float(self.params["photoPipe"]))/(2*thisDist)
                                 ax = top * ((zoomedTrace[i*2]+middle[0]) - (zoomedTrace[0]+middle[0]))
@@ -798,13 +800,13 @@ class Parametrage(BoxLayout):
                                                  zoomedTrace[1]+middle[1] + ay-self.lineWidth/2 + ((float(self.params["photoPipe"])/thisDist)*((zoomedTrace[i*2+1]+middle[1]) - (zoomedTrace[1]+middle[1])))*p), size=(self.lineWidth, self.lineWidth))
 
                         elif (i+1)*2+1 < len(zoomedTrace):
-                            if self.params["photos"][i] and not self.params["nodeAction"]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
+                            if self.params["photos"][i]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
                             else: Color(self.pathColor[0], self.pathColor[1], self.pathColor[2], self.pathColor[3])
                             Line(points=[zoomedTrace[i*2]+middle[0], zoomedTrace[i*2+1]+middle[1], zoomedTrace[(i+1)*2]+middle[0], zoomedTrace[(i+1)*2+1]+middle[1]], width=self.lineWidth)
                             thisDist = max(distance.euclidean(self.pixelToCM(self.params["trace"][i*2]+middle[0], self.params["trace"][i*2+1]+middle[1]),
                                                         self.pixelToCM(self.params["trace"][(i+1)*2]+middle[0], self.params["trace"][(i+1)*2+1]+middle[1])), 0.0001)
                             dist += thisDist
-                            if self.params["photos"][i] and not self.params["nodeAction"]:
+                            if self.params["photos"][i]:
                                 nb = floor(thisDist/float(self.params["photoPipe"]))
                                 top = (thisDist-nb*float(self.params["photoPipe"]))/(2*thisDist)
                                 ax = top * (zoomedTrace[i*2] - zoomedTrace[(i+1)*2])
@@ -819,7 +821,10 @@ class Parametrage(BoxLayout):
                         if self.lastTouched == i:
                             Color(self.nodeHighlight[0], self.nodeHighlight[1], self.nodeHighlight[2], self.nodeHighlight[3])
                             Ellipse(pos=(zoomedTrace[i*2]+middle[0]-(self.diametre+5)/2, zoomedTrace[i*2+1]+middle[1]-(self.diametre+5)/2), size=(self.diametre+5, self.diametre+5))
-                        Color(self.nodeColor[0], self.nodeColor[1], self.nodeColor[2], self.nodeColor[3])
+                        if self.params["actionNodes"][i]:
+                            Color(self.actionNode[0], self.actionNode[1], self.actionNode[2], self.actionNode[3])
+                        else:
+                            Color(self.nodeColor[0], self.nodeColor[1], self.nodeColor[2], self.nodeColor[3])
                         Ellipse(pos=(zoomedTrace[i*2]+middle[0]-self.diametre/2, zoomedTrace[i*2+1]+middle[1]-self.diametre/2), size=(self.diametre, self.diametre))
                         label = CoreLabel(text=str(i+1), font_size=20)
                         label.refresh()
@@ -971,6 +976,15 @@ class Parametrage(BoxLayout):
                     self.checkKeyClock = -1
                 self.checkKeyClock = Clock.schedule_interval(self.checkKeyHolding, 0.2)
 
+    def removeNode(self):
+        if self.lastTouched != -1:
+            del self.params["trace"][self.lastTouched*2+1]
+            del self.params["trace"][self.lastTouched*2]
+            del self.params["photos"][self.lastTouched]
+            del self.params["actionNodes"][self.lastTouched]
+            self.lastTouched = -1
+            self.update_rect()
+
     def clickedDown(self, touch):
         if self.mode == "Free":
             x = touch.x
@@ -989,10 +1003,7 @@ class Parametrage(BoxLayout):
                 for i in range(int(len(zoomedTrace)/2)):
                     if hypot(zoomedTrace[i*2]+self.ids.libreDrawing.center_x - x, zoomedTrace[i*2+1]+self.ids.libreDrawing.center_y - y) <= self.diametre/2:
                         if touch.button == 'right':
-                            del self.params["trace"][i*2+1]
-                            del self.params["trace"][i*2]
-                            del self.params["photos"][i]
-                            self.lastTouched = -1
+                            self.params["actionNodes"][i] = not self.params["actionNodes"][i]
                             self.update_rect()
                         elif touch.button == 'left':
                             self.isDragging = i
@@ -1020,6 +1031,7 @@ class Parametrage(BoxLayout):
                             self.params["trace"].insert((i+1)*2, coordX)
                             self.params["trace"].insert((i+1)*2+1, coordY)
                             self.params["photos"].insert((i+1), False)
+                            self.params["actionNodes"].insert((i+1), False)
                             self.lastTouched = i+1
                             self.isDragging = i+1
                             self.update_rect()
@@ -1042,6 +1054,7 @@ class Parametrage(BoxLayout):
                     self.params["trace"].append(coordX)
                     self.params["trace"].append(coordY)
                     self.params["photos"].append(False)
+                    self.params["actionNodes"].append(False)
                     self.lastTouched = len(self.params["photos"])-1
                     self.isDragging = len(self.params["photos"])-1
                     self.update_rect()
@@ -1054,7 +1067,7 @@ class Parametrage(BoxLayout):
             if self.zoomFactor == 0.05:
                 self.positionClamp()
                 self.update_rect()
-            UndoRedo.do([self.params["trace"].copy(), self.params["photos"].copy()])
+            UndoRedo.do([self.params["trace"].copy(), self.params["photos"].copy(), self.params["actionNodes"].copy()])
 
     def clickedMove(self, touch):
         if self.mode == "Free":
@@ -1131,7 +1144,8 @@ class Parametrage(BoxLayout):
     def removeAllNodes(self):
         self.params["trace"] = []
         self.params["photos"] = []
-        UndoRedo.do([self.params["trace"].copy(), self.params["photos"].copy()])
+        self.params["actionNodes"] = []
+        UndoRedo.do([self.params["trace"].copy(), self.params["photos"].copy(), self.params["actionNodes"].copy()])
         self.update_rect()
 
     def inputMove(self, *args):
@@ -1148,6 +1162,7 @@ class Parametrage(BoxLayout):
                 self.params["trace"].append(float(position[0])*ratioX + self.corners[3][0])
                 self.params["trace"].append(float(position[1])*ratioY + self.corners[3][1])
                 self.params["photos"].append(False)
+                self.params["actionNodes"].append(False)
                 self.lastTouched = len(self.params["photos"]) -1
             elif self.lastTouched*2+1 < len(self.params["trace"]):
                 self.params["trace"][self.lastTouched*2] = float(position[0])*ratioX + self.corners[3][0]
@@ -1254,8 +1269,9 @@ class Parametrage(BoxLayout):
             pyperclip.copy(str(self.systemPosition))
 
     def undo(self):
-        last = UndoRedo.undo([self.params["trace"].copy(), self.params["photos"].copy()])
+        last = UndoRedo.undo([self.params["trace"].copy(), self.params["photos"].copy(), self.params["actionNodes"].copy()])
         if last != -1:
             self.params["trace"] = last[0]
             self.params["photos"] = last[1]
+            self.params["actionNodes"] = last[2]
         self.update_rect()

@@ -50,6 +50,13 @@
       "key":"clear"
    },
    {
+      "type":"shortcut",
+      "title":"Suppress node",
+      "desc":"Supresses selected node",
+      "section":"shortcuts",
+      "key":"suppr"
+   },
+   {
       "type":"title",
       "title": "Direct control"
    },

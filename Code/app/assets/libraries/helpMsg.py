@@ -10,8 +10,9 @@ pipeHelp = "[u]Usage in Pipe mode[/u]\n\n \
 freeHelp = "[u]Usage in Free mode[/u]\n\n \
     1) To edit a path:\n \
     *      Left click to add or move a node\n \
-    *      Right click on a node to remove it\n \
+    *      Right click on a node to change it's mode, Action or Nothing\n \
     *      Right click on a path to change from Picture (purple) to Nothing (blue)\n \
+    *      Press suppr to suppress the selected node\n \
     *      Hold ctrl to clamp node position relative to the last one\n \
     *      Hold shift to clamp node position to the four corners\n \
     2) Connect the system to the [b]computer[/b]\n \
