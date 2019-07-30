@@ -1,28 +1,35 @@
+import json
+import os
 import re
 import threading
-from math import cos, pow, sin, sqrt
 import time
+from math import cos, pow, sin, sqrt
+
 import keyboard
 import kivy.utils as utils
+import requests
 import serial.tools.list_ports
 from kivy.clock import Clock
 from kivy.core.window import Window
-from kivy.properties import NumericProperty, ObjectProperty, StringProperty
+from kivy.properties import (ListProperty, NumericProperty, ObjectProperty,
+                             StringProperty)
 from kivy.uix.actionbar import ActionDropDown
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.colorpicker import ColorPicker
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.image import Image
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
+from kivy.uix.scrollview import ScrollView
 from kivy.uix.settings import SettingItem
 from kivy.uix.switch import Switch
 from kivy.uix.textinput import TextInput
 from scipy.spatial import distance
+
 from .localization import _
-import os
-import requests
+
 
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
@@ -35,6 +42,46 @@ class SaveDialog(FloatLayout):
     text_input = ObjectProperty(None)
     cancel = ObjectProperty(None)
     path = StringProperty("C:/")
+
+
+class ActionChoosing(FloatLayout):
+    newAction = ObjectProperty(None)
+    cancel = ObjectProperty(None)
+    chose = ObjectProperty(None)
+    actions = StringProperty("{}")
+
+    def __init__(self, **kwargs):
+        super(ActionChoosing, self).__init__(**kwargs)
+        # Have to wait if declared in .kv because the properties are not set before init
+        Clock.schedule_once(self.after_init)
+
+    def after_init(self, *args):
+        self.bind(size=self.updateGrid, pos=self.updateGrid)
+        self.createGrid()
+
+    def updateGrid(self, *args):
+        self.ids.box.remove_widget(self.scrollView)
+        self.createGrid()
+    
+    def createGrid(self, *args):
+        self.scrollView = ScrollView(size_hint= (1, 1))
+        grid = CustomGrid(cols=max(round(self.size[0]/150-0.5), 1))
+        actions = json.loads(self.actions)
+        for action in actions:
+            button = GridButton(text=str(action.replace(actions[action] + "\\", "").replace(".ino", "")), path=actions[action], filename=action, chose=self.chose)
+            grid.add_widget(button)
+        self.scrollView.add_widget(grid)
+        self.ids.box.add_widget(self.scrollView, index=1)
+
+
+class GridButton(Button):
+    path = StringProperty("")
+    filename = StringProperty("")
+    chose = ObjectProperty(None)
+
+
+class CustomGrid(GridLayout):
+    pass
 
 
 class MenuDropDown(ActionDropDown):
@@ -217,7 +264,7 @@ class Input(BoxLayout):
             self.after_init()
         else:
             # Have to wait if declared in .kv because the properties are not set before init
-            Clock.schedule_once(self.after_init)        
+            Clock.schedule_once(self.after_init)
 
     def after_init(self, *args):
         self.label = Label(text=self.inputName)

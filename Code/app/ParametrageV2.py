@@ -47,7 +47,8 @@ class DaphnieMatonApp(App):
         self.configFiles = {
             ".\\assets\\settings\\config.json": 'General',
             ".\\assets\\settings\\shortcuts.json": 'Shortcuts',
-            ".\\assets\\settings\\colors.json": 'Aspect'
+            ".\\assets\\settings\\colors.json": 'Aspect',
+            ".\\assets\\settings\\hidden.json": 'hidden',
         }
 
         for short in self.shortcuts:
@@ -91,6 +92,8 @@ class DaphnieMatonApp(App):
             'nodeHighlight': "#d32828",
             'pathColor': "#72f7ff",
             'pathHighlight': "#82d883"})
+        config.setdefaults('hidden', {
+            'action': '{}'})
 
     def build_settings(self, settings):
         settings.register_type('buttons', SettingButtons)
@@ -98,6 +101,8 @@ class DaphnieMatonApp(App):
         settings.register_type('shortcut', SettingShortcut)
 
         for files in self.configFiles:
+            if self.configFiles[files] == "hidden":
+                continue
             f = openFile(files, "r", encoding='utf8')
             if f.mode == 'r':
                 contents = f.read()

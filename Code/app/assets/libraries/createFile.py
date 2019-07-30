@@ -54,14 +54,23 @@ def generateFile(waypoints, photos, ratio, action):
                 Y1axis.moveTo(waypoints[currentWaypoint*2+1]);\n \
                 Y2axis.moveTo(waypoints[currentWaypoint*2+1]);\n \
                 \n \
+                bool xmax = false;\n \
+                bool ymax = false;\n \
+                \n \
                 if( (Xaxis.targetPosition() - Xaxis.currentPosition()>0 && digitalRead(MD)) || (Xaxis.targetPosition() - Xaxis.currentPosition()<0 && digitalRead(MA)) ){\n \
                     Xaxis.runSpeedToPosition();\n \
+                }\n \
+                else{\n \
+                    xmax = true;\n \
                 }\n \
                 if( (Y1axis.targetPosition() - Y1axis.currentPosition()>0 && digitalRead(B) && digitalRead(C)) || (Y1axis.targetPosition() - Y1axis.currentPosition()<0 && digitalRead(A) && digitalRead(D)) ){\n \
                     Y1axis.runSpeedToPosition();\n \
                     Y2axis.runSpeedToPosition();\n \
                 }\n \
-                if(Xaxis.distanceToGo()==0 && (Y1axis.distanceToGo()==0 || Y2axis.distanceToGo()==0)){\n \
+                else{\n \
+                    ymax = true;\n \
+                }\n \
+                if((Xaxis.distanceToGo()==0 || xmax) && (Y1axis.distanceToGo()==0 || Y2axis.distanceToGo()==0 || ymax)){\n \
                     if(photo[currentWaypoint]){\n \
                         //Gotta take them\n \
                         action();\n \

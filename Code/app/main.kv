@@ -1,6 +1,35 @@
 #:kivy 1.10.1
 #:import _ assets.libraries.localization._
 
+
+<ActionChoosing>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: 'vertical'
+        id: box
+        BoxLayout:
+            size_hint_y: None
+            height: 40
+            Button:
+                text: _('Cancel')
+                on_release: root.cancel()
+            Button:
+                text: _('New action')
+                on_release: root.newAction()
+
+<CustomGrid>:
+    size_hint_y: None
+    height: self.minimum_height
+    spacing: 5
+    padding: 10
+
+<GridButton>:
+    size_hint_y: None
+    size_hint_max_x: 200
+    height: self.width
+    on_release: root.chose(path=root.path, filename=root.filename)
+
 <LoadDialog>:
     BoxLayout:
         size: root.size

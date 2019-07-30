@@ -28,7 +28,7 @@ from kivy.uix.popup import Popup
 from scipy.spatial import distance
 
 from . import undoRedo as UndoRedo
-from .classes import (Input, LoadDialog, MenuDropDown, MyLabel, SaveDialog,
+from .classes import (Input, LoadDialog, ActionChoosing, MenuDropDown, MyLabel, SaveDialog,
                       checkUpdates, getPorts, hitLine, polToCar, urlOpen)
 from .createFile import generateFile
 from .helpMsg import aboutPanel, directHelp, freeHelp, pipeHelp
@@ -401,13 +401,7 @@ class Parametrage(BoxLayout):
             self.readingClock.cancel()
             self.readingClock = -1
 
-        threading.Thread(target=lambda: self.updateAsync(calibration=calibration, callback=callback)).start()
-
-    def updateAsync(self, calibration, callback):
-        arduinoPath = self.settings.get('general', 'arduinoPath')
-        self.boardBusy = True
-
-        if not os.path.isfile(arduinoPath + '/arduino_debug.exe'):
+        if not os.path.isfile(self.settings.get('general', 'arduinoPath') + '/arduino_debug.exe'):
             try: self.popup.dismiss()
             except: pass
             self.popup = Popup( title=_('Arduino dir missing'),
@@ -421,6 +415,45 @@ class Parametrage(BoxLayout):
             self.popup.open()
             return
 
+        if (self.mode == "Pipe" or self.mode == "Free") and not calibration:
+            content = ActionChoosing(newAction=lambda: self.newAction(callback=callback),
+                                                                      chose=self.chooseAction,
+                                                                      actions=self.settings.get('hidden', 'action'),
+                                     cancel=self.abortUpload)
+            self._popup = Popup(title=_("Action program"), content=content,
+                                size_hint=(0.9, 0.9))
+            self._popup.open()
+        else:
+            threading.Thread(target=lambda: self.updateAsync(calibration=calibration, callback=callback)).start()
+
+    def newAction(self, callback=None):
+        content = LoadDialog(load=lambda path, filename: self.addAction(path, filename, callback=callback))
+        self.actionPopup = Popup(title=_("New action program"), content=content,
+                            size_hint=(0.9, 0.9))
+        content.cancel = self.actionPopup.dismiss
+        self.actionPopup.open()
+
+    def addAction(self, path, filename, callback=None):
+        try:
+            if ".ino" not in filename[0]:
+                ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n The file has to be '.ino'", u"Wrong File Error", 0)
+                return
+            
+            current = json.loads(self.settings.get('hidden', 'action'))
+            current[str(filename[0])] = path
+            self.settings.set('hidden', 'action', str(json.dumps(current)))
+            self.settings.write()
+
+            self.actionPopup.dismiss()
+
+            self.chooseAction(path, filename[0], callback=callback)
+        except:
+            print("error")
+
+    def updateAsync(self, calibration, callback):
+        arduinoPath = self.settings.get('general', 'arduinoPath')
+        self.boardBusy = True
+
         try:
             if self.port != -1:
                 if not (calibration and self.hasGoodProgram):
@@ -428,14 +461,6 @@ class Parametrage(BoxLayout):
                         self.board.close()
                         self.board = -1
                     except: pass
-                
-                if (self.mode == "Pipe" or self.mode == "Free") and not calibration:
-                    # prompt .ino thing
-                    content = LoadDialog(load=lambda path, filename: self.chooseAction(path, filename, callback=callback), cancel=self.abortUpload)
-                    self._popup = Popup(title=_("Action program"), content=content,
-                                        size_hint=(0.9, 0.9))
-                    self._popup.open()
-                    return
 
                 if calibration:
                     if not self.hasGoodProgram:
@@ -468,56 +493,74 @@ class Parametrage(BoxLayout):
         self.boardBusy = False
 
     def chooseAction(self, path, filename, callback=None):
+        self._popup.dismiss()
+        if ".ino" not in filename:
+            ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n The file has to be '.ino'", u"Wrong File Error", 0)
+            return
+        threading.Thread(target=lambda: self.chooseActionAsync(path=path, filename=filename, callback=callback)).start()
+
+    def chooseActionAsync(self, path, filename, callback=None):
         try:
-            if ".ino" not in filename[0]:
-                ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n The file has to be '.ino'", u"Wrong File Error", 0)
-            else:
-                self.settings.set("general", "actionPath", str(osJoinPath(path, filename[0])))
-                self.settings.write()
+            self.settings.set("general", "actionPath", str(osJoinPath(path, filename)))
+            self.settings.write()
 
-                print(str(osJoinPath(path, filename[0])))
+            if self.mode == "Pipe":
+                parcours = self.generatePathFromPipe()
 
-                if self.mode == "Pipe":
-                    parcours = self.generatePathFromPipe()
+                # Convertir "parcours" de px en cm
+                cmValues = []
+                photos = []
 
-                    # Convertir "trace" de px en cm
-                    cmValues = []
+                for i in range(round(len(parcours[0])/2)):
+                    curent = self.pixelToCM(parcours[0][i*2], parcours[0][i*2+1])
+                    cmValues.append(curent[1])
+                    cmValues.append(curent[0])
 
-                    for i in range(round(len(parcours[0])/2)):
-                        curent = self.pixelToCM(parcours[0][i*2], parcours[0][i*2+1])
-                        cmValues.append(curent[1])
-                        cmValues.append(curent[0])
+                for i in range(round(len(parcours[0])/2)):
+                    photos.append(False)
+                    if parcours[1][i]:
+                        middles = self.lineToPictures((cmValues[i*2], cmValues[i*2+1]), (cmValues[((i+1)*2)%len(cmValues)], cmValues[((i+1)*2+1)%len(cmValues)]))
+                        cmValues[(i+1)*2:(i+1)*2] = middles
+                        photos.extend([True for i in range(int(len(middles)/2))])
 
-                    genFile = generateFile(cmValues, parcours[1], float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename[0])))
-                    f = open(".\\assets\\currentFile\\currentFile.ino","w+")
-                    f.write(genFile)
-                    f.close()
-                    osSystem(self.settings.get('general', 'arduinoPath') + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
-                    self.hasGoodProgram = False
-                elif self.mode == "Free":
-                    # Convertir "trace" de px en cm
-                    cmValues = []
+                genFile = generateFile(cmValues, photos, float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename)))
+                f = open(".\\assets\\currentFile\\currentFile.ino","w+")
+                f.write(genFile)
+                f.close()
+                osSystem(self.settings.get('general', 'arduinoPath') + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
+                self.hasGoodProgram = False
+            elif self.mode == "Free":
+                # Convertir "trace" de px en cm
+                cmValues = []
+                photos = []
 
-                    for i in range(round(len(self.params["trace"])/2)):
-                        curent = self.pixelToCM(self.params["trace"][i*2], self.params["trace"][i*2+1])
-                        cmValues.append(curent[1])
-                        cmValues.append(curent[0])
+                for i in range(round(len(self.params["trace"])/2)):
+                    curent = self.pixelToCM(self.params["trace"][i*2], self.params["trace"][i*2+1])
+                    cmValues.append(curent[1])
+                    cmValues.append(curent[0])
 
-                    genFile = generateFile(cmValues, self.params["photos"], float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename[0])))
-                    f = open(".\\assets\\currentFile\\currentFile.ino","w+")
-                    f.write(genFile)
-                    f.close()
-                    osSystem(self.settings.get('general', 'arduinoPath') + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
-                    self.hasGoodProgram = False
+                for i in range(round(len(self.params["trace"])/2)):
+                    photos.append(False)
+                    if self.params["photos"][i]:
+                        middles = self.lineToPictures((cmValues[i*2], cmValues[i*2+1]), (cmValues[((i+1)*2)%len(cmValues)], cmValues[((i+1)*2+1)%len(cmValues)]))
+                        cmValues[(i+1)*2:(i+1)*2] = middles
+                        photos.extend([True for i in range(int(len(middles)/2))])
 
-                print("DONE !")
-                self._popup.dismiss()
-                try: self.popup.dismiss()
-                except: pass
-                self.popup = Popup(title=_('Success !'), content=Label(text=_('Upload finished successfully !')), size_hint=(None, None), size=(400, 300))
-                self.popup.open()
-                if callback != None:
-                    callback()
+                genFile = generateFile(cmValues, photos, float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename)))
+                f = open(".\\assets\\currentFile\\currentFile.ino","w+")
+                f.write(genFile)
+                f.close()
+                osSystem(self.settings.get('general', 'arduinoPath') + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
+                self.hasGoodProgram = False
+
+            print("DONE !")
+            self._popup.dismiss()
+            try: self.popup.dismiss()
+            except: pass
+            self.popup = Popup(title=_('Success !'), content=Label(text=_('Upload finished successfully !')), size_hint=(None, None), size=(400, 300))
+            self.popup.open()
+            if callback != None:
+                callback()
         except Exception as e:
             ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n" + str(e), u"Wrong File Error", 0)
 

@@ -1,0 +1,13 @@
+[
+    {
+       "type":"title",
+       "title": "Actions"
+    },
+    {
+       "type":"string",
+       "title":"Actions",
+       "desc":"Saved actions in the form of a json string",
+       "section":"hidden",
+       "key":"action"
+    }
+]
