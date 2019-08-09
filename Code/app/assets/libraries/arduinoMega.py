@@ -38,25 +38,22 @@ class Arduino:
     def sendSerial(self, direction, shortcut=False, urgent=False, *args):
         if self.boardBusy:
             return
-        if urgent:
-            self.boardBusy = True
-        if self.port != -1:
+        
+        self.boardBusy = urgent
+
+        try:
+            self.board.write(direction)
+        except:
             try:
+                self.board = serial.Serial(str(self.port), 9600, timeout=1)
+                time.sleep(2)
                 self.board.write(direction)
             except:
-                try:
-                    self.board = serial.Serial(str(self.port), 9600, timeout=1)
-                    time.sleep(2)
-                    self.board.write(direction)
-                except:
-                    if not self.boardBusy:
-                        self.easyPopup(_('Disconnected'), _('The system has been disconnected'))
+                self.easyPopup(_('Disconnected'), _('The system has been disconnected'))
 
-            if shortcut == True:
-                if self.checkKeyClock != -1:
-                    self.checkKeyClock.cancel()
-                    self.checkKeyClock = -1
-                self.checkKeyClock = Clock.schedule_interval(self.checkKeyHolding, 0.2)
+        if shortcut == True:
+            self.stopCheckKey()
+            self.checkKeyClock = Clock.schedule_interval(self.checkKeyHolding, 0.2)
 
     def readFromSerial(self, *args):
         if self.port != -1:
@@ -85,8 +82,9 @@ class Arduino:
             self.readingClock = -1
 
     def checkItHasDirectProgram(self):
-        self.sendSerial(bytes([9]), urgent=True)
-        if self.board != -1:
+        if self.port != -1:
+            self.sendSerial(bytes([9]), urgent=True)
+
             try:
                 response = self.board.readline()
                 print(response)
@@ -151,7 +149,6 @@ class Arduino:
 
     def uploadAsync(self, program):
         self.boardBusy = True
-
         try:
             if self.port != -1:
                 try:
@@ -184,6 +181,9 @@ class Arduino:
             self.sendSerial(bytes([6]))
 
         if stopX and stopY:
-            if self.checkKeyClock != -1:
-                self.checkKeyClock.cancel()
-                self.checkKeyClock = -1
+            self.stopCheckKey()
+
+    def stopCheckKey(self):
+        if self.checkKeyClock != -1:
+            self.checkKeyClock.cancel()
+            self.checkKeyClock = -1
