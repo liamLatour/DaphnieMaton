@@ -1,18 +1,13 @@
 import json
-import os
-import re
 import threading
 import time
-from math import cos, pow, sin, sqrt
 
 import keyboard
 import kivy.utils as utils
-import requests
 import serial.tools.list_ports
 from kivy.clock import Clock
 from kivy.core.window import Window
-from kivy.properties import (ListProperty, NumericProperty, ObjectProperty,
-                             StringProperty)
+from kivy.properties import NumericProperty, ObjectProperty, StringProperty
 from kivy.uix.actionbar import ActionDropDown
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -26,23 +21,19 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.settings import SettingItem
 from kivy.uix.switch import Switch
 from kivy.uix.textinput import TextInput
-from scipy.spatial import distance
 
 from .localization import _
-
 
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
     cancel = ObjectProperty(None)
     path = StringProperty("C:/")
 
-
 class SaveDialog(FloatLayout):
     save = ObjectProperty(None)
     text_input = ObjectProperty(None)
     cancel = ObjectProperty(None)
     path = StringProperty("C:/")
-
 
 class ActionChoosing(FloatLayout):
     newAction = ObjectProperty(None)
@@ -73,20 +64,16 @@ class ActionChoosing(FloatLayout):
         self.scrollView.add_widget(grid)
         self.ids.box.add_widget(self.scrollView, index=1)
 
-
 class GridButton(Button):
     path = StringProperty("")
     filename = StringProperty("")
     chose = ObjectProperty(None)
 
-
 class CustomGrid(GridLayout):
     pass
 
-
 class MenuDropDown(ActionDropDown):
     pass
-
 
 class SettingButtons(SettingItem):
     def __init__(self, **kwargs):
@@ -101,7 +88,6 @@ class SettingButtons(SettingItem):
 
     def On_ButtonPressed(self,instance):
         self.panel.settings.dispatch('on_config_change',self.panel.config, self.section, self.key, instance.ID)
-
 
 class SettingShortcut(SettingItem):
     popup = ObjectProperty(None, allownone=True)
@@ -170,7 +156,6 @@ class SettingShortcut(SettingItem):
         self.running = True
         threading.Thread(target=self._inputget).start()
 
-
 class SettingColorPicker(SettingItem):
     popup = ObjectProperty(None, allownone=True)
     textinput = ObjectProperty(None)
@@ -228,7 +213,6 @@ class SettingColorPicker(SettingItem):
         # all done, open the popup !
         popup.open()
 
-
 class MyLabel(Image):
     text = StringProperty('')
 
@@ -237,7 +221,6 @@ class MyLabel(Image):
         l.font_size = '50'
         l.texture_update()
         self.texture = l.texture
-
 
 class Input(BoxLayout):
     """Custom input to handle parameters.
@@ -314,62 +297,3 @@ class Input(BoxLayout):
             self.add_widget(self.input)
         except:
             pass
-
-
-def getPorts():
-    """Used to gather every connected devices on usb.
-
-    returns: list of found devices on COM ports.
-    """
-    arduinoPorts = os.popen("python -m serial.tools.list_ports").read().strip().replace(' ', '').split('\n')
-    if arduinoPorts == ['']:
-        return []
-    return arduinoPorts
-
-
-def urlOpen(instance, url):
-    """Opens a browser window with specified url.
-
-    url string: the website to go to.
-    """
-    import webbrowser
-    webbrowser.open(url, new=2)
-
-
-def hitLine(lineA, lineB, point, lineWidth):
-    """Checks whether the point is in line or out.
-
-    lineA tuple: a point of the line.
-    lineB tuple: another point of the line.
-    point tuple: point we want to check.
-    lineWidth tuple: width of the line.
-
-    returns: True if in and False if out.
-    """
-    numerator = abs((lineB[1]-lineA[1])*point[0]-(lineB[0]-lineA[0])*point[1]+lineB[0]*lineA[1]-lineB[1]*lineA[0])
-    denominator = max(sqrt(pow(lineB[1]-lineA[1], 2)+pow(lineB[0]-lineA[0], 2)), 0.00001)
-    if numerator/denominator <= lineWidth:
-        if distance.euclidean(lineA, point) < distance.euclidean(lineA, lineB) and distance.euclidean(lineB, point) < distance.euclidean(lineA, lineB):
-            return True
-    return False
-
-def checkUpdates(versionFile):
-    """Checks if a new version exists and updates the current one.
-
-    versionFile string: User's file holding current version
-
-    returns: the new version tag if one exists
-    """
-    url = 'https://raw.githubusercontent.com/liamLatour/DaphnieMaton/master/version'
-    req = requests.get(url).text.strip()
-    
-    if os.path.isfile(versionFile):
-        # Store configuration file values
-        f = open(versionFile, "r")
-        contents = f.read().strip()
-        f.close()
-        if req != contents:
-            return req
-    else:
-        return req
-    return False

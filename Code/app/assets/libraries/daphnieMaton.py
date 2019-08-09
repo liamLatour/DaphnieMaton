@@ -29,12 +29,12 @@ from scipy.spatial import distance
 
 from .arduinoMega import Arduino
 from .classes import (
-    ActionChoosing, Input, LoadDialog, MenuDropDown, MyLabel, SaveDialog,
-    checkUpdates, getPorts, hitLine, urlOpen)
+    ActionChoosing, Input, LoadDialog, MenuDropDown, MyLabel, SaveDialog)
 from .createFile import generateFile
-from .helpMsg import aboutPanel, directHelp, freeHelp, pipeHelp
+from .helpMsg import helpMsg
 from .localization import _
 from .undoRedo import UndoRedo
+from .utilityFunctions import checkUpdates, getPorts, hitLine, urlOpen
 
 
 class Parametrage(BoxLayout):
@@ -56,7 +56,7 @@ class Parametrage(BoxLayout):
 
         # Search for arduino installation
         if not os.path.isfile(self.settings.get('general', 'arduinoPath') + '/arduino_debug.exe'):
-            threading.Thread(target=lambda: self.findFile("arduino.exe", "C:\\")).start()
+            threading.Thread(target=lambda: self.findArduinoDir("arduino.exe", "C:\\")).start()
 
         # Specific to the mode 'Pipe'
         self.pipePanel = self.ids.tuyeauInputs
@@ -116,7 +116,7 @@ class Parametrage(BoxLayout):
         if refresh:
             self.update_rect()
 
-    def findFile(self, name, path):
+    def findArduinoDir(self, name, path):
         for currentPath in os.walk(path):
             if name in currentPath[2]:
                 print("Found arduino path: " + currentPath[0])
@@ -127,13 +127,7 @@ class Parametrage(BoxLayout):
     def help(self, *args):
         self.popbox = BoxLayout()
 
-        if self.mode == "Pipe":
-            self.poplb = MyLabel(text=pipeHelp)
-        elif self.mode == "Free":
-            self.poplb = MyLabel(text=freeHelp)
-        elif self.mode == "Direct":
-            self.poplb = MyLabel(text=directHelp)
-
+        self.poplb = MyLabel(text=helpMsg[self.mode])
         self.poplb.bind(on_ref_press=urlOpen)
         self.popbox.add_widget(self.poplb)
 
@@ -192,7 +186,7 @@ class Parametrage(BoxLayout):
 
     def about_panel(self):
         self.popbox = BoxLayout()
-        self.poplb = MyLabel(text=aboutPanel)
+        self.poplb = MyLabel(text=helpMsg["About"])
         self.poplb.bind(on_ref_press=urlOpen)
         self.popbox.add_widget(self.poplb)
 
@@ -630,31 +624,19 @@ class Parametrage(BoxLayout):
             buttonSize = min(self.ids.directSplitter.size[0]/4, self.ids.directSplitter.size[1]/4)
             fontSize = min(self.ids.directSplitter.size[0]/20, self.ids.directSplitter.size[1]/20)
 
-            raz = Button(text=_('Origin'), font_size=fontSize, pos = (middle[0]-buttonSize/2, middle[1]-buttonSize/2), size = (buttonSize, buttonSize))
+            buttons = {_("Origin"): {"value": [0, 8], "position": [0, 0]},
+                        u'\u23E9': {"value": [1, 5], "position": [1, 0]},
+                        u'\u23EA': {"value": [2, 5], "position": [-1, 0]},
+                        u'\u23EB': {"value": [3, 6], "position": [0, 1]},
+                        u'\u23EC': {"value": [4, 6], "position": [0, -1]}}
 
-            right = Button(text=u'\u23E9', font_size=fontSize, font_name=self.font, pos = (middle[0]+buttonSize+5-buttonSize/2, middle[1]-buttonSize/2), size = (buttonSize, buttonSize))
-            left = Button(text=u'\u23EA', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize-5-buttonSize/2, middle[1]-buttonSize/2), size = (buttonSize, buttonSize))
-            up = Button(text=u'\u23EB', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize/2, middle[1]+buttonSize+5-buttonSize/2), size = (buttonSize, buttonSize))
-            down = Button(text=u'\u23EC', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize/2, middle[1]-buttonSize-5-buttonSize/2), size = (buttonSize, buttonSize))
-
-            raz.bind(on_release=partial(self.arduino.sendSerial, bytes([8])))
-
-            right.bind(on_press=partial(self.arduino.sendSerial, bytes([1])))
-            right.bind(on_release=partial(self.arduino.sendSerial, bytes([5])))
-            left.bind(on_press=partial(self.arduino.sendSerial, bytes([2])))
-            left.bind(on_release=partial(self.arduino.sendSerial, bytes([5])))
-            up.bind(on_press=partial(self.arduino.sendSerial, bytes([3])))
-            up.bind(on_release=partial(self.arduino.sendSerial, bytes([6])))
-            down.bind(on_press=partial(self.arduino.sendSerial, bytes([4])))
-            down.bind(on_release=partial(self.arduino.sendSerial, bytes([6])))
-            
-            self.ids.directDrawing.add_widget(raz)
-
-            self.ids.directDrawing.add_widget(right)
-            self.ids.directDrawing.add_widget(left)
-            self.ids.directDrawing.add_widget(up)
-            self.ids.directDrawing.add_widget(down)
-            
+            for button in buttons:
+                but = Button(text=button, font_size=fontSize, font_name=self.font,
+                             pos = (middle[0]-buttonSize/2+(buttonSize+5)*buttons[button]["position"][0], middle[1]-buttonSize/2+(buttonSize+5)*buttons[button]["position"][1]),
+                             size = (buttonSize, buttonSize))
+                but.bind(on_press=partial(self.arduino.sendSerial, bytes([buttons[button]["value"][0]])))
+                but.bind(on_release=partial(self.arduino.sendSerial, bytes([buttons[button]["value"][1]])))
+                self.ids.directDrawing.add_widget(but)
 
             self.ids.directBack.canvas.before.clear()
 
@@ -675,25 +657,14 @@ class Parametrage(BoxLayout):
                 Color(1, 1, 1, 1)
                 Rectangle(pos=(self.size[0]-200, self.size[1] - (70 +95)), size=(200, 70), texture=text)
 
-                if not self.arduino.systemSwitchs['A']: Color(1, 1, 0)
-                else: Color(0, 0, 0)
-                Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 + switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2 - switchMiddle[1]/2), size=(self.switchDiameter, self.switchDiameter))
-                if not self.arduino.systemSwitchs['B']: Color(1, 1, 0)
-                else: Color(0, 0, 0)
-                Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 + switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2 + switchMiddle[1]/2), size=(self.switchDiameter, self.switchDiameter))
-                if not self.arduino.systemSwitchs['C']: Color(1, 1, 0)
-                else: Color(0, 0, 0)
-                Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 - switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2 + switchMiddle[1]/2), size=(self.switchDiameter, self.switchDiameter))
-                if not self.arduino.systemSwitchs['D']: Color(1, 1, 0)
-                else: Color(0, 0, 0)
-                Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 - switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2 - switchMiddle[1]/2), size=(self.switchDiameter, self.switchDiameter))
-                if not self.arduino.systemSwitchs['MA']: Color(1, 1, 0)
-                else: Color(0, 0, 0)
-                Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 + switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2), size=(self.switchDiameter, self.switchDiameter))
-                if not self.arduino.systemSwitchs['MD']: Color(1, 1, 0)
-                else: Color(0, 0, 0)
-                Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 - switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2), size=(self.switchDiameter, self.switchDiameter))
-            
+                switches = self.arduino.systemSwitchs
+                for switch in switches:
+                    if switches[switch]['value']: Color(0, 0, 0)
+                    else: Color(1, 1, 0)
+                    Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 + switchMiddle[0]/2*switches[switch]['position'][0],
+                                 switchMiddle[1] - self.switchDiameter / 2 - switchMiddle[1]/2*switches[switch]['position'][1]),
+                                 size=(self.switchDiameter, self.switchDiameter))
+                    
             if not self.arduino.hasDirectProgram:
                 with self.ids.directDrawing.canvas.after:
                     dimensionX = self.ids.directSplitter.size[0]

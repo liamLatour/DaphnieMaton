@@ -19,12 +19,12 @@ class Arduino:
         self.port = -1
         self.systemPosition = (0, 0)
         self.systemSwitchs = {
-            'A': False,
-            'B': False,
-            'C': False,
-            'D': False,
-            'MA': False,
-            'MD': False,
+            'A': {'value':False, 'position':[1,-1]},
+            'B': {'value':False, 'position':[1,1]},
+            'C': {'value':False, 'position':[-1,1]},
+            'D': {'value':False, 'position':[-1,-1]},
+            'MA': {'value':False, 'position':[1,0]},
+            'MD': {'value':False, 'position':[-1,0]},
         }
         self.readingClock = -1
         self.checkKeyClock = -1
@@ -60,12 +60,12 @@ class Arduino:
             received = json.loads(self.board.readline().decode("utf-8").rstrip())
 
             self.systemPosition = (received['X'], received['Y'])
-            self.systemSwitchs['A'] = received['A']
-            self.systemSwitchs['B'] = received['B']
-            self.systemSwitchs['C'] = received['C']
-            self.systemSwitchs['D'] = received['D']
-            self.systemSwitchs['MA'] = received['MA']
-            self.systemSwitchs['MD'] = received['MD']
+            self.systemSwitchs['A']['value'] = received['A']
+            self.systemSwitchs['B']['value'] = received['B']
+            self.systemSwitchs['C']['value'] = received['C']
+            self.systemSwitchs['D']['value'] = received['D']
+            self.systemSwitchs['MA']['value'] = received['MA']
+            self.systemSwitchs['MD']['value'] = received['MD']
             self.refresh()
         except:
             self.stopReading()
