@@ -35,6 +35,29 @@ class Arduino:
         self.programs = programs
         self.refresh = refresh
 
+    def sendSerial(self, direction, shortcut=False, urgent=False, *args):
+        if self.boardBusy:
+            return
+        if urgent:
+            self.boardBusy = True
+        if self.port != -1:
+            try:
+                self.board.write(direction)
+            except:
+                try:
+                    self.board = serial.Serial(str(self.port), 9600, timeout=1)
+                    time.sleep(2)
+                    self.board.write(direction)
+                except:
+                    if not self.boardBusy:
+                        self.easyPopup(_('Disconnected'), _('The system has been disconnected'))
+
+            if shortcut == True:
+                if self.checkKeyClock != -1:
+                    self.checkKeyClock.cancel()
+                    self.checkKeyClock = -1
+                self.checkKeyClock = Clock.schedule_interval(self.checkKeyHolding, 0.2)
+
     def readFromSerial(self, *args):
         if self.port != -1:
             self.sendSerial(bytes([7]))
@@ -56,6 +79,11 @@ class Arduino:
 
                 self.easyPopup(_('Disconnected'), _('The system has been disconnected'))
 
+    def stopReading(self):
+        if self.readingClock != -1:
+            self.readingClock.cancel()
+            self.readingClock = -1
+
     def checkItHasDirectProgram(self):
         self.sendSerial(bytes([9]), urgent=True)
         if self.board != -1:
@@ -76,11 +104,14 @@ class Arduino:
                 return False
         self.boardBusy = False
     
-    def stopReading(self):
-        if self.readingClock != -1:
-            self.readingClock.cancel()
-            self.readingClock = -1
-
+    def calibrate(self, program):
+        self.uploadProgram(program)
+        
+        if self.port != -1:
+            self.boardBusy = False # to be sure to launch the command
+            self.sendSerial(bytes([10]))
+            self.calibrateClock = Clock.schedule_interval(self.getCalibrationAsync, 0.5)
+    
     def getCalibrationAsync(self, *args):
         if self.port != -1 and self.board != -1:
             if self.board.in_waiting > 0:
@@ -107,14 +138,6 @@ class Arduino:
             print("new board")
             self.board = serial.Serial(str(self.port), 9600, timeout=1)
         
-    def calibrate(self, program):
-        self.uploadProgram(program)
-        
-        if self.port != -1:
-            self.boardBusy = False # to be sure to launch the command
-            self.sendSerial(bytes([10]))
-            self.calibrateClock = Clock.schedule_interval(self.getCalibrationAsync, 0.5)
-
     def uploadProgram(self, program):
         if not os.path.isfile(self.settings.get('general', 'arduinoPath') + '/arduino_debug.exe'):
             self.easyPopup(_('Arduino dir missing'), _('The specified arduino path is not correct \n (under Option -> Arduino.exe path)'))
@@ -148,29 +171,6 @@ class Arduino:
             self.easyPopup(_('Oopsie...'), _('Something went wrong, try again or report a bug') + "\n" + str(e))
         self.boardBusy = False
         self.refresh()
-
-    def sendSerial(self, direction, shortcut=False, urgent=False, *args):
-        if self.boardBusy:
-            return
-        if urgent:
-            self.boardBusy = True
-        if self.port != -1:
-            try:
-                self.board.write(direction)
-            except:
-                try:
-                    self.board = serial.Serial(str(self.port), 9600, timeout=1)
-                    time.sleep(2)
-                    self.board.write(direction)
-                except:
-                    if not self.boardBusy:
-                        self.easyPopup(_('Disconnected'), _('The system has been disconnected'))
-
-            if shortcut == True:
-                if self.checkKeyClock != -1:
-                    self.checkKeyClock.cancel()
-                    self.checkKeyClock = -1
-                self.checkKeyClock = Clock.schedule_interval(self.checkKeyHolding, 0.2)
 
     def checkKeyHolding(self, *args):
         stopX = False
