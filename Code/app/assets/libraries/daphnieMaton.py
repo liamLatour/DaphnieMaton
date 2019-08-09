@@ -7,7 +7,7 @@ import time
 from functools import partial
 from json import dumps as jsDumps
 from json import load as jsLoad
-from math import atan2, floor, hypot, pi
+from math import atan2, cos, floor, hypot, pi, pow, sin, sqrt
 from os import system as osSystem
 from os.path import join as osJoinPath
 
@@ -27,13 +27,15 @@ from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from scipy.spatial import distance
 
-from .undoRedo import UndoRedo
-from .classes import (Input, LoadDialog, ActionChoosing, MenuDropDown, MyLabel, SaveDialog,
-                      checkUpdates, getPorts, hitLine, polToCar, urlOpen)
+from .arduinoMega import Arduino
+from .classes import (
+    ActionChoosing, Input, LoadDialog, MenuDropDown, MyLabel, SaveDialog,
+    checkUpdates, getPorts, hitLine, urlOpen)
 from .createFile import generateFile
 from .helpMsg import aboutPanel, directHelp, freeHelp, pipeHelp
 from .localization import _
-from .arduinoMega import Arduino
+from .undoRedo import UndoRedo
+
 
 class Parametrage(BoxLayout):
     def __init__(self, *args, **kwargs):
@@ -43,7 +45,7 @@ class Parametrage(BoxLayout):
         self.mode = "Pipe" # Stores the current mode
         self.portDropDown = MenuDropDown()
         self.fileDropDown = MenuDropDown()
-        self.undoRedo = self.UndoRedo()
+        self.undoRedo = UndoRedo()
 
         self.speed = self.settings.get('general', 'speed') # meters per second
         self.imageWidth = 1.4 # in meter
@@ -810,7 +812,7 @@ class Parametrage(BoxLayout):
                     dist = distance.euclidean(previousPoint, (thisX, thisY))
                     angle = round(atan2(thisY-previousPoint[1], thisX-previousPoint[0])/ (pi/4)) * (pi/4)
 
-                    position = polToCar(previousPoint, dist, angle)
+                    position = (cos(angle)*dist+previousPoint[0], sin(angle)*dist + previousPoint[1])
                     newPosition = (position[0], position[1])
                 
                 elif keyboard.is_pressed("shift"): # To clamp to the corners (origin, top-right, ...)

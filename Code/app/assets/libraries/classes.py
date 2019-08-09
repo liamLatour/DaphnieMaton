@@ -236,7 +236,6 @@ class MyLabel(Image):
         l = Label(text=self.text, valign='middle', halign='justify', padding= (15, 35), markup = True)
         l.font_size = '50'
         l.texture_update()
-        # Set it to image, it'll be scaled to image size automatically:
         self.texture = l.texture
 
 
@@ -277,16 +276,12 @@ class Input(BoxLayout):
 
         if self.inputType == 0:
             self.input = TextInput(text=self.default_text, multiline=False, input_filter=self.input_filter)
-            self.input.bind(text=self.toCall)
-            self.add_widget(self.input)
         elif self.inputType == 1:
             self.input = Switch(active=self.default_text=="True")
-            self.input.bind(active=self.toCall)
-            self.add_widget(self.input)
         elif self.inputType == 2:
             self.input = Button(text=self.default_text)
-            self.input.bind(on_press=self.toCall)
-            self.add_widget(self.input)
+        self.input.bind(on_press=self.toCall)
+        self.add_widget(self.input)
 
     def bindThis(self, *args):
         if self.inputType == 0:
@@ -352,26 +347,11 @@ def hitLine(lineA, lineB, point, lineWidth):
     returns: True if in and False if out.
     """
     numerator = abs((lineB[1]-lineA[1])*point[0]-(lineB[0]-lineA[0])*point[1]+lineB[0]*lineA[1]-lineB[1]*lineA[0])
-    denominator = sqrt(pow(lineB[1]-lineA[1], 2)+pow(lineB[0]-lineA[0], 2))
-    if denominator == 0:
-        denominator = 0.00001
+    denominator = max(sqrt(pow(lineB[1]-lineA[1], 2)+pow(lineB[0]-lineA[0], 2)), 0.00001)
     if numerator/denominator <= lineWidth:
         if distance.euclidean(lineA, point) < distance.euclidean(lineA, lineB) and distance.euclidean(lineB, point) < distance.euclidean(lineA, lineB):
             return True
     return False
-
-
-def polToCar(center, dist, angle):
-    """Converts polar coordinates to cartesian.
-
-    center tuple: center of the local system.
-    dist float: distance from the center to the point.
-    angle float: angle in radian.
-
-    returns: a tuple representing the X and Y -> (x, y)
-    """
-    return (cos(angle)*dist+center[0], sin(angle)*dist + center[1])
-
 
 def checkUpdates(versionFile):
     """Checks if a new version exists and updates the current one.
@@ -386,11 +366,10 @@ def checkUpdates(versionFile):
     if os.path.isfile(versionFile):
         # Store configuration file values
         f = open(versionFile, "r")
-        if f.mode == 'r':
-            contents = f.read().strip()
-            f.close()
-            if req != contents:
-                return req
+        contents = f.read().strip()
+        f.close()
+        if req != contents:
+            return req
     else:
         return req
     return False
