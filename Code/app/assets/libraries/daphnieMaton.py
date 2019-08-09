@@ -27,7 +27,7 @@ from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from scipy.spatial import distance
 
-from . import undoRedo as UndoRedo
+from .undoRedo import UndoRedo
 from .classes import (Input, LoadDialog, ActionChoosing, MenuDropDown, MyLabel, SaveDialog,
                       checkUpdates, getPorts, hitLine, polToCar, urlOpen)
 from .createFile import generateFile
@@ -43,6 +43,7 @@ class Parametrage(BoxLayout):
         self.mode = "Pipe" # Stores the current mode
         self.portDropDown = MenuDropDown()
         self.fileDropDown = MenuDropDown()
+        self.undoRedo = self.UndoRedo()
 
         self.speed = self.settings.get('general', 'speed') # meters per second
         self.imageWidth = 1.4 # in meter
@@ -794,7 +795,7 @@ class Parametrage(BoxLayout):
             if self.zoomFactor == 0.05:
                 self.positionClamp()
                 self.update_rect()
-            UndoRedo.do([self.params["trace"].copy(), self.params["photos"].copy(), self.params["actionNodes"].copy()])
+            self.undoRedo.do([self.params["trace"].copy(), self.params["photos"].copy(), self.params["actionNodes"].copy()])
 
     def clickedMove(self, touch):
         if self.mode == "Free":
@@ -872,7 +873,7 @@ class Parametrage(BoxLayout):
         self.params["trace"] = []
         self.params["photos"] = []
         self.params["actionNodes"] = []
-        UndoRedo.do([self.params["trace"].copy(), self.params["photos"].copy(), self.params["actionNodes"].copy()])
+        self.undoRedo.do([self.params["trace"].copy(), self.params["photos"].copy(), self.params["actionNodes"].copy()])
         self.update_rect()
 
     def inputMove(self, *args):
@@ -997,7 +998,7 @@ class Parametrage(BoxLayout):
             pyperclip.copy(str(self.arduino.systemPosition))
 
     def undo(self):
-        last = UndoRedo.undo([self.params["trace"].copy(), self.params["photos"].copy(), self.params["actionNodes"].copy()])
+        last = self.undoRedo.undo([self.params["trace"].copy(), self.params["photos"].copy(), self.params["actionNodes"].copy()])
         if last != -1:
             self.params["trace"] = last[0]
             self.params["photos"] = last[1]
