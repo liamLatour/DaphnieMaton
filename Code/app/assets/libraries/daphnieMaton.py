@@ -71,7 +71,7 @@ class Parametrage(BoxLayout):
         # Specific to the mode 'direct'
         self.switchDiameter = 30.
 
-        self.arduino = Arduino(self.settings, self.easyPopup, programs={"Direct":
+        self.arduino = Arduino(self.settings, self.easyPopup, self.update_rect, programs={"Direct":
                                                                             {"isDirectProgram": True, "path": ".\\assets\\directFile\\directFile.ino"},
                                                                         "Current":
                                                                             {"isDirectProgram": False, "path": ".\\assets\\currentFile\\currentFile.ino"}})
@@ -288,7 +288,7 @@ class Parametrage(BoxLayout):
         content = ActionChoosing(newAction=self.newAction,
                                  chose=lambda path, filename: threading.Thread(target=lambda: self.uploadPath(path=path, filename=filename)).start(),
                                  actions=self.settings.get('hidden', 'action'),
-                                 cancel=self.easyPopup(_('Upload aborted'), _('Upload has been aborted')))
+                                 cancel=lambda: self.easyPopup(_('Upload aborted'), _('Upload has been aborted')))
         self.easyPopup(_("Action program"), content)
 
     def newAction(self):
@@ -358,6 +358,8 @@ class Parametrage(BoxLayout):
 
         if self.mode == "Direct":
             self.arduino.checkItHasDirectProgram()
+        else:
+            self.arduino.stopReading()
 
         self.update_rect()
 

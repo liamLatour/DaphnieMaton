@@ -13,7 +13,7 @@ from .localization import _
 
 
 class Arduino:
-    def __init__(self, settings, easyPopup, programs={}):
+    def __init__(self, settings, easyPopup, refresh, programs={}):
         self.hasDirectProgram = False
         self.boardBusy = False
         self.board = -1
@@ -33,6 +33,7 @@ class Arduino:
         self.easyPopup = easyPopup
         self.settings = settings
         self.programs = programs
+        self.refresh = refresh
 
     def readFromSerial(self, *args):
         if self.port != -1:
@@ -47,6 +48,7 @@ class Arduino:
                 self.systemSwitchs['D'] = received['D']
                 self.systemSwitchs['MA'] = received['MA']
                 self.systemSwitchs['MD'] = received['MD']
+                self.refresh()
             except:
                 if self.readingClock != -1:
                     self.readingClock.cancel()
@@ -67,11 +69,17 @@ class Arduino:
             response = response.decode("utf-8").rstrip()
             if response == "DaphnieMaton":
                 self.hasDirectProgram = True
+                self.stopReading()
                 self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
                 return True
             else:
                 return False
         self.boardBusy = False
+    
+    def stopReading(self):
+        if self.readingClock != -1:
+            self.readingClock.cancel()
+            self.readingClock = -1
 
     def getCalibrationAsync(self, *args):
         if self.port != -1 and self.board != -1:
@@ -113,11 +121,9 @@ class Arduino:
             return
 
         self.easyPopup(_('Upload'), AsyncImage(source='.\\assets\\logo.png', size=(100, 100)), auto_dismiss=False)
-        """
-        if self.readingClock != -1:
-            self.readingClock.cancel()
-            self.readingClock = -1
-        """
+        
+        self.stopReading()
+        
         threading.Thread(target=lambda: self.uploadAsync(program)).start()
 
     def uploadAsync(self, program):
@@ -141,11 +147,10 @@ class Arduino:
         except Exception as e:
             self.easyPopup(_('Oopsie...'), _('Something went wrong, try again or report a bug') + "\n" + str(e))
         self.boardBusy = False
+        self.refresh()
 
     def sendSerial(self, direction, shortcut=False, urgent=False, *args):
         if self.boardBusy:
-            print("Cannot")
-            print(direction)
             return
         if urgent:
             self.boardBusy = True
