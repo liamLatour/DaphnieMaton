@@ -103,59 +103,57 @@ class Arduino:
         self.calibrateClock = Clock.schedule_interval(self.getCalibrationAsync, 0.5)
     
     def getCalibrationAsync(self, *args):
-        if self.port != -1 and self.board != -1:
-            if self.board.in_waiting > 0:
-                try:
-                    received = json.loads(self.board.readline().decode("utf-8").rstrip())
-                    print(received)
-                    steps = received['Steps']
-                    speed = float(self.settings.get('general', 'yDist'))/(float(received['Time'])/100) # in m.s^-1
+        if self.port == -1:
+            self.calibrateClock.cancel()
+            self.easyPopup(_('Disconnected'), _('The system has been disconnected'))
+            return
 
-                    self.settings.set("general", "stepToCm", str(round((float(steps)/(float(self.settings.get('general', 'yDist'))-5.5))*10) / 10))
-                    self.settings.set("general", "speed", str(round(speed*10) / 10))
-                    self.settings.write()
-
-                    self.easyPopup(_('Calibration successful'), _('The DaphnieMaton has found it\'s ratio: ') + str(self.settings.get('general', 'stepToCm')) + " step/cm")
-
-                    print("calibrated to " + str(self.settings.get('general', 'stepToCm')))
-                    print("Speed is: " + str(speed) + "m.s^-1")
-                except Exception as e:
-                    print(e)
-                    print("mine")
-                    self.easyPopup(_('Disconnected'), _('The system has been disconnected'))
-                self.calibrateClock.cancel()
-        elif self.board == -1:
-            print("new board")
+        if self.board == -1:
             self.board = serial.Serial(str(self.port), 9600, timeout=1)
+        elif self.board.in_waiting > 0:
+            try:
+                received = json.loads(self.board.readline().decode("utf-8").rstrip())
+                print(received)
+                steps = received['Steps']
+                speed = float(self.settings.get('general', 'yDist'))/(float(received['Time'])/100) # in m.s^-1
+
+                self.settings.set("general", "stepToCm", str(round((float(steps)/(float(self.settings.get('general', 'yDist'))-5.5))*10) / 10))
+                self.settings.set("general", "speed", str(round(speed*10) / 10))
+                self.settings.write()
+
+                self.easyPopup(_('Calibration successful'), _('The DaphnieMaton has found it\'s ratio: ') + str(self.settings.get('general', 'stepToCm')) + " step/cm")
+
+                self.calibrateClock.cancel()
+                print("calibrated to " + str(self.settings.get('general', 'stepToCm')))
+                print("Speed is: " + str(speed) + "m.s^-1")
+            except Exception as e:
+                print(e)
+                self.easyPopup(_('Disconnected'), _('The system has been disconnected'))
         
     def uploadProgram(self, program):
         if not os.path.isfile(self.settings.get('general', 'arduinoPath') + '/arduino_debug.exe'):
             self.easyPopup(_('Arduino dir missing'), _('The specified arduino path is not correct \n (under Option -> Arduino.exe path)'))
             return
+        elif self.port == -1:
+            self.easyPopup(_('No port detected'), _('No serial port was specified'))
+            return
 
         self.easyPopup(_('Upload'), AsyncImage(source='.\\assets\\logo.png', size=(100, 100)), auto_dismiss=False)
-        
         self.stopReading()
-        
         threading.Thread(target=lambda: self.uploadAsync(program)).start()
 
     def uploadAsync(self, program):
         self.boardBusy = True
         try:
-            if self.port != -1:
-                try:
-                    self.board.close()
-                    self.board = -1
-                except: pass
+            if self.board != -1:
+                self.board.close()
+                self.board = -1
 
-                self.hasDirectProgram = self.programs[program]["isDirectProgram"]
-
-                osSystem(self.settings.get('general', 'arduinoPath') + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload "+self.programs[program]["path"])            
-                
-                print("DONE !")
-                self.easyPopup(_('Success !'), _('Upload finished successfully !'))
-            else:
-                self.easyPopup(_('No port detected'), _('No serial port was specified'))
+            self.hasDirectProgram = self.programs[program]["isDirectProgram"]
+            osSystem(self.settings.get('general', 'arduinoPath') + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload "+self.programs[program]["path"])            
+            
+            print("DONE !")
+            self.easyPopup(_('Success !'), _('Upload finished successfully !'))
         except Exception as e:
             self.easyPopup(_('Oopsie...'), _('Something went wrong, try again or report a bug') + "\n" + str(e))
         self.boardBusy = False
