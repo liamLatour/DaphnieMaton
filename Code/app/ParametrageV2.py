@@ -39,10 +39,10 @@ class DaphnieMatonApp(App):
             'suppr': [self.app.removeNode],
 
             'copy': [self.app.copyToClipboard],
-            'moveRight': [lambda: self.app.moveDirect(bytes([1]), shortcut=True)],
-            'moveLeft': [lambda: self.app.moveDirect(bytes([2]), shortcut=True)],
-            'moveUp': [lambda: self.app.moveDirect(bytes([3]), shortcut=True)],
-            'moveDown': [lambda: self.app.moveDirect(bytes([4]), shortcut=True)]
+            'moveRight': [lambda: self.app.arduino.sendSerial(bytes([1]), shortcut=True)],
+            'moveLeft': [lambda: self.app.arduino.sendSerial(bytes([2]), shortcut=True)],
+            'moveUp': [lambda: self.app.arduino.sendSerial(bytes([3]), shortcut=True)],
+            'moveDown': [lambda: self.app.arduino.sendSerial(bytes([4]), shortcut=True)]
         }
 
         self.configFiles = {
@@ -64,7 +64,6 @@ class DaphnieMatonApp(App):
     def build_config(self, config):
         config.setdefaults('general', {
             'arduinoPath': 'C:\\',
-            'actionPath': 'action.ino',
             'savePath': 'C:\\',
             'stepToCm': 100,
             'yDist': 100,
@@ -116,7 +115,7 @@ class DaphnieMatonApp(App):
             change_language_to(translation_to_language_code(value))
             print("Language changed")
         if section == "general" and key == "calibrate":
-            self.app.update(calibration=True, callback=self.app.calibrate)
+            self.app.arduino.calibrate(program="Direct")
             print("Calibrate")
 
         if section == "shortcuts":

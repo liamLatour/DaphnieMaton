@@ -33,7 +33,7 @@ from .classes import (Input, LoadDialog, ActionChoosing, MenuDropDown, MyLabel, 
 from .createFile import generateFile
 from .helpMsg import aboutPanel, directHelp, freeHelp, pipeHelp
 from .localization import _
-
+from .arduinoMega import Arduino
 
 class Parametrage(BoxLayout):
     def __init__(self, *args, **kwargs):
@@ -43,7 +43,6 @@ class Parametrage(BoxLayout):
         self.mode = "Pipe" # Stores the current mode
         self.portDropDown = MenuDropDown()
         self.fileDropDown = MenuDropDown()
-        self.port = -1
 
         self.speed = self.settings.get('general', 'speed') # meters per second
         self.imageWidth = 1.4 # in meter
@@ -70,21 +69,12 @@ class Parametrage(BoxLayout):
         self.corners = [(88, 82), (88, -72), (-75, 82), (-75, -72)] # Right-Top, Right-Down, Left-Top, Left-Down
 
         # Specific to the mode 'direct'
-        self.board = -1
         self.switchDiameter = 30.
-        self.readingClock = -1
-        self.checkKeyClock = -1
-        self.systemPosition = (0, 0)
-        self.systemSwitchs = {
-            'A': False,
-            'B': False,
-            'C': False,
-            'D': False,
-            'MA': False,
-            'MD': False,
-        }
-        self.hasGoodProgram = False
-        self.boardBusy = False
+
+        self.arduino = Arduino(self.settings, self.easyPopup, programs={"Direct":
+                                                                            {"isDirectProgram": True, "path": ".\\assets\\directFile\\directFile.ino"},
+                                                                        "Current":
+                                                                            {"isDirectProgram": False, "path": ".\\assets\\currentFile\\currentFile.ino"}})
 
         Clock.schedule_once(self.binding)
         Clock.schedule_interval(partial(self.save, -1, -1), int(self.settings.get('general', 'autoSave'))*60)
@@ -104,13 +94,12 @@ class Parametrage(BoxLayout):
         textPopup = "[u]A new version is available ![/u]\n\n \
                         You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/master.zip][color=0083ff][u]here[/u][/color][/ref]"
         if newVersion != False:
-            self.popup = Popup(title=_('New Version ' + newVersion), size_hint=(0.7, 0.7))
             self.popbox = BoxLayout()
             self.poplb = Label(text=textPopup, markup = True)
             self.poplb.bind(on_ref_press=urlOpen)
             self.popbox.add_widget(self.poplb)
-            self.popup.content = self.popbox
-            self.popup.open()
+
+            self.easyPopup(_('New Version ' + newVersion), self.popbox)
 
     def updateColors(self, refresh=True):
         self.pipeColor = utils.get_color_from_hex(self.settings.get('colors', 'pipeColor'))
@@ -125,18 +114,14 @@ class Parametrage(BoxLayout):
             self.update_rect()
 
     def findFile(self, name, path):
-        for root, dirs, files in os.walk(path):
-            if name in files:
-                print("Found arduino path: " + root)
-                self.settings.set("general", "arduinoPath", str(root))
+        for currentPath in os.walk(path):
+            if name in currentPath[2]:
+                print("Found arduino path: " + currentPath[0])
+                self.settings.set("general", "arduinoPath", str(currentPath[0]))
                 self.settings.write()
                 return
 
     def help(self, *args):
-        try: self.popup.dismiss()
-        except: pass
-
-        self.popup = Popup(title=_('Help'), size_hint=(0.7, 0.7))
         self.popbox = BoxLayout()
 
         if self.mode == "Pipe":
@@ -147,10 +132,9 @@ class Parametrage(BoxLayout):
             self.poplb = MyLabel(text=directHelp)
 
         self.poplb.bind(on_ref_press=urlOpen)
-
         self.popbox.add_widget(self.poplb)
-        self.popup.content = self.popbox
-        self.popup.open()
+
+        self.easyPopup(_('Help'), self.popbox)
 
     def newFile(self, refresh, *args):
         self.filePath = -1
@@ -204,18 +188,12 @@ class Parametrage(BoxLayout):
             self.update_rect()
 
     def about_panel(self):
-        try: self.popup.dismiss()
-        except: pass
-
-        self.popup = Popup(title=_('About'), size_hint=(0.7, 0.7))
         self.popbox = BoxLayout()
-
         self.poplb = MyLabel(text=aboutPanel)
         self.poplb.bind(on_ref_press=urlOpen)
-
         self.popbox.add_widget(self.poplb)
-        self.popup.content = self.popbox
-        self.popup.open()
+
+        self.easyPopup(_('About'), self.popbox)
 
     def show_file(self):
         self.fileDropDown.open(self.ids.fileButton)
@@ -237,55 +215,28 @@ class Parametrage(BoxLayout):
             self.portDropDown.add_widget(Button(text=port, height=48, size_hint_y= None, on_release=lambda a:self.change_port(port)))
 
     def change_port(self, port):
-        self.port = port
+        self.arduino.port = port
         if port != -1:
             self.ids.port_button.text = _("Port") + " " + port
-            threading.Thread(target=lambda: self.checkItHasGoodProgram()).start()
+            threading.Thread(target=lambda: self.arduino.checkItHasDirectProgram()).start()
         else:
             self.ids.port_button.text = _("Port")
         self.portDropDown.dismiss()
 
-    def checkItHasGoodProgram(self):
-        self.moveDirect(bytes([9]), urgent=True)
-        if self.board != -1:
-            try:
-                response = self.board.readline()
-                print(response)
-            except:
-                try: self.popup.dismiss()
-                except: pass
-                self.popup = Popup( title=_('Disconnected'),
-                                    content=Label(text=_('The system has been disconnected')),
-                                    size_hint=(None, None),
-                                    size=(400, 300))
-                self.popup.open()
-
-            response = response.decode("utf-8").rstrip()
-            if response == "DaphnieMaton":
-                self.hasGoodProgram = True
-                self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
-                self.update_rect()
-            else:
-                print("wrong program")
-        self.boardBusy = False        
-
     def dismiss_popup(self):
-        self._popup.dismiss()
+        self.popup.dismiss()
 
     def show_load(self, *args):
         if self.filePath != -1:
             content = LoadDialog(load=self.load, cancel=self.dismiss_popup, path=self.filePath)
         else:
             content = LoadDialog(load=self.load, cancel=self.dismiss_popup, path=self.settings.get('general', 'savePath'))
-        self._popup = Popup(title=_("Load file"), content=content,
-                            size_hint=(0.9, 0.9))
-        self._popup.open()
+
+        self.easyPopup(_("Load file"), content)
 
     def show_save(self, *args):
         content = SaveDialog(save=self.save, cancel=self.dismiss_popup, path=self.settings.get('general', 'savePath'))
-        self._popup = Popup(title=_("Save file"), content=content,
-                            size_hint=(0.9, 0.9))
-        self._popup.open()
+        self.easyPopup(_("Save file"), content)
 
     def load(self, path, filename):
         try:
@@ -332,110 +283,22 @@ class Parametrage(BoxLayout):
 
         self.dismiss_popup()
 
-    def readFromSerial(self, *args):
-        if self.port != -1:
-            self.moveDirect(bytes([7]))
-            try:
-                received = json.loads(self.board.readline().decode("utf-8").rstrip())
 
-                self.systemPosition = (received['X'], received['Y'])
-                self.systemSwitchs['A'] = received['A']
-                self.systemSwitchs['B'] = received['B']
-                self.systemSwitchs['C'] = received['C']
-                self.systemSwitchs['D'] = received['D']
-                self.systemSwitchs['MA'] = received['MA']
-                self.systemSwitchs['MD'] = received['MD']
-                self.update_rect()
-            except:
-                if self.readingClock != -1:
-                    self.readingClock.cancel()
-                    self.readingClock = -1
-                try: self.popup.dismiss()
-                except: pass
-                self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
-                self.popup.open()
+    def chooseAction(self):
+        content = ActionChoosing(newAction=self.newAction,
+                                 chose=lambda path, filename: threading.Thread(target=lambda: self.uploadPath(path=path, filename=filename)).start(),
+                                 actions=self.settings.get('hidden', 'action'),
+                                 cancel=self.easyPopup(_('Upload aborted'), _('Upload has been aborted')))
+        self.easyPopup(_("Action program"), content)
 
-    def getCalibrationAsync(self, *args):
-        if self.port != -1 and self.board != -1:
-            if self.board.in_waiting > 0:
-                try:
-                    received = json.loads(self.board.readline().decode("utf-8").rstrip())
-                    print(received)
-                    steps = received['Steps']
-                    speed = float(self.settings.get('general', 'yDist'))/(float(received['Time'])/100) # in m.s^-1
-
-                    self.settings.set("general", "stepToCm", str(round((float(steps)/(float(self.settings.get('general', 'yDist'))-5.5))*10) / 10))
-                    self.settings.set("general", "speed", str(round(speed*10) / 10))
-                    self.settings.write()
-                    try: self.popup.dismiss()
-                    except: pass
-                    self.popup = Popup( title=_('Calibration successful'),
-                                        content=Label(text=_('The DaphnieMaton has found it\'s ratio: ') + str(self.settings.get('general', 'stepToCm')) + " step/cm"),
-                                            size_hint=(None, None),
-                                            size=(400, 300))
-                    self.popup.open()
-                    print("calibrated to " + str(self.settings.get('general', 'stepToCm')))
-                    print("Speed is: " + str(speed) + "m.s^-1")
-                except Exception as e:
-                    print(e)
-                    try: self.popup.dismiss()
-                    except: pass
-                    self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
-                    self.popup.open()
-                self.calibrateClock.cancel()
-                self.calibrateClock = -1
-        elif self.board == -1:
-            print("new board")
-            self.board = serial.Serial(str(self.port), 9600, timeout=1)
-
-    def calibrate(self):
-        if self.port != -1:
-            self.boardBusy = False # to be sure to launch the command
-            self.moveDirect(bytes([10]))
-            self.calibrateClock = Clock.schedule_interval(self.getCalibrationAsync, 0.5)
-
-    def update(self, calibration=False, callback=None, *args):
-        try: self.popup.dismiss()
-        except: pass
-        self.popup = Popup(title=_('Upload'), content=AsyncImage(source='.\\assets\\logo.png', size=(100, 100)), size_hint=(None, None), size=(400, 300), auto_dismiss=False)
-        self.popup.open()
-        if self.readingClock != -1:
-            self.readingClock.cancel()
-            self.readingClock = -1
-
-        if not os.path.isfile(self.settings.get('general', 'arduinoPath') + '/arduino_debug.exe'):
-            try: self.popup.dismiss()
-            except: pass
-            self.popup = Popup( title=_('Arduino dir missing'),
-                                content=Label(text=_('The specified arduino path is not correct \n (under Option -> Arduino.exe path)'),
-                                text_size=self.popup.size,
-                                strip=True,
-                                valign='middle',
-                                halign='center',
-                                padding= (15, 35)),
-                                size_hint=(None, None), size=(400, 300))
-            self.popup.open()
-            return
-
-        if (self.mode == "Pipe" or self.mode == "Free") and not calibration:
-            content = ActionChoosing(newAction=lambda: self.newAction(callback=callback),
-                                                                      chose=self.chooseAction,
-                                                                      actions=self.settings.get('hidden', 'action'),
-                                     cancel=self.abortUpload)
-            self._popup = Popup(title=_("Action program"), content=content,
-                                size_hint=(0.9, 0.9))
-            self._popup.open()
-        else:
-            threading.Thread(target=lambda: self.updateAsync(calibration=calibration, callback=callback)).start()
-
-    def newAction(self, callback=None):
-        content = LoadDialog(load=lambda path, filename: self.addAction(path, filename, callback=callback))
+    def newAction(self):
+        content = LoadDialog(load=lambda path, filename: self.addAction(path, filename))
         self.actionPopup = Popup(title=_("New action program"), content=content,
                             size_hint=(0.9, 0.9))
         content.cancel = self.actionPopup.dismiss
         self.actionPopup.open()
 
-    def addAction(self, path, filename, callback=None):
+    def addAction(self, path, filename):
         try:
             if ".ino" not in filename[0]:
                 ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n The file has to be '.ino'", u"Wrong File Error", 0)
@@ -447,148 +310,54 @@ class Parametrage(BoxLayout):
             self.settings.write()
 
             self.actionPopup.dismiss()
-
-            self.chooseAction(path, filename[0], callback=callback)
+            threading.Thread(target=lambda: self.uploadPath(path=path, filename=filename[0])).start()
         except:
             print("error")
 
-    def updateAsync(self, calibration, callback):
-        arduinoPath = self.settings.get('general', 'arduinoPath')
-        self.boardBusy = True
 
+    def uploadPath(self, path, filename):
         try:
-            if self.port != -1:
-                if not (calibration and self.hasGoodProgram):
-                    try:
-                        self.board.close()
-                        self.board = -1
-                    except: pass
-
-                if calibration:
-                    if not self.hasGoodProgram:
-                        osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
-                        self.hasGoodProgram = True
-                    self.update_rect()
-                elif self.mode == "Direct":
-                    osSystem(arduinoPath + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\directFile\\directFile.ino")            
-                    self.hasGoodProgram = True
-                    self.update_rect()
-                    self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
-
-                print("DONE !")
-                try: self.popup.dismiss()
-                except: pass
-                self.popup = Popup(title=_('Success !'), content=Label(text=_('Upload finished successfully !')), size_hint=(None, None), size=(400, 300))
-                self.popup.open()
-                if callback != None:
-                    callback()
-            else:
-                try: self.popup.dismiss()
-                except: pass
-                self.popup = Popup(title=_('No port detected'), content=Label(text=_('No serial port was specified')), size_hint=(None, None), size=(400, 300))
-                self.popup.open()
-        except Exception as e:
-            try: self.popup.dismiss()
-            except: pass
-            self.popup = Popup(title=_('Oopsie...'), content=Label(text=_('Something went wrong, try again or report a bug') + "\n" + str(e)), size_hint=(None, None), size=(400, 300))
-            self.popup.open()
-        self.boardBusy = False
-
-    def chooseAction(self, path, filename, callback=None):
-        self._popup.dismiss()
-        if ".ino" not in filename:
-            ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n The file has to be '.ino'", u"Wrong File Error", 0)
-            return
-        threading.Thread(target=lambda: self.chooseActionAsync(path=path, filename=filename, callback=callback)).start()
-
-    def chooseActionAsync(self, path, filename, callback=None):
-        try:
-            self.settings.set("general", "actionPath", str(osJoinPath(path, filename)))
-            self.settings.write()
-
             if self.mode == "Pipe":
                 parcours = self.generatePathFromPipe()
-
-                # Convertir "parcours" de px en cm
-                cmValues = []
-                photos = []
-
-                for i in range(round(len(parcours[0])/2)):
-                    curent = self.pixelToCM(parcours[0][i*2], parcours[0][i*2+1])
-                    cmValues.append(curent[1])
-                    cmValues.append(curent[0])
-
-                for i in range(round(len(parcours[0])/2)):
-                    photos.append(False)
-                    if parcours[1][i]:
-                        middles = self.lineToPictures((cmValues[i*2], cmValues[i*2+1]), (cmValues[((i+1)*2)%len(cmValues)], cmValues[((i+1)*2+1)%len(cmValues)]))
-                        cmValues[(i+1)*2:(i+1)*2] = middles
-                        photos.extend([True for i in range(int(len(middles)/2))])
-
-                genFile = generateFile(cmValues, photos, float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename)))
-                f = open(".\\assets\\currentFile\\currentFile.ino","w+")
-                f.write(genFile)
-                f.close()
-                osSystem(self.settings.get('general', 'arduinoPath') + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
-                self.hasGoodProgram = False
+                trace, pictures, actionNodes = parcours
             elif self.mode == "Free":
-                # Convertir "trace" de px en cm
-                cmValues = []
-                photos = []
+                trace = self.params["trace"]
+                pictures = self.params["photos"]
+                actionNodes = self.params["actionNodes"]
+                
+            cmValues = []
+            photos = []
 
-                for i in range(round(len(self.params["trace"])/2)):
-                    curent = self.pixelToCM(self.params["trace"][i*2], self.params["trace"][i*2+1])
-                    cmValues.append(curent[1])
-                    cmValues.append(curent[0])
+            for i in range(round(len(trace)/2)):
+                curent = self.pixelToCM(trace[i*2], trace[i*2+1])
+                cmValues.append(curent[1])
+                cmValues.append(curent[0])
 
-                for i in range(round(len(self.params["trace"])/2)):
-                    photos.append(self.params["actionNodes"][i])
-                    if self.params["photos"][i]:
-                        middles = self.lineToPictures((cmValues[i*2], cmValues[i*2+1]), (cmValues[((i+1)*2)%len(cmValues)], cmValues[((i+1)*2+1)%len(cmValues)]))
-                        cmValues[(i+1)*2:(i+1)*2] = middles
-                        photos.extend([True for i in range(int(len(middles)/2))])
+            for i in range(round(len(trace)/2)):
+                photos.append(actionNodes[i])
+                if pictures[i]:
+                    middles = self.lineToPictures((cmValues[i*2], cmValues[i*2+1]), (cmValues[((i+1)*2)%len(cmValues)], cmValues[((i+1)*2+1)%len(cmValues)]))
+                    cmValues[(i+1)*2:(i+1)*2] = middles
+                    photos.extend([True for i in range(int(len(middles)/2))])
 
-                genFile = generateFile(cmValues, photos, float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename)))
-                f = open(".\\assets\\currentFile\\currentFile.ino","w+")
-                f.write(genFile)
-                f.close()
-                osSystem(self.settings.get('general', 'arduinoPath') + "\\arduino_debug --board arduino:avr:mega:cpu=atmega2560 --port "+str(self.port)+" --upload .\\assets\\currentFile\\currentFile.ino")
-                self.hasGoodProgram = False
+            genFile = generateFile(cmValues, photos, float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename)))
+            f = open(".\\assets\\currentFile\\currentFile.ino","w+")
+            f.write(genFile)
+            f.close()
 
-            print("DONE !")
-            self._popup.dismiss()
-            try: self.popup.dismiss()
-            except: pass
-            self.popup = Popup(title=_('Success !'), content=Label(text=_('Upload finished successfully !')), size_hint=(None, None), size=(400, 300))
-            self.popup.open()
-            if callback != None:
-                callback()
+            self.arduino.uploadProgram("Current")
         except Exception as e:
             ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n" + str(e), u"Wrong File Error", 0)
 
-    def abortUpload(self):
-        self._popup.dismiss()
-        try: self.popup.dismiss()
-        except: pass
-        self.popup = Popup(title=_('Upload aborted'), content=Label(text=_('Upload has been aborted')), size_hint=(None, None), size=(400, 300))
-        self.popup.open()
+
+
 
     def changedTab(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
-
-        if self.readingClock != -1:
-            self.readingClock.cancel()
-            self.readingClock = -1
-
         self.zoomFactor = float('inf')
 
         if self.mode == "Direct":
-                self.moveDirect(bytes([9]))
-                if self.board != -1:
-                    response = self.board.readline().decode("utf-8").rstrip()
-                    if response == "DaphnieMaton":
-                        self.hasGoodProgram = True
-                        self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
+            self.arduino.checkItHasDirectProgram()
 
         self.update_rect()
 
@@ -654,7 +423,7 @@ class Parametrage(BoxLayout):
             self.params["photos"] = photos
             self.params["actionNodes"] = [False for i in range(len(photos))]
 
-        return (path, photos)
+        return (path, photos, [False for i in range(len(photos))])
 
     def update_rect(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
@@ -863,16 +632,16 @@ class Parametrage(BoxLayout):
             up = Button(text=u'\u23EB', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize/2, middle[1]+buttonSize+5-buttonSize/2), size = (buttonSize, buttonSize))
             down = Button(text=u'\u23EC', font_size=fontSize, font_name=self.font, pos = (middle[0]-buttonSize/2, middle[1]-buttonSize-5-buttonSize/2), size = (buttonSize, buttonSize))
 
-            raz.bind(on_release=partial(self.moveDirect, bytes([8])))
+            raz.bind(on_release=partial(self.arduino.sendSerial, bytes([8])))
 
-            right.bind(on_press=partial(self.moveDirect, bytes([1])))
-            right.bind(on_release=partial(self.moveDirect, bytes([5])))
-            left.bind(on_press=partial(self.moveDirect, bytes([2])))
-            left.bind(on_release=partial(self.moveDirect, bytes([5])))
-            up.bind(on_press=partial(self.moveDirect, bytes([3])))
-            up.bind(on_release=partial(self.moveDirect, bytes([6])))
-            down.bind(on_press=partial(self.moveDirect, bytes([4])))
-            down.bind(on_release=partial(self.moveDirect, bytes([6])))
+            right.bind(on_press=partial(self.arduino.sendSerial, bytes([1])))
+            right.bind(on_release=partial(self.arduino.sendSerial, bytes([5])))
+            left.bind(on_press=partial(self.arduino.sendSerial, bytes([2])))
+            left.bind(on_release=partial(self.arduino.sendSerial, bytes([5])))
+            up.bind(on_press=partial(self.arduino.sendSerial, bytes([3])))
+            up.bind(on_release=partial(self.arduino.sendSerial, bytes([6])))
+            down.bind(on_press=partial(self.arduino.sendSerial, bytes([4])))
+            down.bind(on_release=partial(self.arduino.sendSerial, bytes([6])))
             
             self.ids.directDrawing.add_widget(raz)
 
@@ -889,8 +658,8 @@ class Parametrage(BoxLayout):
                 Rectangle(pos = self.pos, size = (self.size[0], self.ids.directSplitter.size[1]))
 
             with self.ids.directDrawing.canvas.before:
-                text = "X: " + str(round(float(self.systemPosition[0])/float(self.settings.get('general', 'stepToCm'))*10)/10) + " "+_("cm") + \
-                        "\nY: " + str(round(float(self.systemPosition[1])/float(self.settings.get('general', 'stepToCm'))*10)/10) + " "+("cm")
+                text = "X: " + str(round(float(self.arduino.systemPosition[0])/float(self.settings.get('general', 'stepToCm'))*10)/10) + " "+_("cm") + \
+                        "\nY: " + str(round(float(self.arduino.systemPosition[1])/float(self.settings.get('general', 'stepToCm'))*10)/10) + " "+("cm")
 
                 Color(1,1,1, .2)
                 Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +95)), size = (200, 70))
@@ -901,26 +670,26 @@ class Parametrage(BoxLayout):
                 Color(1, 1, 1, 1)
                 Rectangle(pos=(self.size[0]-200, self.size[1] - (70 +95)), size=(200, 70), texture=text)
 
-                if not self.systemSwitchs['A']: Color(1, 1, 0)
+                if not self.arduino.systemSwitchs['A']: Color(1, 1, 0)
                 else: Color(0, 0, 0)
                 Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 + switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2 - switchMiddle[1]/2), size=(self.switchDiameter, self.switchDiameter))
-                if not self.systemSwitchs['B']: Color(1, 1, 0)
+                if not self.arduino.systemSwitchs['B']: Color(1, 1, 0)
                 else: Color(0, 0, 0)
                 Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 + switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2 + switchMiddle[1]/2), size=(self.switchDiameter, self.switchDiameter))
-                if not self.systemSwitchs['C']: Color(1, 1, 0)
+                if not self.arduino.systemSwitchs['C']: Color(1, 1, 0)
                 else: Color(0, 0, 0)
                 Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 - switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2 + switchMiddle[1]/2), size=(self.switchDiameter, self.switchDiameter))
-                if not self.systemSwitchs['D']: Color(1, 1, 0)
+                if not self.arduino.systemSwitchs['D']: Color(1, 1, 0)
                 else: Color(0, 0, 0)
                 Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 - switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2 - switchMiddle[1]/2), size=(self.switchDiameter, self.switchDiameter))
-                if not self.systemSwitchs['MA']: Color(1, 1, 0)
+                if not self.arduino.systemSwitchs['MA']: Color(1, 1, 0)
                 else: Color(0, 0, 0)
                 Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 + switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2), size=(self.switchDiameter, self.switchDiameter))
-                if not self.systemSwitchs['MD']: Color(1, 1, 0)
+                if not self.arduino.systemSwitchs['MD']: Color(1, 1, 0)
                 else: Color(0, 0, 0)
                 Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 - switchMiddle[0]/2, switchMiddle[1] - self.switchDiameter / 2), size=(self.switchDiameter, self.switchDiameter))
             
-            if not self.hasGoodProgram:
+            if not self.arduino.hasDirectProgram:
                 with self.ids.directDrawing.canvas.after:
                     dimensionX = self.ids.directSplitter.size[0]
                     dimensionY = self.ids.directSplitter.size[1] - 50
@@ -931,50 +700,6 @@ class Parametrage(BoxLayout):
                     text = label.texture
                     Color(0, 0, 0, 1)
                     Rectangle(pos=(realMiddle[0]-dimensionX/2, realMiddle[1]-(dimensionX*(3/16))/2), size=(dimensionX, dimensionX*(3/16)), texture=text)
-            
-    def checkKeyHolding(self, *args):
-        stopX = False
-        stopY = False
-
-        if not (keyboard.is_pressed(self.settings.get('shortcuts', 'moveLeft')) or keyboard.is_pressed(self.settings.get('shortcuts', 'moveRight'))):
-            stopX = True
-            self.moveDirect(bytes([5]))
-        if not (keyboard.is_pressed(self.settings.get('shortcuts', 'moveUp')) or keyboard.is_pressed(self.settings.get('shortcuts', 'moveDown'))):
-            stopY = True
-            self.moveDirect(bytes([6]))
-
-        if stopX and stopY:
-            if self.checkKeyClock != -1:
-                self.checkKeyClock.cancel()
-                self.checkKeyClock = -1
-
-    def moveDirect(self, direction, shortcut=False, urgent=False, *args):
-        if self.boardBusy:
-            print("Cannot")
-            print(direction)
-            return
-        if urgent:
-            self.boardBusy = True
-        if self.port != -1:
-            try:
-                self.board.write(direction)
-            except:
-                try:
-                    self.board = serial.Serial(str(self.port), 9600, timeout=1)
-                    time.sleep(2)
-                    self.board.write(direction)
-                except:
-                    if not self.boardBusy:
-                        try: self.popup.dismiss()
-                        except: pass
-                        self.popup = Popup(title=_('Disconnected'), content=Label(text=_('The system has been disconnected')), size_hint=(None, None), size=(400, 300))
-                        self.popup.open()
-
-            if shortcut == True:
-                if self.checkKeyClock != -1:
-                    self.checkKeyClock.cancel()
-                    self.checkKeyClock = -1
-                self.checkKeyClock = Clock.schedule_interval(self.checkKeyHolding, 0.2)
 
     def removeNode(self):
         if self.lastTouched != -1:
@@ -1248,6 +973,7 @@ class Parametrage(BoxLayout):
         self.ids.freePhotoPipe.bindThis()
         self.update_rect()        
 
+    #TODO: transform in decorator
     def sanitize(self, number):
         """Avoids getting errors on empty inputs.
 
@@ -1266,7 +992,7 @@ class Parametrage(BoxLayout):
     def copyToClipboard(self):
         if self.mode == "Direct":
             print("Copied")
-            pyperclip.copy(str(self.systemPosition))
+            pyperclip.copy(str(self.arduino.systemPosition))
 
     def undo(self):
         last = UndoRedo.undo([self.params["trace"].copy(), self.params["photos"].copy(), self.params["actionNodes"].copy()])
@@ -1275,3 +1001,15 @@ class Parametrage(BoxLayout):
             self.params["photos"] = last[1]
             self.params["actionNodes"] = last[2]
         self.update_rect()
+
+    def easyPopup(self, title, content, auto_dismiss=True):
+        if isinstance(content, str):
+            content = Label(text=content)
+
+        try: self.popup.dismiss()
+        except: pass
+        self.popup = Popup( title=title,
+                            content=content,
+                            size_hint=(None, None),
+                            size=(400, 300))
+        self.popup.open()

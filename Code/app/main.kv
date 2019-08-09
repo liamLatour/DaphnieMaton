@@ -183,7 +183,7 @@
                             orientation: 'horizontal'
                             Button:
                                 text: _('Upload')
-                                on_release: root.update()
+                                on_release: root.chooseAction()
                             Button:
                                 text: _('Copy to Free mode')
                                 on_release: root.generatePathFromPipe(True)
@@ -243,7 +243,7 @@
                             orientation: 'horizontal'
                             Button:
                                 text: _('Upload')
-                                on_release: root.update()
+                                on_release: root.chooseAction()
         TabbedPanelItem:
             text: _('Direct control')
             name: 'Direct'
@@ -262,4 +262,4 @@
                         orientation: 'horizontal'
                         Button:
                             text: _('Upload')
-                            on_release: root.update()
+                            on_release: root.arduino.uploadProgram("Direct")
