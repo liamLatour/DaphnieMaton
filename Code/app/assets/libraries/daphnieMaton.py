@@ -356,7 +356,7 @@ class Parametrage(BoxLayout):
         self.mode = self.ids.tabbedPanel.current_tab.name
         self.zoomFactor = float('inf')
 
-        if self.mode == "Direct":
+        if self.mode == "Direct" and self.arduino.port != -1:
             self.arduino.checkItHasDirectProgram()
         else:
             self.arduino.stopReading()

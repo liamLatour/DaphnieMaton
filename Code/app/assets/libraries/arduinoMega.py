@@ -11,7 +11,6 @@ from kivy.uix.image import AsyncImage
 
 from .localization import _
 
-
 class Arduino:
     def __init__(self, settings, easyPopup, refresh, programs={}):
         self.hasDirectProgram = False
@@ -56,25 +55,21 @@ class Arduino:
             self.checkKeyClock = Clock.schedule_interval(self.checkKeyHolding, 0.2)
 
     def readFromSerial(self, *args):
-        if self.port != -1:
-            self.sendSerial(bytes([7]))
-            try:
-                received = json.loads(self.board.readline().decode("utf-8").rstrip())
+        self.sendSerial(bytes([7]))
+        try:
+            received = json.loads(self.board.readline().decode("utf-8").rstrip())
 
-                self.systemPosition = (received['X'], received['Y'])
-                self.systemSwitchs['A'] = received['A']
-                self.systemSwitchs['B'] = received['B']
-                self.systemSwitchs['C'] = received['C']
-                self.systemSwitchs['D'] = received['D']
-                self.systemSwitchs['MA'] = received['MA']
-                self.systemSwitchs['MD'] = received['MD']
-                self.refresh()
-            except:
-                if self.readingClock != -1:
-                    self.readingClock.cancel()
-                    self.readingClock = -1
-
-                self.easyPopup(_('Disconnected'), _('The system has been disconnected'))
+            self.systemPosition = (received['X'], received['Y'])
+            self.systemSwitchs['A'] = received['A']
+            self.systemSwitchs['B'] = received['B']
+            self.systemSwitchs['C'] = received['C']
+            self.systemSwitchs['D'] = received['D']
+            self.systemSwitchs['MA'] = received['MA']
+            self.systemSwitchs['MD'] = received['MD']
+            self.refresh()
+        except:
+            self.stopReading()
+            self.easyPopup(_('Disconnected'), _('The system has been disconnected'))
 
     def stopReading(self):
         if self.readingClock != -1:
@@ -82,33 +77,30 @@ class Arduino:
             self.readingClock = -1
 
     def checkItHasDirectProgram(self):
-        if self.port != -1:
-            self.sendSerial(bytes([9]), urgent=True)
-
-            try:
-                response = self.board.readline()
-                print(response)
-            except:
-                self.easyPopup(_('Disconnected'), _('The system has been disconnected'))
-
-            self.boardBusy = False
-            response = response.decode("utf-8").rstrip()
+        self.sendSerial(bytes([9]), urgent=True)
+        try:
+            response = self.board.readline().decode("utf-8").rstrip()
+            print(response)
             if response == "DaphnieMaton":
                 self.hasDirectProgram = True
                 self.stopReading()
                 self.readingClock = Clock.schedule_interval(self.readFromSerial, 0.2)
-                return True
-            else:
-                return False
+        except:
+            self.easyPopup(_('Disconnected'), _('The system has been disconnected'))
+
         self.boardBusy = False
     
     def calibrate(self, program):
-        self.uploadProgram(program)
+        if self.port == -1:
+            self.easyPopup(_('No port detected'), _('No serial port was specified'))
+            return
         
-        if self.port != -1:
-            self.boardBusy = False # to be sure to launch the command
-            self.sendSerial(bytes([10]))
-            self.calibrateClock = Clock.schedule_interval(self.getCalibrationAsync, 0.5)
+        self.stopReading()
+        if not self.hasDirectProgram:
+            self.uploadProgram(program)
+
+        self.sendSerial(bytes([10]))
+        self.calibrateClock = Clock.schedule_interval(self.getCalibrationAsync, 0.5)
     
     def getCalibrationAsync(self, *args):
         if self.port != -1 and self.board != -1:
@@ -129,9 +121,9 @@ class Arduino:
                     print("Speed is: " + str(speed) + "m.s^-1")
                 except Exception as e:
                     print(e)
+                    print("mine")
                     self.easyPopup(_('Disconnected'), _('The system has been disconnected'))
                 self.calibrateClock.cancel()
-                self.calibrateClock = -1
         elif self.board == -1:
             print("new board")
             self.board = serial.Serial(str(self.port), 9600, timeout=1)
