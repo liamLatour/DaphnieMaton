@@ -35,7 +35,7 @@ from .helpMsg import helpMsg
 from .localization import _
 from .undoRedo import UndoRedo
 from .utilityFunctions import checkUpdates, getPorts, hitLine, urlOpen
-
+from .config import Config
 
 class Parametrage(BoxLayout):
     def __init__(self, *args, **kwargs):
@@ -46,6 +46,11 @@ class Parametrage(BoxLayout):
         self.portDropDown = MenuDropDown()
         self.fileDropDown = MenuDropDown()
         self.undoRedo = UndoRedo()
+        self.arduino = Arduino(self.settings, self.easyPopup, self.update_rect, programs={
+                                            "Direct":
+                                                    {"isDirectProgram": True, "path": ".\\assets\\directFile\\directFile.ino"},
+                                            "Current":
+                                                    {"isDirectProgram": False, "path": ".\\assets\\currentFile\\currentFile.ino"}})
 
         self.speed = self.settings.get('general', 'speed') # meters per second
         self.imageWidth = 1.4 # in meter
@@ -74,11 +79,6 @@ class Parametrage(BoxLayout):
         # Specific to the mode 'direct'
         self.switchDiameter = 30.
 
-        self.arduino = Arduino(self.settings, self.easyPopup, self.update_rect, programs={"Direct":
-                                                                            {"isDirectProgram": True, "path": ".\\assets\\directFile\\directFile.ino"},
-                                                                        "Current":
-                                                                            {"isDirectProgram": False, "path": ".\\assets\\currentFile\\currentFile.ino"}})
-
         Clock.schedule_once(self.binding)
         Clock.schedule_interval(partial(self.save, -1, -1), int(self.settings.get('general', 'autoSave'))*60)
 
@@ -89,6 +89,24 @@ class Parametrage(BoxLayout):
         self.ids.directDrawing.bind(size=self.update_rect, pos=self.update_rect)
         self.ids.libreDrawing.bind(size=self.update_rect, pos=self.update_rect)
         self.ids.changeTab.bind(on_touch_up = self.changedTab)
+        self.config = Config({
+                "nbPipe": {"value": 2, "inputs": [self.ids.nbPipe]},
+                "lenPipe" : {"value": 0.9, "inputs": [self.ids.lenPipe]},
+                "photoPipe" : {"value": 10, "inputs": [self.ids.photoPipe]},
+                "distOriginX" : {"value": 5, "inputs": [self.ids.distOriginX]},
+                "distOriginY" : {"value": 5, "inputs": [self.ids.distOriginY]},
+                "sameGap" : {"value": True, "inputs": [self.ids.sameGap]},
+                "horizontal" : {"value": False, "inputs": [self.ids.horizontal]},
+                "gaps" : {"value": [20], "inputs": []},    #
+                "loop" : {"value": True, "inputs": [self.ids.loop]},
+                "trace" : {"value": [], "inputs": []},     #
+                "photos" : {"value": [], "inputs": []},    #
+                "actionNodes": {"value": [], "inputs": []} #
+            },
+            self.corners[3],
+            (self.corners[0][0]-self.corners[2][0])/(self.actualWidth*100),
+            (self.corners[0][1] - self.corners[1][1]) / (self.actualHeight)
+        )
         self.newFile(False)
         self.updateColors(refresh=False)
         self.tuyeauGap()
@@ -133,56 +151,21 @@ class Parametrage(BoxLayout):
 
         self.easyPopup(_('Help'), self.popbox)
 
+
+
+
     def newFile(self, refresh, *args):
         self.filePath = -1
         self.fileName = _("configuration")
-        self.params = {
-            "nbPipe": 2,
-            "lenPipe" : 0.9,
-            "photoPipe" : 10,
-            "distOriginX" : 5,
-            "distOriginY" : 5,
-            "sameGap" : True,
-            "horizontal" : False,
-            "gaps" : [20],
-            "loop" : True,
-            "trace" : [],
-            "photos" : [],
-            "actionNodes": []
-        }
-
-        self.ids.loop.unbindThis()
-        self.ids.nbPipe.unbindThis()
-        self.ids.lenPipe.unbindThis()
-        self.ids.photoPipe.unbindThis()
-        self.ids.freePhotoPipe.unbindThis()
-        self.ids.distOriginX.unbindThis()
-        self.ids.distOriginY.unbindThis()
-        self.ids.horizontal.unbindThis()
-        self.ids.sameGap.unbindThis()
-
-        self.ids.loop.input.active = self.params["loop"]
-        self.ids.nbPipe.input.text = str(self.params["nbPipe"])
-        self.ids.lenPipe.input.text = str(self.params["lenPipe"])
-        self.ids.photoPipe.input.text = str(self.params["photoPipe"])
-        self.ids.freePhotoPipe.input.text = str(self.params["photoPipe"])
-        self.ids.distOriginX.input.text = str(self.params["distOriginX"])
-        self.ids.distOriginY.input.text = str(self.params["distOriginY"])
-        self.ids.horizontal.input.active = self.params["horizontal"]
-        self.ids.sameGap.input.active = self.params["sameGap"]
-
-        self.ids.loop.bindThis()
-        self.ids.nbPipe.bindThis()
-        self.ids.lenPipe.bindThis()
-        self.ids.photoPipe.bindThis()
-        self.ids.freePhotoPipe.bindThis()
-        self.ids.distOriginX.bindThis()
-        self.ids.distOriginY.bindThis()
-        self.ids.horizontal.bindThis()
-        self.ids.sameGap.bindThis()
+        
+        self.config.reset()
 
         if refresh:
             self.update_rect()
+
+
+
+
 
     def about_panel(self):
         self.popbox = BoxLayout()
@@ -235,20 +218,14 @@ class Parametrage(BoxLayout):
         content = SaveDialog(save=self.save, cancel=self.dismiss_popup, path=self.settings.get('general', 'savePath'))
         self.easyPopup(_("Save file"), content)
 
+
+
+
+
+
     def load(self, path, filename):
         try:
-            self.filePath = path
-            self.fileName = filename[0].replace(".json", "")
-            with open(osJoinPath(path, filename[0])) as stream:
-                self.params = jsLoad(stream)
-                for param in self.params:
-                    try:
-                        self.ids[param].unbindThis()
-                        self.ids[param].input.text = str(self.params[param])
-                        self.ids[param].input.active = bool(self.params[param])
-                        self.ids[param].bindThis()
-                    except: pass
-
+            self.config.load(path, filename)
             self.tuyeauGap()
             self.dismiss_popup()
         except Exception as e:
@@ -259,26 +236,17 @@ class Parametrage(BoxLayout):
             if self.filePath == -1:
                 print("no path")
                 return
-            else:
-                path = self.filePath
-                filename = self.fileName
+            path = self.filePath
+            filename = self.fileName
 
         self.filePath = path
         self.fileName = filename
 
-        if not filename.endswith(".json"):
-            filename = filename+".json"
-
-        with open(osJoinPath(path, filename), 'w') as stream:
-            paramsCopy = self.params.copy()
-
-            for item in paramsCopy: # Converts numpy arrays into python list
-                try: paramsCopy[item] = paramsCopy[item].tolist()
-                except: pass
-
-            stream.write(jsDumps( paramsCopy ))
-
+        self.config.save(path, filename)
         self.dismiss_popup()
+
+
+
 
 
     def chooseAction(self):
@@ -315,12 +283,11 @@ class Parametrage(BoxLayout):
     def uploadPath(self, path, filename):
         try:
             if self.mode == "Pipe":
-                parcours = self.generatePathFromPipe()
-                trace, pictures, actionNodes = parcours
-            elif self.mode == "Free":
-                trace = self.params["trace"]
-                pictures = self.params["photos"]
-                actionNodes = self.params["actionNodes"]
+                trace, pictures, actionNodes = self.config.generatePathFromPipe()
+            else:
+                trace = self.config.currentConfig["trace"]["value"]
+                pictures = self.config.currentConfig["photos"]["value"]
+                actionNodes = self.config.currentConfig["actionNodes"]["value"]
                 
             cmValues = []
             photos = []
@@ -360,69 +327,6 @@ class Parametrage(BoxLayout):
 
         self.update_rect()
 
-    def generatePathFromPipe(self, copy=False):
-        """Converts the pipe parameters to a path.
-
-        copy bool: copy in Free mode or not
-
-        return: the converted path
-        """
-        path = []
-        photos = []
-
-        length = self.params["lenPipe"]
-        origin = self.corners[3]
-        height = self.corners[0][1] - self.corners[1][1]
-        width = self.corners[0][0] - self.corners[2][0]
-
-        ratioX = width / (self.actualWidth*100)
-        ratioY = height / (self.actualHeight)
-
-        if self.params["horizontal"]:
-            xPosition = origin[0] + self.params["distOriginX"]*ratioX
-            yPosition = origin[1] + self.params["distOriginY"]*ratioY/100
-
-            path.append(xPosition)
-            path.append(yPosition)
-            photos.append(True)
-            path.append(xPosition + length*ratioX*100)
-            path.append(yPosition)
-            photos.append(False)
-
-            for x in range(self.params["nbPipe"]-1):
-                yPosition += self.params["gaps"][x]*ratioY/100
-                path.append(xPosition)
-                path.append(yPosition)
-                photos.append(True)
-                path.append(xPosition + length*ratioX*100)
-                path.append(yPosition)
-                photos.append(False)
-        else:
-            xPosition = origin[0] + self.params["distOriginX"]*ratioX
-            yPosition = origin[1] + self.params["distOriginY"]*ratioY/100
-
-            path.append(xPosition)
-            path.append(yPosition)
-            photos.append(True)
-            path.append(xPosition)
-            path.append(yPosition + length*ratioY)
-            photos.append(False)
-
-            for x in range(self.params["nbPipe"]-1):
-                xPosition += self.params["gaps"][x]*ratioX
-                path.append(xPosition)
-                path.append(yPosition)
-                photos.append(True)
-                path.append(xPosition)
-                path.append(yPosition + length*ratioY)
-                photos.append(False)
-
-        if copy:
-            self.params["trace"] = path
-            self.params["photos"] = photos
-            self.params["actionNodes"] = [False for i in range(len(photos))]
-
-        return (path, photos, [False for i in range(len(photos))])
 
     def update_rect(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
@@ -440,21 +344,16 @@ class Parametrage(BoxLayout):
                         gapsValue.append(max(self.sanitize(gap.input.text), 0))
 
             if len(gapsValue) == 0:
-                if len(self.params["gaps"]) > 0:
-                    gapsValue = [self.params["gaps"][0]]
+                if len(self.config.currentConfig["gaps"]["value"]) > 0:
+                    gapsValue = [self.config.currentConfig["gaps"]["value"][0]]
                 else:
                     gapsValue = [20]
 
-            self.params["nbPipe"] = max(self.sanitize(self.ids.nbPipe.input.text), 1)
-            self.params["lenPipe"] = max(self.sanitize(self.ids.lenPipe.input.text), 0.1)
-            self.params["photoPipe"] = max(self.sanitize(self.ids.photoPipe.input.text), 1)
-            self.params["distOriginX"] = self.sanitize(self.ids.distOriginX.input.text)
-            self.params["distOriginY"] = self.sanitize(self.ids.distOriginY.input.text)
-            self.params["horizontal"] = self.ids.horizontal.input.active
-            self.params["sameGap"] = self.ids.sameGap.input.active
-            self.params["gaps"] = gapsValue
 
-            if self.params["nbPipe"] <= 2:
+            self.config.read()
+            self.config.currentConfig["gaps"]["value"] = gapsValue
+
+            if self.config.currentConfig["nbPipe"]["value"] <= 2:
                 self.ids.sameGap.hide()
             else:
                 self.ids.sameGap.show()
@@ -470,14 +369,14 @@ class Parametrage(BoxLayout):
 
             with self.ids.pipeDrawing.canvas.before:
                 width = min(self.ids.pipeSplitter.size[0]-50, self.ids.pipeSplitter.size[1]-50)
-                height = self.params["lenPipe"]/self.imageHeight *width
+                height = self.config.currentConfig["lenPipe"]["value"]/self.imageHeight *width
 
                 Color(1,1,1,1)
                 Rectangle(source=self.settings.get('colors', 'imagePath'), pos = (middle[0]-width/2, middle[1]-width/2), size = (width, width))
 
-                text = _("Total time") + ": " + str(round( ((self.params["nbPipe"]*self.params["lenPipe"])/float(self.speed)) *10)/10) + " sec" + \
-                                        "\n"+_("Photo number") + ": " + str( round((self.params["nbPipe"]*self.params["lenPipe"])/(self.params["photoPipe"]/100))) + \
-                                        "\n"+_("Photo every") +" "+ str( round( ((float(self.speed)*self.params["nbPipe"]) / ((self.params["nbPipe"]*self.params["lenPipe"]) / (self.params["photoPipe"]/100)))*10 )/10 ) + " sec"
+                text = _("Total time") + ": " + str(round( ((self.config.currentConfig["nbPipe"]["value"]*self.config.currentConfig["lenPipe"]["value"])/float(self.speed)) *10)/10) + " sec" + \
+                                        "\n"+_("Photo number") + ": " + str( round((self.config.currentConfig["nbPipe"]["value"]*self.config.currentConfig["lenPipe"]["value"])/(self.config.currentConfig["photoPipe"]["value"]/100))) + \
+                                        "\n"+_("Photo every") +" "+ str( round( ((float(self.speed)*self.config.currentConfig["nbPipe"]["value"]) / ((self.config.currentConfig["nbPipe"]["value"]*self.config.currentConfig["lenPipe"]["value"]) / (self.config.currentConfig["photoPipe"]["value"]/100)))*10 )/10 ) + " sec"
 
                 Color(0.5,0.5,0.5, .6)
                 Rectangle(pos = (self.size[0]-200, self.size[1] - (70 +95)), size = (200, 70))
@@ -495,23 +394,23 @@ class Parametrage(BoxLayout):
 
                 Color(self.pipeColor[0], self.pipeColor[1], self.pipeColor[2], self.pipeColor[3])
 
-                if self.params["horizontal"]:
-                    xPosition = -(width-height)/2 + (self.params["distOriginX"] + self.imageOrigin[0])*ratioX
-                    yPosition = middle[1] - width/2 + (self.params["distOriginY"] + self.imageOrigin[1])*ratioY
+                if self.config.currentConfig["horizontal"]["value"]:
+                    xPosition = -(width-height)/2 + (self.config.currentConfig["distOriginX"]["value"] + self.imageOrigin[0])*ratioX
+                    yPosition = middle[1] - width/2 + (self.config.currentConfig["distOriginY"]["value"] + self.imageOrigin[1])*ratioY
 
                     Rectangle(pos = (middle[0]-height/2 + xPosition, yPosition), size = (height, pipeWidth))
 
-                    for x in range(self.params["nbPipe"]-1):
-                        yPosition += self.params["gaps"][x]*ratioY
+                    for x in range(self.config.currentConfig["nbPipe"]["value"]-1):
+                        yPosition += self.config.currentConfig["gaps"]["value"][x]*ratioY
                         Rectangle(pos = (middle[0]-height/2 + xPosition, yPosition), size = (height, pipeWidth))
                 else:
-                    xPosition = middle[0] - width/2 + (self.params["distOriginX"] + self.imageOrigin[0])*ratioX
-                    yPosition = -(width-height)/2 + (self.params["distOriginY"] + self.imageOrigin[1])*ratioY
+                    xPosition = middle[0] - width/2 + (self.config.currentConfig["distOriginX"]["value"] + self.imageOrigin[0])*ratioX
+                    yPosition = -(width-height)/2 + (self.config.currentConfig["distOriginY"]["value"] + self.imageOrigin[1])*ratioY
 
                     Rectangle(pos = (xPosition, middle[1]-height/2 + yPosition), size = (pipeWidth, height))
 
-                    for x in range(self.params["nbPipe"]-1):
-                        xPosition += self.params["gaps"][x]*ratioX
+                    for x in range(self.config.currentConfig["nbPipe"]["value"]-1):
+                        xPosition += self.config.currentConfig["gaps"]["value"][x]*ratioX
                         Rectangle(pos = (xPosition, middle[1]-height/2 + yPosition), size = (pipeWidth, height))
 
         elif self.mode == "Free":
@@ -521,11 +420,11 @@ class Parametrage(BoxLayout):
             self.ids.libreDrawing.canvas.before.clear()
 
             self.ids.libreSplitter.min_size = int(round(self.size[0]/2))
-            zoomedTrace = np.multiply(self.params["trace"], self.zoomFactor).tolist()
+            zoomedTrace = np.multiply(self.config.currentConfig["trace"]["value"], self.zoomFactor).tolist()
 
             self.ids.freeBack.canvas.before.clear()
 
-            self.params["photoPipe"] = max(self.sanitize(self.ids.freePhotoPipe.input.text), 1)
+            self.config.read()
 
             with self.ids.freeBack.canvas.before:
                 Color(self.background[0], self.background[1], self.background[2], self.background[3])
@@ -547,49 +446,49 @@ class Parametrage(BoxLayout):
                     else:
                         isLoop = False
                     
-                    self.params["loop"] = isLoop
+                    self.config.currentConfig["loop"]["value"] = isLoop
 
                     for i in range(int(len(zoomedTrace)/2)):
                         if (i+1)*2+1 >= len(zoomedTrace) and isLoop:
-                            if self.params["photos"][i]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
+                            if self.config.currentConfig["photos"]["value"][i]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
                             else: Color(self.pathColor[0], self.pathColor[1], self.pathColor[2], self.pathColor[3])
                             Line(points=[zoomedTrace[i*2]+middle[0], zoomedTrace[i*2+1]+middle[1], zoomedTrace[0]+middle[0], zoomedTrace[1]+middle[1]], width=self.lineWidth)
-                            thisDist = max(distance.euclidean(self.pixelToCM(self.params["trace"][i*2]+middle[0], self.params["trace"][i*2+1]+middle[1]),
-                                                        self.pixelToCM(self.params["trace"][0]+middle[0], self.params["trace"][1]+middle[1])), 0.0001)
+                            thisDist = max(distance.euclidean(self.pixelToCM(self.config.currentConfig["trace"]["value"][i*2]+middle[0], self.config.currentConfig["trace"]["value"][i*2+1]+middle[1]),
+                                                        self.pixelToCM(self.config.currentConfig["trace"]["value"][0]+middle[0], self.config.currentConfig["trace"]["value"][1]+middle[1])), 0.0001)
                             dist += thisDist
-                            if self.params["photos"][i]:
-                                nb = floor(thisDist/float(self.params["photoPipe"]))
-                                top = (thisDist-nb*float(self.params["photoPipe"]))/(2*thisDist)
+                            if self.config.currentConfig["photos"]["value"][i]:
+                                nb = floor(thisDist/float(self.config.currentConfig["photoPipe"]["value"]))
+                                top = (thisDist-nb*float(self.config.currentConfig["photoPipe"]["value"]))/(2*thisDist)
                                 ax = top * ((zoomedTrace[i*2]+middle[0]) - (zoomedTrace[0]+middle[0]))
                                 ay = top * ((zoomedTrace[i*2+1]+middle[1]) - (zoomedTrace[1]+middle[1]))
                                 Color(0, 0, 0)
                                 for p in range(nb+1):
-                                    Ellipse(pos=(zoomedTrace[0]+middle[0] + ax-self.lineWidth/2 + ((float(self.params["photoPipe"])/thisDist)*((zoomedTrace[i*2]+middle[0]) - (zoomedTrace[0]+middle[0])))*p,
-                                                 zoomedTrace[1]+middle[1] + ay-self.lineWidth/2 + ((float(self.params["photoPipe"])/thisDist)*((zoomedTrace[i*2+1]+middle[1]) - (zoomedTrace[1]+middle[1])))*p), size=(self.lineWidth, self.lineWidth))
+                                    Ellipse(pos=(zoomedTrace[0]+middle[0] + ax-self.lineWidth/2 + ((float(self.config.currentConfig["photoPipe"]["value"])/thisDist)*((zoomedTrace[i*2]+middle[0]) - (zoomedTrace[0]+middle[0])))*p,
+                                                 zoomedTrace[1]+middle[1] + ay-self.lineWidth/2 + ((float(self.config.currentConfig["photoPipe"]["value"])/thisDist)*((zoomedTrace[i*2+1]+middle[1]) - (zoomedTrace[1]+middle[1])))*p), size=(self.lineWidth, self.lineWidth))
 
                         elif (i+1)*2+1 < len(zoomedTrace):
-                            if self.params["photos"][i]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
+                            if self.config.currentConfig["photos"]["value"][i]: Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
                             else: Color(self.pathColor[0], self.pathColor[1], self.pathColor[2], self.pathColor[3])
                             Line(points=[zoomedTrace[i*2]+middle[0], zoomedTrace[i*2+1]+middle[1], zoomedTrace[(i+1)*2]+middle[0], zoomedTrace[(i+1)*2+1]+middle[1]], width=self.lineWidth)
-                            thisDist = max(distance.euclidean(self.pixelToCM(self.params["trace"][i*2]+middle[0], self.params["trace"][i*2+1]+middle[1]),
-                                                        self.pixelToCM(self.params["trace"][(i+1)*2]+middle[0], self.params["trace"][(i+1)*2+1]+middle[1])), 0.0001)
+                            thisDist = max(distance.euclidean(self.pixelToCM(self.config.currentConfig["trace"]["value"][i*2]+middle[0], self.config.currentConfig["trace"]["value"][i*2+1]+middle[1]),
+                                                        self.pixelToCM(self.config.currentConfig["trace"]["value"][(i+1)*2]+middle[0], self.config.currentConfig["trace"]["value"][(i+1)*2+1]+middle[1])), 0.0001)
                             dist += thisDist
-                            if self.params["photos"][i]:
-                                nb = floor(thisDist/float(self.params["photoPipe"]))
-                                top = (thisDist-nb*float(self.params["photoPipe"]))/(2*thisDist)
+                            if self.config.currentConfig["photos"]["value"][i]:
+                                nb = floor(thisDist/float(self.config.currentConfig["photoPipe"]["value"]))
+                                top = (thisDist-nb*float(self.config.currentConfig["photoPipe"]["value"]))/(2*thisDist)
                                 ax = top * (zoomedTrace[i*2] - zoomedTrace[(i+1)*2])
                                 ay = top * (zoomedTrace[i*2+1] - zoomedTrace[(i+1)*2+1])
                                 Color(0, 0, 0)
                                 for p in range(nb+1):
-                                    Ellipse(pos=(zoomedTrace[(i+1)*2]+middle[0] + ax-self.lineWidth/2 + ((float(self.params["photoPipe"])/thisDist)*(zoomedTrace[i*2] - zoomedTrace[(i+1)*2]))*p,
-                                                 zoomedTrace[(i+1)*2+1]+middle[1] + ay-self.lineWidth/2 + ((float(self.params["photoPipe"])/thisDist)*(zoomedTrace[i*2+1] - zoomedTrace[(i+1)*2+1]))*p), size=(self.lineWidth, self.lineWidth))
+                                    Ellipse(pos=(zoomedTrace[(i+1)*2]+middle[0] + ax-self.lineWidth/2 + ((float(self.config.currentConfig["photoPipe"]["value"])/thisDist)*(zoomedTrace[i*2] - zoomedTrace[(i+1)*2]))*p,
+                                                 zoomedTrace[(i+1)*2+1]+middle[1] + ay-self.lineWidth/2 + ((float(self.config.currentConfig["photoPipe"]["value"])/thisDist)*(zoomedTrace[i*2+1] - zoomedTrace[(i+1)*2+1]))*p), size=(self.lineWidth, self.lineWidth))
                                 
                     
                     for i in range(int(len(zoomedTrace)/2)):
                         if self.lastTouched == i:
                             Color(self.nodeHighlight[0], self.nodeHighlight[1], self.nodeHighlight[2], self.nodeHighlight[3])
                             Ellipse(pos=(zoomedTrace[i*2]+middle[0]-(self.diametre+5)/2, zoomedTrace[i*2+1]+middle[1]-(self.diametre+5)/2), size=(self.diametre+5, self.diametre+5))
-                        if self.params["actionNodes"][i]:
+                        if self.config.currentConfig["actionNodes"]["value"][i]:
                             Color(self.actionNode[0], self.actionNode[1], self.actionNode[2], self.actionNode[3])
                         else:
                             Color(self.nodeColor[0], self.nodeColor[1], self.nodeColor[2], self.nodeColor[3])
@@ -679,10 +578,10 @@ class Parametrage(BoxLayout):
 
     def removeNode(self):
         if self.lastTouched != -1:
-            del self.params["trace"][self.lastTouched*2+1]
-            del self.params["trace"][self.lastTouched*2]
-            del self.params["photos"][self.lastTouched]
-            del self.params["actionNodes"][self.lastTouched]
+            del self.config.currentConfig["trace"]["value"][self.lastTouched*2+1]
+            del self.config.currentConfig["trace"]["value"][self.lastTouched*2]
+            del self.config.currentConfig["photos"]["value"][self.lastTouched]
+            del self.config.currentConfig["actionNodes"]["value"][self.lastTouched]
             self.lastTouched = -1
             self.update_rect()
 
@@ -690,7 +589,7 @@ class Parametrage(BoxLayout):
         if self.mode == "Free":
             x = touch.x
             y = touch.y
-            zoomedTrace = np.multiply(self.params["trace"], self.zoomFactor).tolist()
+            zoomedTrace = np.multiply(self.config.currentConfig["trace"]["value"], self.zoomFactor).tolist()
 
             if self.ids.libreDrawing.collide_point(x, y):
                 # Updates zooming depending on the mouse wheel
@@ -704,12 +603,12 @@ class Parametrage(BoxLayout):
                 for i in range(int(len(zoomedTrace)/2)):
                     if hypot(zoomedTrace[i*2]+self.ids.libreDrawing.center_x - x, zoomedTrace[i*2+1]+self.ids.libreDrawing.center_y - y) <= self.diametre/2:
                         if touch.button == 'right':
-                            self.params["actionNodes"][i] = not self.params["actionNodes"][i]
+                            self.config.currentConfig["actionNodes"]["value"][i] = not self.config.currentConfig["actionNodes"]["value"][i]
                             self.update_rect()
                         elif touch.button == 'left':
                             self.isDragging = i
                             self.lastTouched = i
-                            self.printCoords(self.params["trace"][i*2], self.params["trace"][i*2+1])
+                            self.printCoords(self.config.currentConfig["trace"]["value"][i*2], self.config.currentConfig["trace"]["value"][i*2+1])
                             self.update_rect()
                         return
 
@@ -719,7 +618,7 @@ class Parametrage(BoxLayout):
                     secondPoint = (zoomedTrace[(i+1)*2]+self.ids.libreDrawing.center_x, zoomedTrace[(i+1)*2+1]+self.ids.libreDrawing.center_y)
                     if hitLine(firstPoint, secondPoint, (x, y), self.lineWidth):
                         if touch.button == 'right':
-                            self.params["photos"][i] = not self.params["photos"][i]
+                            self.config.currentConfig["photos"]["value"][i] = not self.config.currentConfig["photos"]["value"][i]
                             self.lastTouched = -1
                             self.update_rect()
                             return
@@ -729,10 +628,10 @@ class Parametrage(BoxLayout):
 
                             self.printCoords(coordX,coordY)
 
-                            self.params["trace"].insert((i+1)*2, coordX)
-                            self.params["trace"].insert((i+1)*2+1, coordY)
-                            self.params["photos"].insert((i+1), False)
-                            self.params["actionNodes"].insert((i+1), False)
+                            self.config.currentConfig["trace"]["value"].insert((i+1)*2, coordX)
+                            self.config.currentConfig["trace"]["value"].insert((i+1)*2+1, coordY)
+                            self.config.currentConfig["photos"]["value"].insert((i+1), False)
+                            self.config.currentConfig["actionNodes"]["value"].insert((i+1), False)
                             self.lastTouched = i+1
                             self.isDragging = i+1
                             self.update_rect()
@@ -742,7 +641,7 @@ class Parametrage(BoxLayout):
                         firstPoint = (zoomedTrace[len(zoomedTrace)-2]+self.ids.libreDrawing.center_x, zoomedTrace[len(zoomedTrace)-1]+self.ids.libreDrawing.center_y)
                         secondPoint = (zoomedTrace[0]+self.ids.libreDrawing.center_x, zoomedTrace[1]+self.ids.libreDrawing.center_y)
                         if hitLine(firstPoint, secondPoint, (x, y), self.lineWidth):
-                            self.params["photos"][len(self.params["photos"])-1] = not self.params["photos"][len(self.params["photos"])-1]
+                            self.config.currentConfig["photos"]["value"][len(self.config.currentConfig["photos"]["value"])-1] = not self.config.currentConfig["photos"]["value"][len(self.config.currentConfig["photos"]["value"])-1]
                             self.update_rect()
 
                 # Adds a new node where the user clicked
@@ -752,12 +651,12 @@ class Parametrage(BoxLayout):
 
                     self.printCoords(coordX, coordY)
 
-                    self.params["trace"].append(coordX)
-                    self.params["trace"].append(coordY)
-                    self.params["photos"].append(False)
-                    self.params["actionNodes"].append(False)
-                    self.lastTouched = len(self.params["photos"])-1
-                    self.isDragging = len(self.params["photos"])-1
+                    self.config.currentConfig["trace"]["value"].append(coordX)
+                    self.config.currentConfig["trace"]["value"].append(coordY)
+                    self.config.currentConfig["photos"]["value"].append(False)
+                    self.config.currentConfig["actionNodes"]["value"].append(False)
+                    self.lastTouched = len(self.config.currentConfig["photos"]["value"])-1
+                    self.isDragging = len(self.config.currentConfig["photos"]["value"])-1
                     self.update_rect()
                     return
 
@@ -768,7 +667,7 @@ class Parametrage(BoxLayout):
             if self.zoomFactor == 0.05:
                 self.positionClamp()
                 self.update_rect()
-            self.undoRedo.do([self.params["trace"].copy(), self.params["photos"].copy(), self.params["actionNodes"].copy()])
+            self.undoRedo.do([self.config.currentConfig["trace"]["value"].copy(), self.config.currentConfig["photos"]["value"].copy(), self.config.currentConfig["actionNodes"]["value"].copy()])
 
     def clickedMove(self, touch):
         if self.mode == "Free":
@@ -777,9 +676,9 @@ class Parametrage(BoxLayout):
                 thisX = (touch.x-self.ids.libreDrawing.center_x)/self.zoomFactor
                 thisY = (touch.y-self.ids.libreDrawing.center_y)/self.zoomFactor
 
-                if keyboard.is_pressed("ctrl") and len(self.params["trace"]) > 2: # To clamp relative to last one (right angles)
-                    fromWhich = self.isDragging-1 % len(self.params["trace"])
-                    previousPoint = (self.params["trace"][(fromWhich)*2], self.params["trace"][(fromWhich)*2+1])
+                if keyboard.is_pressed("ctrl") and len(self.config.currentConfig["trace"]["value"]) > 2: # To clamp relative to last one (right angles)
+                    fromWhich = self.isDragging-1 % len(self.config.currentConfig["trace"]["value"])
+                    previousPoint = (self.config.currentConfig["trace"]["value"][(fromWhich)*2], self.config.currentConfig["trace"]["value"][(fromWhich)*2+1])
                     dist = distance.euclidean(previousPoint, (thisX, thisY))
                     angle = round(atan2(thisY-previousPoint[1], thisX-previousPoint[0])/ (pi/4)) * (pi/4)
 
@@ -801,8 +700,8 @@ class Parametrage(BoxLayout):
                 if newPosition != -1:
                     self.printCoords(newPosition[0], newPosition[1])
 
-                    self.params["trace"][self.isDragging*2] = newPosition[0]
-                    self.params["trace"][self.isDragging*2+1] = newPosition[1]
+                    self.config.currentConfig["trace"]["value"][self.isDragging*2] = newPosition[0]
+                    self.config.currentConfig["trace"]["value"][self.isDragging*2+1] = newPosition[1]
 
                     self.lastTouched = self.isDragging
 
@@ -824,14 +723,14 @@ class Parametrage(BoxLayout):
         thisDist = max(distance.euclidean(a, b), 0.0001)
         newPoints = []
 
-        nb = floor(thisDist/float(self.params["photoPipe"]))
-        top = (thisDist-nb*float(self.params["photoPipe"]))/(2*thisDist)
+        nb = floor(thisDist/float(self.config.currentConfig["photoPipe"]["value"]))
+        top = (thisDist-nb*float(self.config.currentConfig["photoPipe"]["value"]))/(2*thisDist)
 
         ax = top * (a[0] - b[0])
         ay = top * (a[1] - b[1])
         for p in range(nb+1):
-            newPoints.append(round((b[0] + ax + ( (float(self.params["photoPipe"])/thisDist)*(a[0] - b[0]) )*p)*100)/100)
-            newPoints.append(round((b[1] + ay + ( (float(self.params["photoPipe"])/thisDist)*(a[1] - b[1]) )*p)*100)/100)
+            newPoints.append(round((b[0] + ax + ( (float(self.config.currentConfig["photoPipe"]["value"])/thisDist)*(a[0] - b[0]) )*p)*100)/100)
+            newPoints.append(round((b[1] + ay + ( (float(self.config.currentConfig["photoPipe"]["value"])/thisDist)*(a[1] - b[1]) )*p)*100)/100)
 
         return newPoints
 
@@ -843,10 +742,10 @@ class Parametrage(BoxLayout):
         self.ids.coord.bindThis()
     
     def removeAllNodes(self):
-        self.params["trace"] = []
-        self.params["photos"] = []
-        self.params["actionNodes"] = []
-        self.undoRedo.do([self.params["trace"].copy(), self.params["photos"].copy(), self.params["actionNodes"].copy()])
+        self.config.currentConfig["trace"]["value"] = []
+        self.config.currentConfig["photos"]["value"] = []
+        self.config.currentConfig["actionNodes"]["value"] = []
+        self.undoRedo.do([self.config.currentConfig["trace"]["value"].copy(), self.config.currentConfig["photos"]["value"].copy(), self.config.currentConfig["actionNodes"]["value"].copy()])
         self.update_rect()
 
     def inputMove(self, *args):
@@ -860,14 +759,14 @@ class Parametrage(BoxLayout):
 
         if len(position) == 2:
             if self.lastTouched == -1:
-                self.params["trace"].append(float(position[0])*ratioX + self.corners[3][0])
-                self.params["trace"].append(float(position[1])*ratioY + self.corners[3][1])
-                self.params["photos"].append(False)
-                self.params["actionNodes"].append(False)
-                self.lastTouched = len(self.params["photos"]) -1
-            elif self.lastTouched*2+1 < len(self.params["trace"]):
-                self.params["trace"][self.lastTouched*2] = float(position[0])*ratioX + self.corners[3][0]
-                self.params["trace"][self.lastTouched*2+1] = float(position[1])*ratioY + self.corners[3][1]
+                self.config.currentConfig["trace"]["value"].append(float(position[0])*ratioX + self.corners[3][0])
+                self.config.currentConfig["trace"]["value"].append(float(position[1])*ratioY + self.corners[3][1])
+                self.config.currentConfig["photos"]["value"].append(False)
+                self.config.currentConfig["actionNodes"]["value"].append(False)
+                self.lastTouched = len(self.config.currentConfig["photos"]["value"]) -1
+            elif self.lastTouched*2+1 < len(self.config.currentConfig["trace"]["value"]):
+                self.config.currentConfig["trace"]["value"][self.lastTouched*2] = float(position[0])*ratioX + self.corners[3][0]
+                self.config.currentConfig["trace"]["value"][self.lastTouched*2+1] = float(position[1])*ratioY + self.corners[3][1]
 
             self.update_rect()
 
@@ -877,9 +776,9 @@ class Parametrage(BoxLayout):
         maxPosTop = (self.ids.libreSplitter.size[1]/2-self.innerScreenMargin[2])/(self.zoomFactor)
         maxPosDown = (-self.ids.libreSplitter.size[1]/2-self.innerScreenMargin[3])/(self.zoomFactor)
 
-        for i in range(int(len(self.params["trace"])/2)):
-            self.params["trace"][i*2] = min(max(self.params["trace"][i*2], maxPosLeft), maxPosRight)
-            self.params["trace"][i*2+1] = min(max(self.params["trace"][i*2+1], maxPosDown), maxPosTop)
+        for i in range(int(len(self.config.currentConfig["trace"]["value"])/2)):
+            self.config.currentConfig["trace"]["value"][i*2] = min(max(self.config.currentConfig["trace"]["value"][i*2], maxPosLeft), maxPosRight)
+            self.config.currentConfig["trace"]["value"][i*2+1] = min(max(self.config.currentConfig["trace"]["value"][i*2+1], maxPosDown), maxPosTop)
                 
     def zoomClamp(self):
         size = self.ids.libreSplitter.size
@@ -887,15 +786,15 @@ class Parametrage(BoxLayout):
         worstY = 0
         worstMX = 0
         worstMY = 0
-        for i in range(int(len(self.params["trace"])/2)):
-            if self.params["trace"][i*2] > worstX:
-                worstX = self.params["trace"][i*2]
-            elif self.params["trace"][i*2] < worstMX:
-                worstMX = self.params["trace"][i*2]
-            if self.params["trace"][i*2+1] > worstY:
-                worstY = self.params["trace"][i*2+1]
-            elif self.params["trace"][i*2+1] < worstMY:
-                worstMY = self.params["trace"][i*2+1]
+        for i in range(int(len(self.config.currentConfig["trace"]["value"])/2)):
+            if self.config.currentConfig["trace"]["value"][i*2] > worstX:
+                worstX = self.config.currentConfig["trace"]["value"][i*2]
+            elif self.config.currentConfig["trace"]["value"][i*2] < worstMX:
+                worstMX = self.config.currentConfig["trace"]["value"][i*2]
+            if self.config.currentConfig["trace"]["value"][i*2+1] > worstY:
+                worstY = self.config.currentConfig["trace"]["value"][i*2+1]
+            elif self.config.currentConfig["trace"]["value"][i*2+1] < worstMY:
+                worstMY = self.config.currentConfig["trace"]["value"][i*2+1]
 
         if worstX*self.zoomFactor > size[0]/2 - self.innerScreenMargin[1]:
             self.zoomFactor = (size[0]/2 - self.innerScreenMargin[1])/float(worstX)
@@ -923,15 +822,15 @@ class Parametrage(BoxLayout):
             return
 
         if bool(self.ids.sameGap.input.active):
-            self.gaps = [Input(inputName=_('Gap between pipes')+" (cm)", input_filter="float", default_text=str(self.params["gaps"][0]), callback=self.update_rect)]
+            self.gaps = [Input(inputName=_('Gap between pipes')+" (cm)", input_filter="float", default_text=str(self.config.currentConfig["gaps"]["value"][0]), callback=self.update_rect)]
             self.pipePanel.add_widget(self.gaps[0])
         else:
             self.gaps = []
             for pipe in range(max(self.sanitize(self.ids.nbPipe.input.text), 2)-1):
                 try:
-                    default = str(self.params["gaps"][pipe])
+                    default = str(self.config.currentConfig["gaps"]["value"][pipe])
                 except:
-                    default = str(self.params["gaps"][0])   
+                    default = str(self.config.currentConfig["gaps"]["value"][0])   
 
                 self.gaps.append(Input(inputName=_('Gap between pipes ')+str(pipe+1)+"-"+str(pipe+2)+" (cm)", input_filter="float", default_text=default, callback=self.update_rect))
                 self.pipePanel.add_widget(self.gaps[pipe])
@@ -971,11 +870,11 @@ class Parametrage(BoxLayout):
             pyperclip.copy(str(self.arduino.systemPosition))
 
     def undo(self):
-        last = self.undoRedo.undo([self.params["trace"].copy(), self.params["photos"].copy(), self.params["actionNodes"].copy()])
+        last = self.undoRedo.undo([self.config.currentConfig["trace"]["value"].copy(), self.config.currentConfig["photos"]["value"].copy(), self.config.currentConfig["actionNodes"]["value"].copy()])
         if last != -1:
-            self.params["trace"] = last[0]
-            self.params["photos"] = last[1]
-            self.params["actionNodes"] = last[2]
+            self.config.currentConfig["trace"]["value"] = last[0]
+            self.config.currentConfig["photos"]["value"] = last[1]
+            self.config.currentConfig["actionNodes"]["value"] = last[2]
         self.update_rect()
 
     def easyPopup(self, title, content, auto_dismiss=True):

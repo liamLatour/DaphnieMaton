@@ -281,7 +281,37 @@ class Input(BoxLayout):
             self.input.unbind(active=self.toCall)
         elif self.inputType == 2:
             self.input.unbind(on_press=self.toCall)
+
+    def write(self, value, *args):
+        self.unbindThis()
+        if self.inputType == 0:
+            self.input.text = str(value)
+        elif self.inputType == 1:
+            self.input.active = bool(value)
+        self.bindThis()
     
+    def read(self, *args):
+        if self.inputType == 0:
+            return self.sanitize(self.input.text)
+        elif self.inputType == 1:
+            return self.input.active
+
+    #TODO: transform in decorator
+    def sanitize(self, number):
+        """Avoids getting errors on empty inputs.
+
+        number string||float||int: the value to sanitize.
+
+        returns: 0 if it is NaN, otherwise the value itself.
+        """
+        try:
+            return int(number)
+        except:
+            try:
+                return float(number)
+            except:
+                return 0
+
     def hide(self, *args):
         self.height = '0'
         try:

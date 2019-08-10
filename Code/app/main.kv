@@ -186,7 +186,7 @@
                                 on_release: root.chooseAction()
                             Button:
                                 text: _('Copy to Free mode')
-                                on_release: root.generatePathFromPipe(True)
+                                on_release: root.config.generatePathFromPipe(True)
         TabbedPanelItem:
             text: _('Free path')
             name: 'Free'
