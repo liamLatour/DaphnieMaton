@@ -1,7 +1,7 @@
 import ctypes
 import traceback
 from io import open as openFile
-
+import os
 import keyboard
 from kivy.app import App
 from kivy.config import Config
@@ -34,7 +34,8 @@ class DaphnieMatonApp(App):
             'open': [self.app.show_load],
             'new': [lambda: self.app.newFile(True)],
 
-            'undo': [self.app.undo],
+            'undo': [lambda: self.app.undo(-1)],
+            'redo': [lambda: self.app.undo(1)],
             'clear': [self.app.removeAllNodes],
             'suppr': [self.app.removeNode],
 
@@ -44,6 +45,8 @@ class DaphnieMatonApp(App):
             'moveUp': [lambda: self.app.arduino.sendSerial(bytes([3]), shortcut=True)],
             'moveDown': [lambda: self.app.arduino.sendSerial(bytes([4]), shortcut=True)]
         }
+
+        os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
         self.configFiles = {
             ".\\assets\\settings\\config.json": 'General',
@@ -77,6 +80,7 @@ class DaphnieMatonApp(App):
             'new': 'ctrl+n',
 
             'undo': 'ctrl+z',
+            'redo': 'ctrl+y',
             'clear': 'ctrl+x',
             'suppr': 'suppr',
 

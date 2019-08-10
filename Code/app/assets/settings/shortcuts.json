@@ -44,6 +44,13 @@
    },
    {
       "type":"shortcut",
+      "title":"Redo",
+      "desc":"Redoes the last action in Free mode",
+      "section":"shortcuts",
+      "key":"redo"
+   },
+   {
+      "type":"shortcut",
       "title":"Clear",
       "desc":"Clear all nodes",
       "section":"shortcuts",

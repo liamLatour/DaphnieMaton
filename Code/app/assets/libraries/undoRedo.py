@@ -1,17 +1,14 @@
 class UndoRedo():
     def __init__(self):
-        self.stack = []
+        self.stack = [[[], [], []]]
+        self.index = 0
 
     def do(self, thing):
-        if len(self.stack) == 0 or thing != self.stack[-1]:
-            if len(self.stack) == 0:
-                self.stack.append([[], [], []])
-            self.stack.append(thing)
+        if self.index < len(self.stack)-1:
+            del self.stack[self.index+1:]
+        self.stack.append(thing)
+        self.index += 1
 
-    def undo(self, current):
-        if len(self.stack) > 0:
-            a = self.stack.pop()
-            if a == current:
-                return self.stack.pop()
-            return a
-        return -1
+    def undo(self, direction):
+        self.index = min(max(self.index+direction, 0), len(self.stack)-1)
+        return self.stack[self.index]

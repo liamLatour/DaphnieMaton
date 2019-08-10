@@ -3,6 +3,7 @@ from json import dumps as jsDumps
 from json import load as jsLoad
 from os.path import join as osJoinPath
 
+
 class Config():
     def __init__(self, default, origin, ratioX, ratioY):
         self.baseConfig = default
@@ -20,7 +21,8 @@ class Config():
 
     def read(self):
         for param in self.currentConfig:
-            self.currentConfig[param]["value"] = self.currentConfig[param]["inputs"][0].read()
+            if len(self.currentConfig[param]["inputs"]) > 0:
+                self.currentConfig[param]["value"] = self.currentConfig[param]["inputs"][0].read()
 
     def load(self, path, filename):
         self.filePath = path
