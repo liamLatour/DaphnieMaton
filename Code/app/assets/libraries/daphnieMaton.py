@@ -444,13 +444,14 @@ class Parametrage(BoxLayout):
                                             size=(self.lineWidth, self.lineWidth))
 
                     for i in range(len(zoomedTrace)):
-                        Color(self.nodeColor[0], self.nodeColor[1], self.nodeColor[2], self.nodeColor[3])
                         if self.lastTouched == i:
                             Color(self.nodeHighlight[0], self.nodeHighlight[1], self.nodeHighlight[2], self.nodeHighlight[3])
                             Ellipse(pos=(zoomedTrace[i][0]+middle[0]-(self.diametre+5)/2, zoomedTrace[i][1]+middle[1]-(self.diametre+5)/2),
                                     size=(self.diametre+5, self.diametre+5))
                         if self.config.currentConfig["actionNodes"]["value"][i]:
                             Color(self.actionNode[0], self.actionNode[1], self.actionNode[2], self.actionNode[3])
+                        else:
+                            Color(self.nodeColor[0], self.nodeColor[1], self.nodeColor[2], self.nodeColor[3])
                         Ellipse(pos=(zoomedTrace[i][0]+middle[0]-self.diametre/2, zoomedTrace[i][1]+middle[1]-self.diametre/2),
                                 size=(self.diametre, self.diametre))
                         label = CoreLabel(text=str(i+1), font_size=20)

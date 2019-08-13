@@ -1,11 +1,4 @@
 """This module provides translation functionality.
-
-The function to use for translation is :class:`_(string)
-<kniteditor.localization.observable_translation.ObservableTranslation>`
-to translate strings. When you use this in the .kv file, the translationss
-are automatically updated when the language is changed.
-
-
 """
 import os
 import gettext

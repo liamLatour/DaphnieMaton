@@ -5,13 +5,19 @@ import os
 
 
 def lineToPictures(b, a, c):
-    """Transforms a line in a multitude of points where a picture has to be taken.
+    """Transforms a line in a multitude of points where a picture has to be taken
+    
+    Arguments:
+        b {tuple} -- first point of the line (in cm)
+        a {tuple} -- second point of the line (in cm)
+        c {float} -- cm between pictures
 
-    a tuple: first point of the line (in cm).
-    b tuple: second point of the line (in cm).
-
-    returns: an array of the NEW points.
+    Returns:
+        array -- the NEW points
     """
+    if c == 0:
+        return []
+    
     thisDist = max(distance.euclidean(a, b), 0.0001)
     newPoints = []
 
