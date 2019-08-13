@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def generateFile(waypoints, photos, ratio, action):
     waypoints = list(np.rint(np.multiply(waypoints, ratio)).tolist())
 
@@ -19,10 +20,10 @@ def generateFile(waypoints, photos, ratio, action):
     \n \
     const int waypointNb = "+str(round(len(waypoints)/2))+";\n \
     int currentWaypoint = 0;\n \
-    const int waypoints[] = "+str(waypoints).replace("[", "{").replace("]", "}").replace(".0", "")+";\n \
+    const int waypoints[][2] = "+str(waypoints).replace("[", "{").replace("]", "}").replace(".0", "")+";\n \
     const bool photo[] = "+str(photos).replace("[", "{").replace("]", "}").replace("F", "f").replace("T", "t")+";\n \
     \n \
-    bool hasStarted = false;\n\n" # Min, Max
+    bool hasStarted = false;\n\n"  # Min, Max
 
     setup = "void setup(){\n \
         Xaxis.setEnablePin(38);\n \
@@ -50,9 +51,9 @@ def generateFile(waypoints, photos, ratio, action):
                 Y1axis.setSpeed(500);\n \
                 Y2axis.setSpeed(500);\n \
                 \n \
-                Xaxis.moveTo(waypoints[currentWaypoint*2]);\n \
-                Y1axis.moveTo(waypoints[currentWaypoint*2+1]);\n \
-                Y2axis.moveTo(waypoints[currentWaypoint*2+1]);\n \
+                Xaxis.moveTo(waypoints[currentWaypoint][0]);\n \
+                Y1axis.moveTo(waypoints[currentWaypoint][1]);\n \
+                Y2axis.moveTo(waypoints[currentWaypoint][1]);\n \
                 \n \
                 bool xmax = false;\n \
                 bool ymax = false;\n \

@@ -10,23 +10,24 @@ from kivy.uix.settings import SettingsWithSidebar
 
 from assets.libraries.classes import (SettingButtons, SettingColorPicker,
                                       SettingShortcut)
-from assets.libraries.daphnieMaton import Parametrage
+import assets.libraries.daphnieMaton as daphnieMaton
 from assets.libraries.localization import (change_language_to,
                                            translation_to_language_code)
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
-Config.set('kivy','window_icon','assets/logoDark.ico')
+Config.set('kivy', 'window_icon', 'assets/logoDark.ico')
 
-#https://stackoverflow.com/questions/34468909/how-to-make-tooltip-using-kivy
+# https://stackoverflow.com/questions/34468909/how-to-make-tooltip-using-kivy
 
 Builder.load_file('.\\main.kv')
+
 
 class DaphnieMatonApp(App):
     def build(self):
         self.settings_cls = SettingsWithSidebar
         self.icon = 'assets/logoDark.png'
         self.update_language_from_config()
-        self.app = Parametrage()
+        self.app = daphnieMaton.Parametrage()
 
         self.shortcuts = {
             'save': [lambda: self.app.save(-1, -1)],
@@ -57,10 +58,13 @@ class DaphnieMatonApp(App):
 
         for short in self.shortcuts:
             if len(self.shortcuts[short]) == 2:
-                self.shortcuts[short].append(keyboard.add_hotkey(self.config.get('shortcuts', short), self.shortcuts[short][0], suppress=False, trigger_on_release=False))
-                self.shortcuts[short].append(keyboard.add_hotkey(self.config.get('shortcuts', short), self.shortcuts[short][1], suppress=False, trigger_on_release=True))
+                self.shortcuts[short].append(keyboard.add_hotkey(self.config.get(
+                    'shortcuts', short), self.shortcuts[short][0], suppress=False, trigger_on_release=False))
+                self.shortcuts[short].append(keyboard.add_hotkey(self.config.get(
+                    'shortcuts', short), self.shortcuts[short][1], suppress=False, trigger_on_release=True))
             else:
-                self.shortcuts[short].append(keyboard.add_hotkey(self.config.get('shortcuts', short), self.shortcuts[short][0], suppress=False))
+                self.shortcuts[short].append(keyboard.add_hotkey(self.config.get(
+                    'shortcuts', short), self.shortcuts[short][0], suppress=False))
 
         return self.app
 
@@ -112,8 +116,9 @@ class DaphnieMatonApp(App):
             f = openFile(files, "r", encoding='utf8')
             if f.mode == 'r':
                 contents = f.read()
-                settings.add_json_panel(self.configFiles[files], self.config, data=contents)
-    
+                settings.add_json_panel(
+                    self.configFiles[files], self.config, data=contents)
+
     def on_config_change(self, config, section, key, value):
         if section == "general" and key == "language":
             change_language_to(translation_to_language_code(value))
@@ -127,11 +132,14 @@ class DaphnieMatonApp(App):
                 if short == key:
                     if len(self.shortcuts[short]) == 4:
                         keyboard.remove_hotkey(self.shortcuts[short][2])
-                        self.shortcuts[short][2] = keyboard.add_hotkey(value, self.shortcuts[short][0], suppress=False, trigger_on_release=False)
-                        self.shortcuts[short][3] = keyboard.add_hotkey(value, self.shortcuts[short][1], suppress=False, trigger_on_release=True)
+                        self.shortcuts[short][2] = keyboard.add_hotkey(
+                            value, self.shortcuts[short][0], suppress=False, trigger_on_release=False)
+                        self.shortcuts[short][3] = keyboard.add_hotkey(
+                            value, self.shortcuts[short][1], suppress=False, trigger_on_release=True)
                     else:
                         keyboard.remove_hotkey(self.shortcuts[short][1])
-                        self.shortcuts[short][1] = keyboard.add_hotkey(value, self.shortcuts[short][0], suppress=False)
+                        self.shortcuts[short][1] = keyboard.add_hotkey(
+                            value, self.shortcuts[short][0], suppress=False)
                     return
 
         if section == "colors":
@@ -141,9 +149,11 @@ class DaphnieMatonApp(App):
         config_language = self.config.get('general', 'language')
         change_language_to(translation_to_language_code(config_language))
 
+
 if __name__ == '__main__':
     try:
         DaphnieMatonApp().run()
     except Exception as e:
         traceback.print_tb(e.__traceback__)
-        ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n" + str(e), u"DaphnieMaton Error", 0)
+        ctypes.windll.user32.MessageBoxW(
+            0, u"An error occured: \n" + str(e), u"DaphnieMaton Error", 0)

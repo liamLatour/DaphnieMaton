@@ -24,16 +24,19 @@ from kivy.uix.textinput import TextInput
 
 from .localization import _
 
+
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
     cancel = ObjectProperty(None)
     path = StringProperty("C:/")
+
 
 class SaveDialog(FloatLayout):
     save = ObjectProperty(None)
     text_input = ObjectProperty(None)
     cancel = ObjectProperty(None)
     path = StringProperty("C:/")
+
 
 class ActionChoosing(FloatLayout):
     newAction = ObjectProperty(None)
@@ -53,41 +56,49 @@ class ActionChoosing(FloatLayout):
     def updateGrid(self, *args):
         self.ids.box.remove_widget(self.scrollView)
         self.createGrid()
-    
+
     def createGrid(self, *args):
-        self.scrollView = ScrollView(size_hint= (1, 1))
+        self.scrollView = ScrollView(size_hint=(1, 1))
         grid = CustomGrid(cols=max(round(self.size[0]/150-0.5), 1))
         actions = json.loads(self.actions)
         for action in actions:
-            button = GridButton(text=str(action.replace(actions[action] + "\\", "").replace(".ino", "")), path=actions[action], filename=action, chose=self.chose)
+            button = GridButton(text=str(action.replace(actions[action] + "\\", "").replace(
+                ".ino", "")), path=actions[action], filename=action, chose=self.chose)
             grid.add_widget(button)
         self.scrollView.add_widget(grid)
         self.ids.box.add_widget(self.scrollView, index=1)
+
 
 class GridButton(Button):
     path = StringProperty("")
     filename = StringProperty("")
     chose = ObjectProperty(None)
 
+
 class CustomGrid(GridLayout):
     pass
 
+
 class MenuDropDown(ActionDropDown):
     pass
+
 
 class SettingButtons(SettingItem):
     def __init__(self, **kwargs):
         self.register_event_type('on_release')
         self.panel = kwargs["panel"]
-        super(SettingItem, self).__init__(title=kwargs["title"], desc=kwargs["desc"], section=kwargs["section"], key=kwargs["key"])#**kwargs
+        super(SettingItem, self).__init__(
+            title=kwargs["title"], desc=kwargs["desc"], section=kwargs["section"], key=kwargs["key"])  # **kwargs
         for aButton in kwargs["buttons"]:
-            oButton=Button(text=aButton['title'], font_size= '15sp')
-            oButton.ID=aButton['id']
+            oButton = Button(text=aButton['title'], font_size='15sp')
+            oButton.ID = aButton['id']
             self.add_widget(oButton)
-            oButton.bind (on_release=self.On_ButtonPressed)
+            oButton.bind(on_release=self.On_ButtonPressed)
 
-    def On_ButtonPressed(self,instance):
-        self.panel.settings.dispatch('on_config_change',self.panel.config, self.section, self.key, instance.ID)
+    def On_ButtonPressed(self, instance):
+        self.panel.settings.dispatch(
+            'on_config_change', self.panel.config, self.section, self.key, instance.ID)
+
 
 class SettingShortcut(SettingItem):
     popup = ObjectProperty(None, allownone=True)
@@ -128,15 +139,18 @@ class SettingShortcut(SettingItem):
         while self.running and threading.main_thread().is_alive():
             hotkey = keyboard.read_hotkey(False)
             self.curValue = hotkey
-            self.shortcutPicker.text = _("Press any key combination") + "\n" + hotkey
+            self.shortcutPicker.text = _(
+                "Press any key combination") + "\n" + hotkey
             time.sleep(0.5)
 
     def _create_popup(self, instance):
         # create popup layout
         content = BoxLayout(orientation='vertical', spacing='5dp')
-        self.popup = popup = Popup(title=self.title, content=content, size_hint=(0.7, 0.6))
+        self.popup = popup = Popup(
+            title=self.title, content=content, size_hint=(0.7, 0.6))
 
-        self.shortcutPicker = shortcutPicker = Label(text=_("Press any key combination") + "\n" + self.value, valign='middle', halign='center')
+        self.shortcutPicker = shortcutPicker = Label(text=_(
+            "Press any key combination") + "\n" + self.value, valign='middle', halign='center')
         content.add_widget(shortcutPicker)
 
         # 2 buttons are created for accept or cancel the current value
@@ -156,6 +170,7 @@ class SettingShortcut(SettingItem):
         self.running = True
         threading.Thread(target=self._inputget).start()
 
+
 class SettingColorPicker(SettingItem):
     popup = ObjectProperty(None, allownone=True)
     textinput = ObjectProperty(None)
@@ -166,7 +181,8 @@ class SettingColorPicker(SettingItem):
             self.value
         except NameError:
             self.value = "#FFFFFF"
-        self.curentColour = Label(text=self.value, color=utils.get_color_from_hex(self.value))
+        self.curentColour = Label(
+            text=self.value, color=utils.get_color_from_hex(self.value))
         self.add_widget(self.curentColour)
 
     def on_panel(self, instance, value):
@@ -192,9 +208,11 @@ class SettingColorPicker(SettingItem):
         # create popup layout
         content = BoxLayout(orientation='vertical', spacing='5dp')
         popup_width = 0.95 * Window.width
-        self.popup = popup = Popup(title=self.title, content=content, size_hint=(None, 0.9), width=popup_width)
+        self.popup = popup = Popup(
+            title=self.title, content=content, size_hint=(None, 0.9), width=popup_width)
 
-        self.colorpicker = colorpicker = ColorPicker(color=utils.get_color_from_hex(self.value))
+        self.colorpicker = colorpicker = ColorPicker(
+            color=utils.get_color_from_hex(self.value))
         colorpicker.bind(on_color=self._validate)
 
         self.colorpicker = colorpicker
@@ -213,14 +231,17 @@ class SettingColorPicker(SettingItem):
         # all done, open the popup !
         popup.open()
 
+
 class MyLabel(Image):
     text = StringProperty('')
 
     def on_text(self, *_):
-        l = Label(text=self.text, valign='middle', halign='justify', padding= (15, 35), markup = True)
+        l = Label(text=self.text, valign='middle',
+                  halign='justify', padding=(15, 35), markup=True)
         l.font_size = '50'
         l.texture_update()
         self.texture = l.texture
+
 
 class Input(BoxLayout):
     """Custom input to handle parameters.
@@ -236,13 +257,14 @@ class Input(BoxLayout):
 
     inputName = StringProperty('default')
     input_filter = StringProperty(None)
+    boundaries = ObjectProperty([float('-inf'), float('inf')])
     default_text = StringProperty('default')
     callback = ObjectProperty(None, rebind=True)
     inputType = NumericProperty(0)
 
     def __init__(self, **kwargs):
         super(Input, self).__init__(**kwargs)
-        if self.callback != None and self.callback != '':
+        if self.callback is not None and self.callback != '':
             self.after_init()
         else:
             # Have to wait if declared in .kv because the properties are not set before init
@@ -252,18 +274,19 @@ class Input(BoxLayout):
         self.label = Label(text=self.inputName)
         self.add_widget(self.label)
 
-        if self.callback != None and self.callback != '':
+        if self.callback is not None and self.callback != '':
             self.toCall = lambda *args: self.callback()
         else:
-            self.toCall = lambda : print("no callback")
+            self.toCall = lambda: print("no callback")
 
         if self.inputType == 0:
-            self.input = TextInput(text=self.default_text, multiline=False, input_filter=self.input_filter)
+            self.input = TextInput(
+                text=self.default_text, multiline=False, input_filter=self.input_filter)
         elif self.inputType == 1:
-            self.input = Switch(active=self.default_text=="True")
+            self.input = Switch(active=self.default_text == "True")
         elif self.inputType == 2:
             self.input = Button(text=self.default_text)
-        self.input.bind(on_press=self.toCall)
+        self.bindThis()
         self.add_widget(self.input)
 
     def bindThis(self, *args):
@@ -289,14 +312,13 @@ class Input(BoxLayout):
         elif self.inputType == 1:
             self.input.active = bool(value)
         self.bindThis()
-    
+
     def read(self, *args):
         if self.inputType == 0:
             return self.sanitize(self.input.text)
         elif self.inputType == 1:
             return self.input.active
 
-    #TODO: transform in decorator
     def sanitize(self, number):
         """Avoids getting errors on empty inputs.
 
@@ -305,20 +327,18 @@ class Input(BoxLayout):
         returns: 0 if it is NaN, otherwise the value itself.
         """
         try:
-            return int(number)
+            number = int(number)
         except:
             try:
-                return float(number)
+                number = float(number)
             except:
-                return 0
+                number = 0
+        return max(min(number, self.boundaries[1]), self.boundaries[0])
 
     def hide(self, *args):
         self.height = '0'
-        try:
-            self.remove_widget(self.label)
-            self.remove_widget(self.input)
-        except:
-            pass
+        self.remove_widget(self.label)
+        self.remove_widget(self.input)
 
     def show(self, *args):
         self.height = '30'
