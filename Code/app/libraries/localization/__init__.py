@@ -16,6 +16,7 @@ _language = "Language"
 _languages_locales = gettext.translation(_languages_dir, _locale_dir,
                                          languages=[_language])
 
+
 def _(string):
     """Translate a string using the current language.
 
@@ -24,6 +25,8 @@ def _(string):
     :rtype: str
     """
     return _locales.gettext(string)
+
+
 _ = ObservableTranslation(_)
 
 
@@ -38,7 +41,7 @@ def change_language_to(new_language):
     assert new_language in list_languages()
     global _locales, _current_language
     _locales = gettext.translation(DOMAIN, _locale_dir,
-                                   languages=[new_language])#new_language])
+                                   languages=[new_language])  # new_language])
     _current_language = new_language
     _.language_changed()
 

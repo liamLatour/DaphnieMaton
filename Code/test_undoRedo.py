@@ -1,11 +1,8 @@
-from app.assets.libraries import undoRedo
+from app.libraries.undoRedo import UndoRedo
 import unittest
 import random
 import sys
 import os
-
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
 
 
 class TestUndoRedo(unittest.TestCase):
@@ -15,7 +12,7 @@ class TestUndoRedo(unittest.TestCase):
             random.randint(0, 1) == 1], [random.randint(0, 1) == 1]]]
         self.second = [[[(random.random(), random.random())], [
             random.randint(0, 1) == 1], [random.randint(0, 1) == 1]]]
-        self.undoRedo = undoRedo.UndoRedo()
+        self.undoRedo = UndoRedo()
         self.undoRedo.do(self.start)
         self.undoRedo.do(self.second)
 

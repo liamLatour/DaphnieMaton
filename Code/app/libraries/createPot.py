@@ -1,7 +1,8 @@
 import io
 import re
 
-files = ["C:\\Users\\Administrateur\\Desktop\\DaphnieMaton\\Code\\app\\main.kv", "C:\\Users\\Administrateur\\Desktop\\DaphnieMaton\\Code\\app\\ParametrageV2.py"]
+files = ["C:\\Users\\Administrateur\\Desktop\\DaphnieMaton\\Code\\app\\main.kv",
+         "C:\\Users\\Administrateur\\Desktop\\DaphnieMaton\\Code\\app\\ParametrageV2.py"]
 
 result = ""
 

@@ -1,11 +1,8 @@
-from app.assets.libraries import utilityFunctions
+from app.libraries import utilityFunctions
 import unittest
 import random
 import sys
 import os
-
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
 
 
 class TestHitLine(unittest.TestCase):
@@ -38,10 +35,13 @@ class TestLineToPictures(unittest.TestCase):
             37.4, 38.45), (45.12, 44.8), (52.85, 51.15), (60.58, 57.5), (68.3, 63.85), (76.03, 70.19), (83.76, 76.54), (91.49, 82.89)])
 
     def test_lineToPictures_zero(self):
-        self.assertEqual(utilityFunctions.lineToPictures((11.4, 17.1), (94.3, 85.2), 0), [])
+        self.assertEqual(utilityFunctions.lineToPictures(
+            (11.4, 17.1), (94.3, 85.2), 0), [])
 
     def test_lineToPictures_samePoint(self):
-        self.assertEqual(utilityFunctions.lineToPictures((10, 5), (10, 5), 5), [(10, 5)])
+        self.assertEqual(utilityFunctions.lineToPictures(
+            (10, 5), (10, 5), 5), [(10, 5)])
+
 
 if __name__ == '__main__':
     unittest.main()

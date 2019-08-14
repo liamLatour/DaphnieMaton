@@ -753,15 +753,11 @@ class Parametrage(BoxLayout):
         self.update_rect()
 
     def freeToPipe(self):
-        self.ids.photoPipe.unbindThis()
-        self.ids.photoPipe.input.text = str(max(self.ids.freePhotoPipe.read(), 1))
-        self.ids.photoPipe.bindThis()
+        self.ids.photoPipe.write(self.ids.freePhotoPipe.read())
         self.update_rect()
 
     def pipeToFree(self):
-        self.ids.freePhotoPipe.unbindThis()
-        self.ids.freePhotoPipe.input.text = str(max(self.ids.photoPipe.read(), 1))
-        self.ids.freePhotoPipe.bindThis()
+        self.ids.freePhotoPipe.write(self.ids.photoPipe.read())
         self.update_rect()
 
     def copyToClipboard(self):

@@ -8,11 +8,11 @@ from kivy.config import Config
 from kivy.lang import Builder
 from kivy.uix.settings import SettingsWithSidebar
 
-from assets.libraries.classes import (SettingButtons, SettingColorPicker,
-                                      SettingShortcut)
-import assets.libraries.daphnieMaton as daphnieMaton
-from assets.libraries.localization import (change_language_to,
-                                           translation_to_language_code)
+from libraries.localization import (change_language_to,
+                                    translation_to_language_code)
+import libraries.daphnieMaton as daphnieMaton
+from libraries.classes import (SettingButtons, SettingColorPicker,
+                               SettingShortcut)
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Config.set('kivy', 'window_icon', 'assets/logoDark.ico')
@@ -50,10 +50,10 @@ class DaphnieMatonApp(App):
         os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
         self.configFiles = {
-            ".\\assets\\settings\\config.json": 'General',
-            ".\\assets\\settings\\shortcuts.json": 'Shortcuts',
-            ".\\assets\\settings\\colors.json": 'Aspect',
-            ".\\assets\\settings\\hidden.json": 'hidden',
+            ".\\settings\\config.json": 'General',
+            ".\\settings\\shortcuts.json": 'Shortcuts',
+            ".\\settings\\colors.json": 'Aspect',
+            ".\\settings\\hidden.json": 'hidden',
         }
 
         for short in self.shortcuts:

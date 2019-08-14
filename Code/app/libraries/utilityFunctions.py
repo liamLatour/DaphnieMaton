@@ -6,7 +6,7 @@ import os
 
 def lineToPictures(b, a, c):
     """Transforms a line in a multitude of points where a picture has to be taken
-    
+
     Arguments:
         b {tuple} -- first point of the line (in cm)
         a {tuple} -- second point of the line (in cm)
@@ -17,7 +17,7 @@ def lineToPictures(b, a, c):
     """
     if c == 0:
         return []
-    
+
     thisDist = max(distance.euclidean(a, b), 0.0001)
     newPoints = []
 
@@ -38,7 +38,8 @@ def getPorts():
 
     returns: list of found devices on COM ports.
     """
-    arduinoPorts = os.popen("python -m serial.tools.list_ports").read().strip().replace(' ', '').split('\n')
+    arduinoPorts = os.popen(
+        "python -m serial.tools.list_ports").read().strip().replace(' ', '').split('\n')
     if arduinoPorts == ['']:
         return []
     return arduinoPorts
@@ -65,8 +66,10 @@ def hitLine(lineA, lineB, point, lineWidth):
     """
     if lineWidth < 0:
         raise ValueError('Line width less than zero')
-    numerator = abs((lineB[1]-lineA[1])*point[0]-(lineB[0]-lineA[0])*point[1]+lineB[0]*lineA[1]-lineB[1]*lineA[0])
-    denominator = max(math.sqrt(pow(lineB[1]-lineA[1], 2)+pow(lineB[0]-lineA[0], 2)), 0.00001)
+    numerator = abs((lineB[1]-lineA[1])*point[0]-(lineB[0]-lineA[0])
+                    * point[1]+lineB[0]*lineA[1]-lineB[1]*lineA[0])
+    denominator = max(
+        math.sqrt(pow(lineB[1]-lineA[1], 2)+pow(lineB[0]-lineA[0], 2)), 0.00001)
     if numerator/denominator <= lineWidth+0.001:
         if distance.euclidean(lineA, point) <= distance.euclidean(lineA, lineB) and distance.euclidean(lineB, point) <= distance.euclidean(lineA, lineB):
             return True
