@@ -103,15 +103,10 @@ class SettingButtons(SettingItem):
 class SettingShortcut(SettingItem):
     popup = ObjectProperty(None, allownone=True)
     textinput = ObjectProperty(None)
+    value = StringProperty("Not defined")
 
     def __init__(self, **kwargs):
         super(SettingShortcut, self).__init__(**kwargs)
-
-        try:
-            self.value
-        except NameError:
-            self.value = "Not defined"
-
         self.curentShortcut = Label(text=self.value)
         self.curValue = self.value
         self.add_widget(self.curentShortcut)
@@ -174,13 +169,10 @@ class SettingShortcut(SettingItem):
 class SettingColorPicker(SettingItem):
     popup = ObjectProperty(None, allownone=True)
     textinput = ObjectProperty(None)
+    value = StringProperty("#FFFFFF")
 
     def __init__(self, **kwargs):
         super(SettingColorPicker, self).__init__(**kwargs)
-        try:
-            self.value
-        except NameError:
-            self.value = "#FFFFFF"
         self.curentColour = Label(
             text=self.value, color=utils.get_color_from_hex(self.value))
         self.add_widget(self.curentColour)
@@ -342,8 +334,6 @@ class Input(BoxLayout):
 
     def show(self, *args):
         self.height = '30'
-        try:
+        if self.label.parent is None and self.input.parent is None:
             self.add_widget(self.label)
             self.add_widget(self.input)
-        except:
-            pass

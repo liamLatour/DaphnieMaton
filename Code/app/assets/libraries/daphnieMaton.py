@@ -55,6 +55,7 @@ class Parametrage(BoxLayout):
         self.actualWidth = 1.144  # in meter
         self.actualHeight = 1.1  # in meter
         self.imageOrigin = (17, 17.2)  # in cm
+        self.popup = -1
 
         # Search for arduino installation
         if not os.path.isfile(self.settings.get('general', 'arduinoPath') + '/arduino_debug.exe'):
@@ -154,6 +155,7 @@ class Parametrage(BoxLayout):
         self.config.reset()
 
         if refresh:
+            self.tuyeauGap()
             self.update_rect()
 
     def about_panel(self):
@@ -211,9 +213,9 @@ class Parametrage(BoxLayout):
         try:
             self.config.load(path, filename)
             self.tuyeauGap()
-            self.dismiss_popup()
         except Exception as e:
             ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n" + str(e), u"Wrong File Error", 0)
+        self.dismiss_popup()
 
     def save(self, path, filename, *args):
         if path == -1:
@@ -243,52 +245,47 @@ class Parametrage(BoxLayout):
         self.actionPopup.open()
 
     def addAction(self, path, filename):
-        try:
-            if ".ino" not in filename[0]:
-                ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n The file has to be '.ino'", u"Wrong File Error", 0)
-                return
+        if ".ino" not in filename[0]:
+            ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n The file has to be '.ino'", u"Wrong File Error", 0)
+            return
 
-            current = json.loads(self.settings.get('hidden', 'action'))
-            current[str(filename[0])] = path
-            self.settings.set('hidden', 'action', str(json.dumps(current)))
-            self.settings.write()
+        current = json.loads(self.settings.get('hidden', 'action'))
+        current[str(filename[0])] = path
+        self.settings.set('hidden', 'action', str(json.dumps(current)))
+        self.settings.write()
 
-            self.actionPopup.dismiss()
-            threading.Thread(target=lambda: self.uploadPath(path=path, filename=filename[0])).start()
-        except:
-            print("error")
+        self.actionPopup.dismiss()
+
+        threading.Thread(target=lambda: self.uploadPath(path=path, filename=filename[0])).start()
 
     def uploadPath(self, path, filename):
-        try:
-            if self.mode == "Pipe":
-                trace, pictures, actionNodes = self.config.generatePathFromPipe()
-            else:
-                trace = self.config.currentConfig["trace"]["value"]
-                pictures = self.config.currentConfig["photos"]["value"]
-                actionNodes = self.config.currentConfig["actionNodes"]["value"]
+        if self.mode == "Pipe":
+            trace, pictures, actionNodes = self.config.generatePathFromPipe()
+        else:
+            trace = self.config.currentConfig["trace"]["value"]
+            pictures = self.config.currentConfig["photos"]["value"]
+            actionNodes = self.config.currentConfig["actionNodes"]["value"]
 
-            cmValues = []
-            photos = []
+        cmValues = []
+        photos = []
 
-            for i in range(len(trace)):
-                curent = self.pixelToCM(trace[i])
-                cmValues.append((curent[1], curent[0]))
+        for i in range(len(trace)):
+            curent = self.pixelToCM(trace[i])
+            cmValues.append((curent[1], curent[0]))
 
-            for i in range(len(trace)):
-                photos.append(actionNodes[i])
-                if pictures[i]:
-                    middles = lineToPictures(cmValues[i], cmValues[(i+1) % len(cmValues)], self.config.currentConfig["photoPipe"]["value"])
-                    cmValues[i+1:i+1] = middles
-                    photos.extend([True for i in range(len(middles))])
+        for i in range(len(trace)):
+            photos.append(actionNodes[i])
+            if pictures[i]:
+                middles = lineToPictures(cmValues[i], cmValues[(i+1) % len(cmValues)], self.config.currentConfig["photoPipe"]["value"])
+                cmValues[i+1:i+1] = middles
+                photos.extend([True for i in range(len(middles))])
 
-            genFile = generateFile(cmValues, photos, float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename)))
-            f = open(".\\assets\\currentFile\\currentFile.ino", "w+")
-            f.write(genFile)
-            f.close()
+        genFile = generateFile(cmValues, photos, float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename)))
+        f = open(".\\assets\\currentFile\\currentFile.ino", "w+")
+        f.write(genFile)
+        f.close()
 
-            self.arduino.uploadProgram("Current")
-        except Exception as e:
-            ctypes.windll.user32.MessageBoxW(0, u"An error occured: \n" + str(e), u"Wrong File Error", 0)
+        self.arduino.uploadProgram("Current")
 
     def changedTab(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
@@ -747,10 +744,9 @@ class Parametrage(BoxLayout):
         else:
             self.gaps = []
             for pipe in range(max(self.ids.nbPipe.read(), 2)-1):
-                try:
+                default = str(self.config.currentConfig["gaps"]["value"][0])
+                if pipe < len(self.config.currentConfig["gaps"]["value"]):
                     default = str(self.config.currentConfig["gaps"]["value"][pipe])
-                except:
-                    default = str(self.config.currentConfig["gaps"]["value"][0])
 
                 self.gaps.append(Input(inputName=_('Gap between pipes ')+str(pipe+1)+"-"+str(pipe+2)+" (cm)", input_filter="float", default_text=default, callback=self.update_rect))
                 self.pipePanel.add_widget(self.gaps[pipe])
@@ -783,10 +779,9 @@ class Parametrage(BoxLayout):
         if isinstance(content, str):
             content = Label(text=content)
 
-        try:
+        if self.popup != -1:
             self.popup.dismiss()
-        except:
-            pass
+
         self.popup = Popup(title=title,
                            content=content,
                            size_hint=(0.7, 0.7),

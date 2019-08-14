@@ -3,19 +3,24 @@ from json import dumps as jsDumps
 from json import load as jsLoad
 from os.path import join as osJoinPath
 import numpy as np
+import copy
 
 
 class Config():
     def __init__(self, default, origin, ratioX, ratioY):
         self.baseConfig = default
-        self.currentConfig = self.baseConfig
+        self.copy()
         self.origin = origin
         self.ratioX = ratioX
         self.ratioY = ratioY / 100
 
-    def reset(self):
-        self.currentConfig = self.baseConfig
+    def copy(self):
+        self.currentConfig = {}
+        for param in self.baseConfig:
+            self.currentConfig[param] = {'value': copy.deepcopy(self.baseConfig[param]['value']), 'inputs': self.baseConfig[param]['inputs']}
 
+    def reset(self):
+        self.copy()
         for param in self.currentConfig:
             for inputs in self.currentConfig[param]["inputs"]:
                 inputs.write(self.currentConfig[param]["value"])
@@ -45,10 +50,11 @@ class Config():
         self.filePath = path
         self.fileName = filename[0].replace(".json", "")
         with open(osJoinPath(path, filename[0])) as stream:
-            self.currentConfig = jsLoad(stream)
+            newConfig = jsLoad(stream)
             for param in self.currentConfig:
+                self.currentConfig[param]["value"] = newConfig[param]
                 for inputs in self.currentConfig[param]["inputs"]:
-                    inputs.write(self.currentConfig[param]["value"])
+                    inputs.write(newConfig[param])
 
     def save(self, path, filename):
         if not filename.endswith(".json"):
@@ -58,10 +64,9 @@ class Config():
             paramsCopy = self.currentConfig.copy()
 
             for item in paramsCopy:  # Converts numpy arrays into python list
-                try:
-                    paramsCopy[item]["value"] = paramsCopy[item]["value"].tolist()
-                except:
-                    pass
+                paramsCopy[item] = paramsCopy[item]["value"]
+                if type(paramsCopy[item]).__module__ == np.__name__:
+                    paramsCopy[item] = paramsCopy[item].tolist()
 
             stream.write(jsDumps(paramsCopy))
 
