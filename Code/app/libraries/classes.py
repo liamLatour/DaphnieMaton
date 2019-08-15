@@ -1,6 +1,9 @@
 import json
 import threading
 import time
+import sys
+
+sys.argv = sys.argv if __name__ == '__main__' else [sys.argv[0]]
 
 import keyboard
 import kivy.utils as utils

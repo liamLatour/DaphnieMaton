@@ -102,7 +102,7 @@ class Parametrage(BoxLayout):
             "actionNodes": {"value": [], "inputs": []}
         },
             self.corners[3],
-            (self.corners[0][0]-self.corners[2][0])/(self.actualWidth*100),
+            (self.corners[0][0]-self.corners[2][0])/(self.actualWidth),
             (self.corners[0][1] - self.corners[1][1]) / (self.actualHeight)
         )
         self.newFile(False)

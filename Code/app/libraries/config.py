@@ -11,8 +11,8 @@ class Config():
         self.baseConfig = default
         self.copy()
         self.origin = origin
-        self.ratioX = ratioX
-        self.ratioY = ratioY / 100
+        self.ratioX = ratioX/100
+        self.ratioY = ratioY/100
 
     def copy(self):
         self.currentConfig = {}
@@ -29,8 +29,7 @@ class Config():
     def read(self, gaps=None):
         for param in self.currentConfig:
             if len(self.currentConfig[param]["inputs"]) > 0:
-                self.currentConfig[param]["value"] = self.currentConfig[param]["inputs"][0].read(
-                )
+                self.currentConfig[param]["value"] = self.currentConfig[param]["inputs"][0].read()
 
         if gaps is not None:
             gapsValue = []
@@ -40,13 +39,12 @@ class Config():
                         max(self.currentConfig["nbPipe"]["value"], 1)-1) * gaps[0].read()
                 else:
                     for gap in gaps:
-                        gapsValue.append(max(gap.read(), 0))
+                        gapsValue.append(gap.read())
 
             if len(gapsValue) == 0:
+                gapsValue = [20]
                 if len(self.currentConfig["gaps"]["value"]) > 0:
                     gapsValue = [self.currentConfig["gaps"]["value"][0]]
-                else:
-                    gapsValue = [20]
             self.currentConfig["gaps"]["value"] = gapsValue
 
     def load(self, path, filename):
@@ -85,10 +83,8 @@ class Config():
 
         length = self.currentConfig["lenPipe"]["value"]*100
 
-        xPosition = self.origin[0] + \
-            self.currentConfig["distOriginX"]["value"]*self.ratioX
-        yPosition = self.origin[1] + \
-            self.currentConfig["distOriginY"]["value"]*self.ratioY
+        xPosition = self.origin[0] + self.currentConfig["distOriginX"]["value"]*self.ratioX
+        yPosition = self.origin[1] + self.currentConfig["distOriginY"]["value"]*self.ratioY
 
         path.append((xPosition, yPosition))
         photos.append(True)
@@ -117,7 +113,6 @@ class Config():
         if copy:
             self.currentConfig["trace"]["value"] = path
             self.currentConfig["photos"]["value"] = photos
-            self.currentConfig["actionNodes"]["value"] = [
-                False for i in range(len(photos))]
+            self.currentConfig["actionNodes"]["value"] = [False for i in range(len(photos))]
 
         return (path, photos, [False for i in range(len(photos))])
