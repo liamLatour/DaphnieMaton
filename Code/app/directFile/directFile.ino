@@ -74,7 +74,7 @@ void loop() {
     }
 
     if (incomingByte == 8){
-      // remise à zero
+      goToOrigin();
     }
     else if (incomingByte == 9){
       Serial.println("DaphnieMaton");
@@ -90,6 +90,31 @@ void loop() {
     Y1axis.runSpeed();
     Y2axis.runSpeed();
   }
+}
+
+void goToOrigin(){
+  Xaxis.setSpeed(-500);
+  Y1axis.setSpeed(-500);
+  Y2axis.setSpeed(-500);
+
+  while(digitalRead(MA)){
+    while(digitalRead(MA)){
+      Xaxis.runSpeed();
+    }
+    delay(2);
+  }
+
+  while(digitalRead(A) && digitalRead(D)){
+    while(digitalRead(A) && digitalRead(D)){
+      Y1axis.runSpeed();
+      Y2axis.runSpeed();
+    }
+    delay(2);
+  }
+  
+  Xaxis.setCurrentPosition(0);
+  Y1axis.setCurrentPosition(0);
+  Y2axis.setCurrentPosition(0);  
 }
 
 void calibrate() {
@@ -110,7 +135,10 @@ void calibrate() {
   // Go to the origin
   Xaxis.setSpeed(-500);
   while(digitalRead(MA)){
-    Xaxis.runSpeed();
+    while(digitalRead(MA)){
+      Xaxis.runSpeed();
+    }
+    delay(2);
   }
 
   String tosend = "{\"Steps\":" + String(abs(Xaxis.currentPosition())) + ", \"Time\":" + String(millis() - start) + "}"; 
