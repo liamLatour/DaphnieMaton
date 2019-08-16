@@ -1,8 +1,6 @@
 from app.libraries import utilityFunctions
 import unittest
 import random
-import sys
-import os
 
 
 class TestHitLine(unittest.TestCase):

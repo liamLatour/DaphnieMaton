@@ -1,8 +1,6 @@
 from app.libraries.undoRedo import UndoRedo
 import unittest
 import random
-import sys
-import os
 
 
 class TestUndoRedo(unittest.TestCase):

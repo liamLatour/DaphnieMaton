@@ -174,7 +174,7 @@ class Arduino:
             osSystem(self.settings.get('general', 'arduinoPath') + "\\arduino_debug --verbose --board arduino:avr:mega:cpu=atmega2560 --port " +
                      str(self.port)+" --upload "+self.programs[program]["path"])
 
-            print("DONE !")
+            print("\r\nDONE !")
             self.easyPopup(_('Success !'), _('Upload finished successfully !'))
         except Exception as e:
             self.easyPopup(_('Oopsie...'), _(

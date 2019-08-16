@@ -1,7 +1,7 @@
 import json
+import sys
 import threading
 import time
-import sys
 
 sys.argv = sys.argv if __name__ == '__main__' else [sys.argv[0]]
 
@@ -26,6 +26,7 @@ from kivy.uix.switch import Switch
 from kivy.uix.textinput import TextInput
 
 from .localization import _
+
 
 
 class LoadDialog(FloatLayout):
@@ -245,7 +246,7 @@ class Input(BoxLayout):
     input_filter string: filter for numeric values (int, float, ...).
     default_text string: text to be displayed at startup.
     callback funct: function to call when it changes.
-    inputType int: Text or switch (0 or 1).
+    inputType int: Text, switch or button (0, 1 or 2).
 
     returns: the BoxLayout object.
     """

@@ -88,27 +88,18 @@ class Config():
 
         path.append((xPosition, yPosition))
         photos.append(True)
+        path.append((xPosition, yPosition + length*self.ratioY))
+        photos.append(False)
 
-        if self.currentConfig["horizontal"]["value"]:
-            path.append((xPosition + length*self.ratioX, yPosition))
-            photos.append(False)
-
-            for x in range(self.currentConfig["nbPipe"]["value"]-1):
-                yPosition += self.currentConfig["gaps"]["value"][x]*self.ratioY
-                path.append((xPosition, yPosition))
-                photos.append(True)
-                path.append((xPosition + length*self.ratioX, yPosition))
-                photos.append(False)
-        else:
+        for x in range(self.currentConfig["nbPipe"]["value"]-1):
+            xPosition += self.currentConfig["gaps"]["value"][x]*self.ratioX
+            path.append((xPosition, yPosition))
+            photos.append(True)
             path.append((xPosition, yPosition + length*self.ratioY))
             photos.append(False)
 
-            for x in range(self.currentConfig["nbPipe"]["value"]-1):
-                xPosition += self.currentConfig["gaps"]["value"][x]*self.ratioX
-                path.append((xPosition, yPosition))
-                photos.append(True)
-                path.append((xPosition, yPosition + length*self.ratioY))
-                photos.append(False)
+        if self.currentConfig["horizontal"]["value"]:
+            path = [a[::-1] for a in path]
 
         if copy:
             self.currentConfig["trace"]["value"] = path

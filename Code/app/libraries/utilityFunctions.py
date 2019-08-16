@@ -68,8 +68,7 @@ def hitLine(lineA, lineB, point, lineWidth):
         raise ValueError('Line width less than zero')
     numerator = abs((lineB[1]-lineA[1])*point[0]-(lineB[0]-lineA[0])
                     * point[1]+lineB[0]*lineA[1]-lineB[1]*lineA[0])
-    denominator = max(
-        math.sqrt(pow(lineB[1]-lineA[1], 2)+pow(lineB[0]-lineA[0], 2)), 0.00001)
+    denominator = max(distance.euclidean(lineA, lineB), 0.00001)
     if numerator/denominator <= lineWidth+0.001:
         if distance.euclidean(lineA, point) <= distance.euclidean(lineA, lineB) and distance.euclidean(lineB, point) <= distance.euclidean(lineA, lineB):
             return True

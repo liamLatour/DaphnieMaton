@@ -1,8 +1,4 @@
-import argparse
 import os
-import random
-import sys
-import time
 import unittest
 
 from app.libraries.classes import Input
@@ -29,7 +25,7 @@ class TestConfig(unittest.TestCase):
         }
         self.config = Config(self.default, (0, 0), 1, 1)
 
-    def test_new_config(self):
+    def test_reset(self):
         self.config.currentConfig["nbPipe"]["value"] = 8
         self.config.currentConfig["trace"]["value"] = [(5, 2), (3, 6)]
         self.config.reset()
@@ -62,19 +58,15 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(len(result[1]), len(result[2]))
         self.assertEqual(
             result[0], [(0.05, 0.05), (0.05, 1.05), (0.25, 0.05), (0.25, 1.05)])
+        self.config.currentConfig["horizontal"]["value"] = True
+        result = self.config.generatePathFromPipe()
+        self.assertEqual(len(result[1]), len(result[2]))
+        self.assertEqual(
+            result[0], [(0.05, 0.05), (1.05, 0.05), (0.05, 0.25), (1.05, 0.25)])
 
     def callback(self):
         print("no callback")
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--input', default='My Input')
-    parser.add_argument('filename', default='some_file.txt')
-    parser.add_argument('unittest_args', nargs='*')
-
-    args = parser.parse_args()
-
-    # Now set the sys.argv to the unittest_args (leaving sys.argv[0] alone)
-    sys.argv[1:] = args.unittest_args
     unittest.main()

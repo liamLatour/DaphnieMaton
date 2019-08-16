@@ -1,7 +1,6 @@
 import ctypes
 import json
 import math
-import operator
 import os
 import re
 import threading
@@ -45,9 +44,9 @@ class Parametrage(BoxLayout):
         self.undoRedo = UndoRedo()
         self.arduino = Arduino(self.settings, self.easyPopup, self.update_rect, programs={
             "Direct":
-            {"isDirectProgram": True, "path": ".\\assets\\directFile\\directFile.ino"},
+            {"isDirectProgram": True, "path": ".\\directFile\\directFile.ino"},
             "Current":
-            {"isDirectProgram": False, "path": ".\\assets\\currentFile\\currentFile.ino"}})
+            {"isDirectProgram": False, "path": ".\\currentFile\\currentFile.ino"}})
 
         self.speed = self.settings.get('general', 'speed')  # meters per second
         self.imageWidth = 1.4  # in meter
@@ -105,9 +104,8 @@ class Parametrage(BoxLayout):
             (self.corners[0][0]-self.corners[2][0])/(self.actualWidth),
             (self.corners[0][1] - self.corners[1][1]) / (self.actualHeight)
         )
-        self.newFile(False)
         self.updateColors(refresh=False)
-        self.tuyeauGap()
+        self.newFile(True)
 
         newVersion = checkUpdates("../../version")
         textPopup = "[u]A new version is available ![/u]\n\n \
@@ -156,7 +154,6 @@ class Parametrage(BoxLayout):
 
         if refresh:
             self.tuyeauGap()
-            self.update_rect()
 
     def about_panel(self):
         self.popbox = BoxLayout()
@@ -187,11 +184,11 @@ class Parametrage(BoxLayout):
 
     def change_port(self, port):
         self.arduino.port = port
+        self.ids.port_button.text = _("Port")
         if port != -1:
             self.ids.port_button.text = _("Port") + " " + port
             threading.Thread(target=lambda: self.arduino.checkItHasDirectProgram()).start()
-        else:
-            self.ids.port_button.text = _("Port")
+
         self.portDropDown.dismiss()
 
     def dismiss_popup(self):
@@ -259,12 +256,12 @@ class Parametrage(BoxLayout):
         threading.Thread(target=lambda: self.uploadPath(path=path, filename=filename[0])).start()
 
     def uploadPath(self, path, filename):
+        trace = self.config.currentConfig["trace"]["value"]
+        pictures = self.config.currentConfig["photos"]["value"]
+        actionNodes = self.config.currentConfig["actionNodes"]["value"]
+
         if self.mode == "Pipe":
             trace, pictures, actionNodes = self.config.generatePathFromPipe()
-        else:
-            trace = self.config.currentConfig["trace"]["value"]
-            pictures = self.config.currentConfig["photos"]["value"]
-            actionNodes = self.config.currentConfig["actionNodes"]["value"]
 
         cmValues = []
         photos = []
@@ -290,11 +287,10 @@ class Parametrage(BoxLayout):
     def changedTab(self, *args):
         self.mode = self.ids.tabbedPanel.current_tab.name
         self.zoomFactor = float('inf')
+        self.arduino.stopReading()
 
         if self.mode == "Direct" and self.arduino.port != -1:
             self.arduino.checkItHasDirectProgram()
-        else:
-            self.arduino.stopReading()
 
         self.update_rect()
 
@@ -307,11 +303,10 @@ class Parametrage(BoxLayout):
             self.ids.pipeBack.canvas.before.clear()
 
             self.config.read(self.gaps)
+            self.ids.sameGap.show()
 
             if self.config.currentConfig["nbPipe"]["value"] <= 2:
                 self.ids.sameGap.hide()
-            else:
-                self.ids.sameGap.show()
 
             self.ids.pipeSplitter.max_size = self.size[0] - 400
             self.ids.pipeSplitter.min_size = int(round(self.size[0]/2))
@@ -393,70 +388,52 @@ class Parametrage(BoxLayout):
                         Color(0, 1, 0, 0.8)
                         Ellipse(pos=(corner[0]*self.zoomFactor+middle[0]-self.diametre/2, corner[1]*self.zoomFactor+middle[1]-self.diametre/2), size=(self.diametre, self.diametre))
 
-                if len(zoomedTrace) > 0:
-                    if len(zoomedTrace) > 2:
-                        isLoop = bool(self.ids.loop.input.active)
-                    else:
-                        isLoop = False
+                isLoop = False
+                goto = len(zoomedTrace)-1
+                if len(zoomedTrace) > 2:
+                    isLoop = bool(self.ids.loop.input.active)
+                    if isLoop:
+                        goto += 1
 
-                    self.config.currentConfig["loop"]["value"] = isLoop
+                self.config.currentConfig["loop"]["value"] = isLoop
 
-                    for i in range(len(zoomedTrace)):
-                        if i+1 >= len(zoomedTrace) and isLoop:
-                            Color(self.pathColor[0], self.pathColor[1], self.pathColor[2], self.pathColor[3])
-                            if self.config.currentConfig["photos"]["value"][i]:
-                                Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
+                for i in range(goto):
+                    nextPoint = (i+1) % len(zoomedTrace)
+                    Color(self.pathColor[0], self.pathColor[1], self.pathColor[2], self.pathColor[3])
+                    if self.config.currentConfig["photos"]["value"][i]:
+                        Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
 
-                            Line(points=[zoomedTrace[i][0]+middle[0], zoomedTrace[i][1]+middle[1], zoomedTrace[0][0]+middle[0], zoomedTrace[0][1]+middle[1]], width=self.lineWidth)
-                            thisDist = max(distance.euclidean(self.pixelToCM(self.config.currentConfig["trace"]["value"][i]), self.pixelToCM(self.config.currentConfig["trace"]["value"][0])), 0.0001)
-                            dist += thisDist
-                            if self.config.currentConfig["photos"]["value"][i]:
-                                nb = math.floor(thisDist/float(self.config.currentConfig["photoPipe"]["value"]))
-                                top = (thisDist-nb*float(self.config.currentConfig["photoPipe"]["value"]))/(2*thisDist)
-                                ax = top * ((zoomedTrace[i][0]+middle[0]) - (zoomedTrace[0][0]+middle[0]))
-                                ay = top * ((zoomedTrace[i][1]+middle[1]) - (zoomedTrace[0][1]+middle[1]))
-                                Color(0, 0, 0)
-                                for p in range(nb+1):
-                                    Ellipse(pos=(zoomedTrace[0][0]+middle[0] + ax-self.lineWidth/2 + ((float(self.config.currentConfig["photoPipe"]["value"])/thisDist)*((zoomedTrace[i][0]+middle[0]) - (zoomedTrace[0][0]+middle[0])))*p,
-                                                 zoomedTrace[0][1]+middle[1] + ay-self.lineWidth/2 + ((float(self.config.currentConfig["photoPipe"]["value"])/thisDist)*((zoomedTrace[i][1]+middle[1]) - (zoomedTrace[0][1]+middle[1])))*p),
-                                            size=(self.lineWidth, self.lineWidth))
+                    Line(points=[zoomedTrace[i][0]+middle[0], zoomedTrace[i][1]+middle[1], zoomedTrace[nextPoint][0]+middle[0], zoomedTrace[nextPoint][1]+middle[1]], width=self.lineWidth)
+                    thisDist = max(distance.euclidean(self.pixelToCM(self.config.currentConfig["trace"]["value"][i]), self.pixelToCM(self.config.currentConfig["trace"]["value"][nextPoint])), 0.0001)
+                    dist += thisDist
+                    if self.config.currentConfig["photos"]["value"][i]:
+                        nb = math.floor(thisDist/float(self.config.currentConfig["photoPipe"]["value"]))
+                        top = (thisDist-nb*float(self.config.currentConfig["photoPipe"]["value"]))/(2*thisDist)
+                        ax = top * (zoomedTrace[i][0] - zoomedTrace[nextPoint][0])
+                        ay = top * (zoomedTrace[i][1] - zoomedTrace[nextPoint][1])
+                        Color(0, 0, 0)
+                        for p in range(nb+1):
+                            Ellipse(pos=(zoomedTrace[nextPoint][0]+middle[0] + ax-self.lineWidth/2 + ((float(self.config.currentConfig["photoPipe"]["value"])/thisDist)*(zoomedTrace[i][0] - zoomedTrace[nextPoint][0]))*p,
+                                         zoomedTrace[nextPoint][1]+middle[1] + ay-self.lineWidth/2 + ((float(self.config.currentConfig["photoPipe"]["value"])/thisDist)*(zoomedTrace[i][1] - zoomedTrace[nextPoint][1]))*p),
+                                    size=(self.lineWidth, self.lineWidth))
 
-                        elif i+1 < len(zoomedTrace):
-                            if self.config.currentConfig["photos"]["value"][i]:
-                                Color(self.pathHighlight[0], self.pathHighlight[1], self.pathHighlight[2], self.pathHighlight[3])
-                            else:
-                                Color(self.pathColor[0], self.pathColor[1], self.pathColor[2], self.pathColor[3])
-                            Line(points=[zoomedTrace[i][0]+middle[0], zoomedTrace[i][1]+middle[1], zoomedTrace[i+1][0]+middle[0], zoomedTrace[i+1][1]+middle[1]], width=self.lineWidth)
-                            thisDist = max(distance.euclidean(self.pixelToCM(self.config.currentConfig["trace"]["value"][i]), self.pixelToCM(self.config.currentConfig["trace"]["value"][i+1])), 0.0001)
-                            dist += thisDist
-                            if self.config.currentConfig["photos"]["value"][i]:
-                                nb = math.floor(thisDist/float(self.config.currentConfig["photoPipe"]["value"]))
-                                top = (thisDist-nb*float(self.config.currentConfig["photoPipe"]["value"]))/(2*thisDist)
-                                ax = top * (zoomedTrace[i][0] - zoomedTrace[i+1][0])
-                                ay = top * (zoomedTrace[i][1] - zoomedTrace[i+1][1])
-                                Color(0, 0, 0)
-                                for p in range(nb+1):
-                                    Ellipse(pos=(zoomedTrace[i+1][0]+middle[0] + ax-self.lineWidth/2 + ((float(self.config.currentConfig["photoPipe"]["value"])/thisDist)*(zoomedTrace[i][0] - zoomedTrace[i+1][0]))*p,
-                                                 zoomedTrace[i+1][1]+middle[1] + ay-self.lineWidth/2 + ((float(self.config.currentConfig["photoPipe"]["value"])/thisDist)*(zoomedTrace[i][1] - zoomedTrace[i+1][1]))*p),
-                                            size=(self.lineWidth, self.lineWidth))
+                for i in range(len(zoomedTrace)):
+                    if self.lastTouched == i:
+                        Color(self.nodeHighlight[0], self.nodeHighlight[1], self.nodeHighlight[2], self.nodeHighlight[3])
+                        Ellipse(pos=(zoomedTrace[i][0]+middle[0]-(self.diametre+5)/2, zoomedTrace[i][1]+middle[1]-(self.diametre+5)/2),
+                                size=(self.diametre+5, self.diametre+5))
+                    Color(self.nodeColor[0], self.nodeColor[1], self.nodeColor[2], self.nodeColor[3])                    
+                    if self.config.currentConfig["actionNodes"]["value"][i]:
+                        Color(self.actionNode[0], self.actionNode[1], self.actionNode[2], self.actionNode[3])
 
-                    for i in range(len(zoomedTrace)):
-                        if self.lastTouched == i:
-                            Color(self.nodeHighlight[0], self.nodeHighlight[1], self.nodeHighlight[2], self.nodeHighlight[3])
-                            Ellipse(pos=(zoomedTrace[i][0]+middle[0]-(self.diametre+5)/2, zoomedTrace[i][1]+middle[1]-(self.diametre+5)/2),
-                                    size=(self.diametre+5, self.diametre+5))
-                        if self.config.currentConfig["actionNodes"]["value"][i]:
-                            Color(self.actionNode[0], self.actionNode[1], self.actionNode[2], self.actionNode[3])
-                        else:
-                            Color(self.nodeColor[0], self.nodeColor[1], self.nodeColor[2], self.nodeColor[3])
-                        Ellipse(pos=(zoomedTrace[i][0]+middle[0]-self.diametre/2, zoomedTrace[i][1]+middle[1]-self.diametre/2),
-                                size=(self.diametre, self.diametre))
-                        label = CoreLabel(text=str(i+1), font_size=20)
-                        label.refresh()
-                        text = label.texture
-                        Color(0, 0, 0, 1)
-                        Ellipse(pos=(zoomedTrace[i][0]+middle[0]-self.diametre/2, zoomedTrace[i][1]+middle[1]-self.diametre/2),
-                                size=(self.diametre, self.diametre), texture=text)
+                    Ellipse(pos=(zoomedTrace[i][0]+middle[0]-self.diametre/2, zoomedTrace[i][1]+middle[1]-self.diametre/2),
+                            size=(self.diametre, self.diametre))
+                    label = CoreLabel(text=str(i+1), font_size=20)
+                    label.refresh()
+                    text = label.texture
+                    Color(0, 0, 0, 1)
+                    Ellipse(pos=(zoomedTrace[i][0]+middle[0]-self.diametre/2, zoomedTrace[i][1]+middle[1]-self.diametre/2),
+                            size=(self.diametre, self.diametre), texture=text)
 
                 text = "Total time: 5 sec\nPhoto number: 10\nDistance: "+str(round(dist*10)/10)+" cm"
 
@@ -501,7 +478,7 @@ class Parametrage(BoxLayout):
                 Color(self.background[0], self.background[1], self.background[2], self.background[3])
                 Rectangle(pos=self.pos, size=(self.size[0], self.ids.directSplitter.size[1]))
 
-            with self.ids.directDrawing.canvas.before:
+            with self.ids.directDrawing.canvas.after:
                 text = "X: " + str(round(float(self.arduino.systemPosition[0])/float(self.settings.get('general', 'stepToCm'))*10)/10) + " "+_("cm") + \
                     "\nY: " + str(round(float(self.arduino.systemPosition[1])/float(self.settings.get('general', 'stepToCm'))*10)/10) + " "+("cm")
 
@@ -516,16 +493,15 @@ class Parametrage(BoxLayout):
 
                 switches = self.arduino.systemSwitchs
                 for switch in switches:
+                    Color(1, 1, 0)
                     if switches[switch]['value']:
                         Color(0, 0, 0)
-                    else:
-                        Color(1, 1, 0)
+
                     Ellipse(pos=(switchMiddle[0] - self.switchDiameter / 2 + switchMiddle[0]/2*switches[switch]['position'][0],
                                  switchMiddle[1] - self.switchDiameter / 2 - switchMiddle[1]/2*switches[switch]['position'][1]),
                             size=(self.switchDiameter, self.switchDiameter))
 
-            if not self.arduino.hasDirectProgram:
-                with self.ids.directDrawing.canvas.after:
+                if not self.arduino.hasDirectProgram:
                     dimensionX = self.ids.directSplitter.size[0]
                     dimensionY = self.ids.directSplitter.size[1] - 50
                     Color(1, 1, 1, 0.7)
@@ -537,119 +513,112 @@ class Parametrage(BoxLayout):
                     Rectangle(pos=(realMiddle[0]-dimensionX/2, realMiddle[1]-(dimensionX*(3/16))/2), size=(dimensionX, dimensionX*(3/16)), texture=text)
 
     def clickedDown(self, touch):
-        if self.mode == "Free":
-            x = touch.x
-            y = touch.y
+        x = touch.x
+        y = touch.y
+
+        if self.ids.libreDrawing.collide_point(x, y) and self.mode == "Free":
             zoomedTrace = np.multiply(self.config.currentConfig["trace"]["value"], self.zoomFactor).tolist()
 
-            if self.ids.libreDrawing.collide_point(x, y):
-                # Updates zooming depending on the mouse wheel
-                if touch.is_mouse_scrolling:
-                    dist = 0.1 if touch.button == 'scrollup' else -0.1
-                    self.zoomFactor += dist
-                    self.zoomClamp()
-                    self.update_rect()
+            # Updates zooming depending on the mouse wheel
+            if touch.is_mouse_scrolling:
+                self.zoomFactor += 0.1 if touch.button == 'scrollup' else -0.1
+                self.update_rect()
 
-                # Checks if the user right clicked on a node, if yes remove it
-                for i in range(len(zoomedTrace)):
-                    if math.hypot(zoomedTrace[i][0]+self.ids.libreDrawing.center_x - x, zoomedTrace[i][1]+self.ids.libreDrawing.center_y - y) <= self.diametre/2:
-                        if touch.button == 'right':
-                            self.config.currentConfig["actionNodes"]["value"][i] = not self.config.currentConfig["actionNodes"]["value"][i]
-                            self.update_rect()
-                        elif touch.button == 'left':
-                            self.isDragging = i
-                            self.lastTouched = i
-                            self.printCoords(self.config.currentConfig["trace"]["value"][i])
-                            self.update_rect()
+            # Checks if the user right clicked on a node, if yes remove it
+            for i in range(len(zoomedTrace)):
+                if math.hypot(zoomedTrace[i][0]+self.ids.libreDrawing.center_x - x, zoomedTrace[i][1]+self.ids.libreDrawing.center_y - y) <= self.diametre/2:
+                    if touch.button == 'right':
+                        self.config.currentConfig["actionNodes"]["value"][i] = not self.config.currentConfig["actionNodes"]["value"][i]
+                        self.update_rect()
+                    elif touch.button == 'left':
+                        self.isDragging = i
+                        self.lastTouched = i
+                        self.printCoords(self.config.currentConfig["trace"]["value"][i])
+                        self.update_rect()
+                    return
+
+            # Check if we clicked on a line or not
+            for i in range(len(zoomedTrace)-1):
+                firstPoint = (zoomedTrace[i][0]+self.ids.libreDrawing.center_x, zoomedTrace[i][1]+self.ids.libreDrawing.center_y)
+                secondPoint = (zoomedTrace[i+1][0]+self.ids.libreDrawing.center_x, zoomedTrace[i+1][1]+self.ids.libreDrawing.center_y)
+                if hitLine(firstPoint, secondPoint, (x, y), self.lineWidth):
+                    if touch.button == 'right':
+                        self.config.currentConfig["photos"]["value"][i] = not self.config.currentConfig["photos"]["value"][i]
+                        self.lastTouched = -1
+                        self.update_rect()
+                        return
+                    elif touch.button == 'left':
+                        coordX = (x-self.ids.libreDrawing.center_x)/self.zoomFactor
+                        coordY = (y-self.ids.libreDrawing.center_y)/self.zoomFactor
+
+                        self.printCoords((coordX, coordY))
+
+                        self.config.currentConfig["trace"]["value"].insert(i+1, [coordX, coordY])
+                        self.config.currentConfig["photos"]["value"].insert((i+1), False)
+                        self.config.currentConfig["actionNodes"]["value"].insert((i+1), False)
+                        self.lastTouched = i+1
+                        self.isDragging = i+1
+                        self.update_rect()
                         return
 
-                # Check if we clicked on a line or not
-                for i in range(len(zoomedTrace)-1):
-                    firstPoint = (zoomedTrace[i][0]+self.ids.libreDrawing.center_x, zoomedTrace[i][1]+self.ids.libreDrawing.center_y)
-                    secondPoint = (zoomedTrace[i+1][0]+self.ids.libreDrawing.center_x, zoomedTrace[i+1][1]+self.ids.libreDrawing.center_y)
-                    if hitLine(firstPoint, secondPoint, (x, y), self.lineWidth):
-                        if touch.button == 'right':
-                            self.config.currentConfig["photos"]["value"][i] = not self.config.currentConfig["photos"]["value"][i]
-                            self.lastTouched = -1
-                            self.update_rect()
-                            return
-                        elif touch.button == 'left':
-                            coordX = (x-self.ids.libreDrawing.center_x)/self.zoomFactor
-                            coordY = (y-self.ids.libreDrawing.center_y)/self.zoomFactor
-
-                            self.printCoords((coordX, coordY))
-
-                            self.config.currentConfig["trace"]["value"].insert(i+1, [coordX, coordY])
-                            self.config.currentConfig["photos"]["value"].insert((i+1), False)
-                            self.config.currentConfig["actionNodes"]["value"].insert((i+1), False)
-                            self.lastTouched = i+1
-                            self.isDragging = i+1
-                            self.update_rect()
-                            return
-                if touch.button == 'right':
-                    if bool(self.ids.loop.input.active) and len(zoomedTrace) > 1:
-                        firstPoint = (zoomedTrace[len(zoomedTrace)-1][0]+self.ids.libreDrawing.center_x, zoomedTrace[len(zoomedTrace)-1][1]+self.ids.libreDrawing.center_y)
-                        secondPoint = (zoomedTrace[0][0]+self.ids.libreDrawing.center_x, zoomedTrace[0][1]+self.ids.libreDrawing.center_y)
-                        if hitLine(firstPoint, secondPoint, (x, y), self.lineWidth):
-                            self.config.currentConfig["photos"]["value"][len(self.config.currentConfig["photos"]["value"])-1] = not self.config.currentConfig["photos"]["value"][len(self.config.currentConfig["photos"]["value"])-1]
-                            self.update_rect()
-
-                # Adds a new node where the user clicked
-                if touch.button == 'left':
-                    coordX = (x-self.ids.libreDrawing.center_x)/self.zoomFactor
-                    coordY = (y-self.ids.libreDrawing.center_y)/self.zoomFactor
-
-                    self.printCoords((coordX, coordY))
-
-                    self.config.currentConfig["trace"]["value"].append([coordX, coordY])
-                    self.config.currentConfig["photos"]["value"].append(False)
-                    self.config.currentConfig["actionNodes"]["value"].append(False)
-                    self.lastTouched = len(self.config.currentConfig["photos"]["value"])-1
-                    self.isDragging = len(self.config.currentConfig["photos"]["value"])-1
+            if touch.button == 'right' and bool(self.ids.loop.input.active) and len(zoomedTrace) > 1:
+                firstPoint = (zoomedTrace[len(zoomedTrace)-1][0]+self.ids.libreDrawing.center_x, zoomedTrace[len(zoomedTrace)-1][1]+self.ids.libreDrawing.center_y)
+                secondPoint = (zoomedTrace[0][0]+self.ids.libreDrawing.center_x, zoomedTrace[0][1]+self.ids.libreDrawing.center_y)
+                if hitLine(firstPoint, secondPoint, (x, y), self.lineWidth):
+                    self.config.currentConfig["photos"]["value"][len(self.config.currentConfig["photos"]["value"])-1] = not self.config.currentConfig["photos"]["value"][len(self.config.currentConfig["photos"]["value"])-1]
                     self.update_rect()
+
+            # Adds a new node where the user clicked
+            if touch.button == 'left':
+                coordX = (x-self.ids.libreDrawing.center_x)/self.zoomFactor
+                coordY = (y-self.ids.libreDrawing.center_y)/self.zoomFactor
+
+                self.printCoords((coordX, coordY))
+
+                self.config.currentConfig["trace"]["value"].append([coordX, coordY])
+                self.config.currentConfig["photos"]["value"].append(False)
+                self.config.currentConfig["actionNodes"]["value"].append(False)
+                self.lastTouched = len(self.config.currentConfig["photos"]["value"])-1
+                self.isDragging = len(self.config.currentConfig["photos"]["value"])-1
+                self.update_rect()
 
     def clickedUp(self, touch):
         if self.mode == "Free":
             if self.zoomFactor == 0.05 and self.isDragging != -1:
                 self.positionClamp(self.isDragging)
                 self.update_rect()
-            if touch.button == 'left':
-                self.isDragging = -1
+            self.isDragging = -1
             self.undoRedo.do([self.config.currentConfig["trace"]["value"].copy(), self.config.currentConfig["photos"]["value"].copy(), self.config.currentConfig["actionNodes"]["value"].copy()])
 
     def clickedMove(self, touch):
-        if self.mode == "Free":
-            newPosition = -1
-            if touch.button == 'left' and self.isDragging != -1:
-                thisX = (touch.x-self.ids.libreDrawing.center_x)/self.zoomFactor
-                thisY = (touch.y-self.ids.libreDrawing.center_y)/self.zoomFactor
+        if self.mode == "Free" and touch.button == 'left' and self.isDragging != -1:
+            thisX = (touch.x-self.ids.libreDrawing.center_x)/self.zoomFactor
+            thisY = (touch.y-self.ids.libreDrawing.center_y)/self.zoomFactor
+            newPosition = (thisX, thisY)
 
-                if keyboard.is_pressed("ctrl") and len(self.config.currentConfig["trace"]["value"]) > 0:  # To clamp relative to last one
-                    fromWhich = self.isDragging-1 % len(self.config.currentConfig["trace"]["value"])
-                    previousPoint = (self.config.currentConfig["trace"]["value"][fromWhich][0], self.config.currentConfig["trace"]["value"][fromWhich][1])
-                    dist = distance.euclidean(previousPoint, (thisX, thisY))
-                    angle = round(math.atan2(thisY-previousPoint[1], thisX-previousPoint[0])/(math.pi/4)) * (math.pi/4)
+            if keyboard.is_pressed("ctrl") and len(self.config.currentConfig["trace"]["value"]) > 0:  # To clamp relative to last one
+                fromWhich = self.isDragging-1 % len(self.config.currentConfig["trace"]["value"])
+                previousPoint = (self.config.currentConfig["trace"]["value"][fromWhich][0], self.config.currentConfig["trace"]["value"][fromWhich][1])
+                dist = distance.euclidean(previousPoint, (thisX, thisY))
+                angle = round(math.atan2(thisY-previousPoint[1], thisX-previousPoint[0])/(math.pi/4)) * (math.pi/4)
 
-                    newPosition = (math.cos(angle)*dist+previousPoint[0], math.sin(angle)*dist + previousPoint[1])
+                newPosition = (math.cos(angle)*dist+previousPoint[0], math.sin(angle)*dist + previousPoint[1])
 
-                elif keyboard.is_pressed("shift"):  # To clamp to the corners (origin, top-right, ...)
-                    dist1 = distance.euclidean(self.corners[0], (thisX, thisY))
-                    dist2 = distance.euclidean(self.corners[1], (thisX, thisY))
-                    dist3 = distance.euclidean(self.corners[2], (thisX, thisY))
-                    dist4 = distance.euclidean(self.corners[3], (thisX, thisY))
+            elif keyboard.is_pressed("shift"):  # To clamp to the corners (origin, top-right, ...)
+                dist1 = distance.euclidean(self.corners[0], (thisX, thisY))
+                dist2 = distance.euclidean(self.corners[1], (thisX, thisY))
+                dist3 = distance.euclidean(self.corners[2], (thisX, thisY))
+                dist4 = distance.euclidean(self.corners[3], (thisX, thisY))
 
-                    indice = np.argmin(np.array([dist1, dist2, dist3, dist4]))
-                    newPosition = self.corners[indice]
+                indice = np.argmin(np.array([dist1, dist2, dist3, dist4]))
+                newPosition = self.corners[indice]
 
-                else:
-                    newPosition = (thisX, thisY)
+            self.printCoords(newPosition)
 
-                self.printCoords(newPosition)
+            self.config.currentConfig["trace"]["value"][self.isDragging] = newPosition
+            self.lastTouched = self.isDragging
 
-                self.config.currentConfig["trace"]["value"][self.isDragging] = newPosition
-                self.lastTouched = self.isDragging
-
-                self.update_rect()
+            self.update_rect()
 
     def removeNode(self):
         if self.lastTouched != -1:
@@ -703,10 +672,7 @@ class Parametrage(BoxLayout):
 
     def printCoords(self, point):
         toCm = self.pixelToCM(point)
-
-        self.ids.coord.unbindThis()
-        self.ids.coord.input.text = str(toCm[0]) + " : " + str(toCm[1])
-        self.ids.coord.bindThis()
+        self.ids.coord.write(str(toCm[0]) + " : " + str(toCm[1]))
 
     def inputMove(self, *args):
         position = re.findall(r"[-+]?\d*\.\d+|[-+]?\d+", self.ids.coord.input.text)
@@ -781,5 +747,6 @@ class Parametrage(BoxLayout):
         self.popup = Popup(title=title,
                            content=content,
                            size_hint=(0.7, 0.7),
-                           size=(400, 300))
+                           size=(400, 300),
+                           auto_dismiss=auto_dismiss)
         self.popup.open()
