@@ -6,7 +6,6 @@ from app.libraries.config import Config
 
 
 class TestConfig(unittest.TestCase):
-
     def setUp(self):
         self.pipe = Input(callback=self.callback)
         self.default = {
@@ -23,7 +22,7 @@ class TestConfig(unittest.TestCase):
             "photos": {"value": [], "inputs": []},
             "actionNodes": {"value": [], "inputs": []}
         }
-        self.config = Config(self.default, (0, 0), 1, 1)
+        self.config = Config(self.default, self.pc, self.cp)
 
     def test_reset(self):
         self.config.currentConfig["nbPipe"]["value"] = 8
@@ -64,8 +63,21 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(
             result[0], [(0.05, 0.05), (1.05, 0.05), (0.05, 0.25), (1.05, 0.25)])
 
+
+    def test_consistentPath(self):
+        vertical = self.config.pathStats(False, 5)
+        self.config.currentConfig["horizontal"]["value"] = True
+        horizontal = self.config.pathStats(False, 5)
+        self.assertEqual(vertical, horizontal)
+
     def callback(self):
         print("no callback")
+
+    def pc(self, p):
+        return (p[0]+25, p[1]*2)
+
+    def cp(self, p):
+        return (p[0]-25, p[1]/2)
 
 
 if __name__ == '__main__':

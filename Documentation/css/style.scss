@@ -1,0 +1,304 @@
+/* Define standard variables and values for website */
+$gradientStart: #cc09c2;
+$gradientEnd: #0e0bd8;
+$mainColor: rgb(45, 163, 124);
+$alpha: 0.05;
+
+@mixin gradient-one {
+    background: linear-gradient(45deg, rgba(255, 2, 234, $alpha), rgba(255, 2, 129, $alpha));
+}
+
+@mixin gradient-two {
+    background: linear-gradient(45deg, rgba(81, 255, 0, $alpha), rgba(208, 255, 0, $alpha));
+}
+
+@mixin gradient-three {
+    background: linear-gradient(45deg, rgba(0, 217, 255, $alpha), rgba(0, 68, 255, $alpha));
+}
+
+@font-face {
+    font-family: Nunito;
+    src: url(Nunito-Regular.ttf);
+}
+
+body,
+html {
+    margin: 0;
+    height: 100%;
+    font-family: "Nunito";
+    padding: 0px;
+    background-color: rgb(85, 85, 85);
+}
+
+.current {
+    background-color: $mainColor;
+    color: #181818 !important;
+    font-weight: bold;
+}
+
+.hideImage {
+    right: -1000px;
+}
+
+.animateImage {
+    position: absolute;
+    right: 0px;
+    animation-name: imgAnim;
+    animation-duration: 1s;
+}
+
+@keyframes imgAnim {
+    0% {
+        right: -500px;
+        opacity: 0.2;
+    }
+
+    100% {
+        right: 0px;
+        opacity: 1;
+    }
+}
+
+#main {
+    margin-left: 350px;
+    color: rgb(255, 255, 255);
+
+    >div {
+        padding: 0;
+        margin: 0;
+
+        &:nth-child(3n) {
+            @include gradient-one;
+        }
+
+        &:nth-child(3n+1) {
+            @include gradient-two;
+        }
+
+        &:nth-child(3n+2) {
+            @include gradient-three;
+        }
+
+        h1 {
+            position: absolute;
+            top: calc(50vh - 50px);
+            left: calc((100vw + 350px)/2);
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background-color: $mainColor;
+            padding: 10px;
+            padding-left: 30px;
+            padding-right: 30px;
+            margin: 0;
+            font-size: 40px;
+            text-transform: capitalize;
+
+            clip-path: polygon(0% 0%, 1% 0%, 1% 100%, 0% 100% );
+            transition: clip-path .5s ease-in-out;
+        }
+
+        h2 {
+            text-align: center;
+            background-color: $mainColor;
+            padding: 20px;
+            margin: 0;
+            font-size: 40px;
+            text-transform: capitalize;
+            width: 60%;
+            margin-left: 20%;
+        }
+
+        ul {
+            font-size: 25px;
+            margin-top: 100px;
+            list-style-type: none;
+
+            li {
+                margin-top: 30px;
+                position: relative;
+                min-height: 56px;
+
+                span {
+                    font-size: 30px;
+                    border-top-left-radius: 20px;
+                    border-bottom-left-radius: 20px;
+                    border-top-right-radius: 20px;
+                    background: linear-gradient(to bottom right, $gradientStart, $gradientEnd);
+                    padding: 10px;
+                    position: absolute;
+                    top: 0;
+                }
+
+                p {
+                    display: inline-block;
+                    width: calc(100% - 150px);
+                    margin-left: 75px;
+                    margin-top: 0;
+                    margin-bottom: 0;
+                }
+            }
+        }
+
+        img {
+            float: right;
+            margin-top: 150px;
+            margin-right: 20px;
+        }
+
+        div {
+            background: transparent;
+            width: 100%;
+            height: 100%;
+        }
+    }
+}
+
+
+.sidenav {
+    height: 100%;
+    width: 350px;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #111;
+    overflow-x: hidden;
+    padding-top: 20px;
+    font-size: 25px;
+    color: #afafaf;
+
+    >ul {
+        margin: 0;
+        padding: 0;
+        font-size: 20px;
+    }
+
+    ul {
+        list-style-type: none;
+
+        a {
+            padding: 6px 8px 6px 16px;
+            text-decoration: none;
+            display: block;
+            color: #afafaf;
+
+            &:hover {
+                color: #f1f1f1;
+            }
+        }
+
+        span {
+            cursor: pointer;
+            user-select: none;
+            font-weight: normal;
+
+            &::before {
+                content: "\25B6";
+                display: inline-block;
+                margin-right: 6px;
+            }
+
+            &:hover {
+                color: #f1f1f1;
+            }
+        }
+    }
+}
+
+.noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* On smaller screens, where height is less than 450px, change the style of the sidebar (less padding and a smaller font size) */
+@media screen and (max-height: 450px) {
+    .sidenav {
+        padding-top: 15px;
+    }
+
+    .sidenav a {
+        font-size: 18px;
+    }
+}
+
+/* Rotate the caret/arrow icon when clicked on (using JavaScript) */
+.caret-down::before {
+    transform: rotate(90deg);
+}
+
+/* Hide the nested list */
+.nested {
+    display: none;
+}
+
+/* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
+.active {
+    display: block;
+}
+
+.correspondance {
+    border-collapse: collapse;
+    width: 90%;
+    margin-left: 5%;
+    margin-top: 100px;
+    font-size: 25px;
+
+    td {
+        text-align: left;
+        padding: 8px;
+    }
+
+    th {
+        /*background-color: rgb(245, 56, 220);*/
+        color: white;
+        text-align: center;
+        padding: 8px;
+    }
+
+    tr:first-child {
+        background-size: 400%;
+        background: linear-gradient(to right, $gradientStart, $gradientEnd);
+    }
+
+    tr:nth-child(even) {
+        background-color: hsl(244, 22%, 27%)
+    }
+
+    tr:nth-child(odd) {
+        background-color: hsl(243, 17%, 20%)
+    }
+}
+
+.footer {
+    padding: 0;
+    margin: 0;
+    background-size: 300%;
+    background: linear-gradient(to right, $gradientStart, $gradientEnd);
+    height: 200px;
+
+    p {
+        color: white;
+        font-size: 25px;
+        padding: 40px;
+        padding-left: 50px;
+        margin: 0;
+    }
+
+    a {
+        text-decoration: none;
+        color: $mainColor;
+        font-weight: 600;
+
+        &:visited {
+            color: rgb(55, 177, 136);
+        }
+
+        &:hover {
+            color: rgb(55, 214, 161);
+        }
+    }
+}

@@ -30,7 +30,7 @@ from .helpMsg import helpMsg
 from .localization import _
 from .undoRedo import UndoRedo
 from .utilityFunctions import (
-    checkUpdates, getPorts, hitLine, lineToPictures, urlOpen)
+    checkUpdates, getPorts, hitLine, urlOpen)
 
 
 class Parametrage(BoxLayout):
@@ -48,7 +48,6 @@ class Parametrage(BoxLayout):
             "Current":
             {"isDirectProgram": False, "path": ".\\currentFile\\currentFile.ino"}})
 
-        self.speed = self.settings.get('general', 'speed')  # meters per second
         self.imageWidth = 1.4  # in meter
         self.imageHeight = 1.4  # in meter
         self.actualWidth = 1.144  # in meter
@@ -100,23 +99,13 @@ class Parametrage(BoxLayout):
             "photos": {"value": [], "inputs": []},
             "actionNodes": {"value": [], "inputs": []}
         },
-            self.corners[3],
-            (self.corners[0][0]-self.corners[2][0])/(self.actualWidth),
-            (self.corners[0][1] - self.corners[1][1]) / (self.actualHeight)
+            self.cmToPixel,
+            self.pixelToCM
         )
         self.updateColors(refresh=False)
         self.newFile(True)
 
-        newVersion = checkUpdates("../../version")
-        textPopup = "[u]A new version is available ![/u]\n\n \
-                        You can download it [ref=https://github.com/liamLatour/DaphnieMaton/archive/master.zip][color=0083ff][u]here[/u][/color][/ref]"
-        if newVersion is not False:
-            self.popbox = BoxLayout()
-            self.poplb = Label(text=textPopup, markup=True)
-            self.poplb.bind(on_ref_press=urlOpen)
-            self.popbox.add_widget(self.poplb)
-
-            self.easyPopup(_('New Version ' + newVersion), self.popbox)
+        checkUpdates(self.settings.get('hidden', 'version'), self.easyPopup)
 
     def updateColors(self, refresh=True):
         self.pipeColor = utils.get_color_from_hex(self.settings.get('colors', 'pipeColor'))
@@ -139,13 +128,13 @@ class Parametrage(BoxLayout):
                 return
 
     def help(self, *args):
-        self.popbox = BoxLayout()
+        popbox = BoxLayout()
 
-        self.poplb = MyLabel(text=helpMsg[self.mode])
-        self.poplb.bind(on_ref_press=urlOpen)
-        self.popbox.add_widget(self.poplb)
+        poplb = MyLabel(text=helpMsg[self.mode])
+        poplb.bind(on_ref_press=urlOpen)
+        popbox.add_widget(poplb)
 
-        self.easyPopup(_('Help'), self.popbox)
+        self.easyPopup(_('Help'), popbox)
 
     def newFile(self, refresh, *args):
         self.filePath = -1
@@ -156,12 +145,12 @@ class Parametrage(BoxLayout):
             self.tuyeauGap()
 
     def about_panel(self):
-        self.popbox = BoxLayout()
-        self.poplb = MyLabel(text=helpMsg["About"])
-        self.poplb.bind(on_ref_press=urlOpen)
-        self.popbox.add_widget(self.poplb)
+        popbox = BoxLayout()
+        poplb = MyLabel(text=helpMsg["About"])
+        poplb.bind(on_ref_press=urlOpen)
+        popbox.add_widget(poplb)
 
-        self.easyPopup(_('About'), self.popbox)
+        self.easyPopup(_('About'), popbox)
 
     def show_file(self):
         self.fileDropDown.open(self.ids.fileButton)
@@ -263,21 +252,9 @@ class Parametrage(BoxLayout):
         if self.mode == "Pipe":
             trace, pictures, actionNodes = self.config.generatePathFromPipe()
 
-        cmValues = []
-        photos = []
+        unraveld = self.config.unravelPath(trace, pictures, actionNodes)
 
-        for i in range(len(trace)):
-            curent = self.pixelToCM(trace[i])
-            cmValues.append((curent[1], curent[0]))
-
-        for i in range(len(trace)):
-            photos.append(actionNodes[i])
-            if pictures[i]:
-                middles = lineToPictures(cmValues[i], cmValues[(i+1) % len(cmValues)], self.config.currentConfig["photoPipe"]["value"])
-                cmValues[i+1:i+1] = middles
-                photos.extend([True for i in range(len(middles))])
-
-        genFile = generateFile(cmValues, photos, float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename)))
+        genFile = generateFile(unraveld[0], unraveld[1], float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename)))
         f = open(".\\assets\\currentFile\\currentFile.ino", "w+")
         f.write(genFile)
         f.close()
@@ -322,9 +299,10 @@ class Parametrage(BoxLayout):
                 Color(1, 1, 1, 1)
                 Rectangle(source=self.settings.get('colors', 'imagePath'), pos=(middle[0]-width/2, middle[1]-width/2), size=(width, width))
 
-                text = _("Total time") + ": " + str(round(((self.config.currentConfig["nbPipe"]["value"]*self.config.currentConfig["lenPipe"]["value"])/float(self.speed))*10)/10) + " sec" + \
-                    "\n"+_("Photo number") + ": " + str(round((self.config.currentConfig["nbPipe"]["value"]*self.config.currentConfig["lenPipe"]["value"])/(self.config.currentConfig["photoPipe"]["value"]/100))) + \
-                    "\n"+_("Photo every") + " " + str(round(((float(self.speed)*self.config.currentConfig["nbPipe"]["value"]) / ((self.config.currentConfig["nbPipe"]["value"]*self.config.currentConfig["lenPipe"]["value"]) / (self.config.currentConfig["photoPipe"]["value"]/100)))*10)/10) + " sec"
+                time, dist, every, number = self.config.pathStats(False, self.settings.get('general', 'speed'))
+                text = _("Total time") + ": " + str(time) + " sec" + \
+                    "\n"+_("Photo number") + ": " + str(number) + \
+                    "\n"+_("Photo every") + ": " + str(every) + " sec"
 
                 Color(0.5, 0.5, 0.5, .6)
                 Rectangle(pos=(self.size[0]-200, self.size[1] - (70+95)), size=(200, 70))
@@ -422,7 +400,7 @@ class Parametrage(BoxLayout):
                         Color(self.nodeHighlight[0], self.nodeHighlight[1], self.nodeHighlight[2], self.nodeHighlight[3])
                         Ellipse(pos=(zoomedTrace[i][0]+middle[0]-(self.diametre+5)/2, zoomedTrace[i][1]+middle[1]-(self.diametre+5)/2),
                                 size=(self.diametre+5, self.diametre+5))
-                    Color(self.nodeColor[0], self.nodeColor[1], self.nodeColor[2], self.nodeColor[3])                    
+                    Color(self.nodeColor[0], self.nodeColor[1], self.nodeColor[2], self.nodeColor[3])
                     if self.config.currentConfig["actionNodes"]["value"][i]:
                         Color(self.actionNode[0], self.actionNode[1], self.actionNode[2], self.actionNode[3])
 
@@ -435,7 +413,11 @@ class Parametrage(BoxLayout):
                     Ellipse(pos=(zoomedTrace[i][0]+middle[0]-self.diametre/2, zoomedTrace[i][1]+middle[1]-self.diametre/2),
                             size=(self.diametre, self.diametre), texture=text)
 
-                text = "Total time: 5 sec\nPhoto number: 10\nDistance: "+str(round(dist*10)/10)+" cm"
+
+                time, dist, every, number = self.config.pathStats(True, self.settings.get('general', 'speed'))
+                text = _("Total time") + ": " + str(time) + " sec" + \
+                    "\n"+_("Distance") + ": " + str(dist) + " cm" + \
+                    "\n"+_("Photo number") + ": " + str(number)
 
                 Color(1, 1, 1, .2)
                 Rectangle(pos=(self.size[0]-200, self.size[1] - (70+95)), size=(200, 70))
@@ -668,11 +650,20 @@ class Parametrage(BoxLayout):
     def pixelToCM(self, point):
         height = self.corners[0][1] - self.corners[1][1]
         width = self.corners[0][0] - self.corners[2][0]
-        return (round(((point[0]-self.corners[3][0])*(self.actualWidth*1000))/width)/10, round(((point[1]-self.corners[3][1])*(self.actualHeight*1000))/height)/10)
+        x = ((point[0]-self.corners[3][0])*self.actualWidth*100)/width
+        y = ((point[1]-self.corners[3][1])*self.actualHeight*100)/height
+        return (x, y)
+
+    def cmToPixel(self, point):
+        height = self.corners[0][1] - self.corners[1][1]
+        width = self.corners[0][0] - self.corners[2][0]
+        x = (point[0]*width)/(self.actualWidth*100)+self.corners[3][0]
+        y = (point[1]*height)/(self.actualHeight*100)+self.corners[3][1]
+        return (x, y)
 
     def printCoords(self, point):
         toCm = self.pixelToCM(point)
-        self.ids.coord.write(str(toCm[0]) + " : " + str(toCm[1]))
+        self.ids.coord.write(str(round(toCm[0]*10)/10) + " : " + str(round(toCm[1]*10)/10))
 
     def inputMove(self, *args):
         position = re.findall(r"[-+]?\d*\.\d+|[-+]?\d+", self.ids.coord.input.text)

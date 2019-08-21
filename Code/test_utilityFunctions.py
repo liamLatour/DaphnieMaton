@@ -29,8 +29,8 @@ class TestHitLine(unittest.TestCase):
 class TestLineToPictures(unittest.TestCase):
 
     def test_lineToPictures_normal(self):
-        self.assertEqual(utilityFunctions.lineToPictures((11.4, 17.1), (94.3, 85.2), 10), [(14.21, 19.41), (21.94, 25.76), (29.67, 32.11), (
-            37.4, 38.45), (45.12, 44.8), (52.85, 51.15), (60.58, 57.5), (68.3, 63.85), (76.03, 70.19), (83.76, 76.54), (91.49, 82.89)])
+        self.assertEqual(utilityFunctions.lineToPictures((11.4, 17.1), (94.3, 85.2), 10), [(14.215, 19.412), (21.942, 25.76), (29.669, 32.107), (
+            37.396, 38.455), (45.123, 44.802), (52.85, 51.15), (60.577, 57.498), (68.304, 63.845), (76.031, 70.193), (83.758, 76.54), (91.485, 82.888)])
 
     def test_lineToPictures_zero(self):
         self.assertEqual(utilityFunctions.lineToPictures(

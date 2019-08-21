@@ -1,7 +1,6 @@
 import os
+import sys
 
-spec = "..\\DaphnieMaton.spec"
 
-os.system("python -m PyInstaller --name DaphnieMaton --icon ..\\Images\\icon.ico .\\app\\ParametrageV2.py")
-os.system("xcopy /Y "+spec+" .\\")
+os.system("xcopy /Y "+sys.argv[1]+" .\\")
 os.system("python -m PyInstaller DaphnieMaton.spec")

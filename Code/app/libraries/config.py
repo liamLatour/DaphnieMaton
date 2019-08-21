@@ -1,18 +1,20 @@
+import copy
 import ctypes
 from json import dumps as jsDumps
 from json import load as jsLoad
 from os.path import join as osJoinPath
-import numpy as np
-import copy
 
+import numpy as np
+from scipy.spatial import distance
+
+from .utilityFunctions import lineToPictures
 
 class Config():
-    def __init__(self, default, origin, ratioX, ratioY):
+    def __init__(self, default, cmToPixel, pixelToCM):
         self.baseConfig = default
         self.copy()
-        self.origin = origin
-        self.ratioX = ratioX/100
-        self.ratioY = ratioY/100
+        self.pixelToCM = pixelToCM
+        self.cmToPixel = cmToPixel
 
     def copy(self):
         self.currentConfig = {}
@@ -81,21 +83,25 @@ class Config():
         path = []
         photos = []
 
-        length = self.currentConfig["lenPipe"]["value"]*100
-
-        xPosition = self.origin[0] + self.currentConfig["distOriginX"]["value"]*self.ratioX
-        yPosition = self.origin[1] + self.currentConfig["distOriginY"]["value"]*self.ratioY
-
+        length = distance.euclidean(self.cmToPixel((0, 0)), self.cmToPixel((0, self.currentConfig["lenPipe"]["value"]*100)))
+        if self.currentConfig["horizontal"]["value"]:
+            length = distance.euclidean(self.cmToPixel((0, 0)), self.cmToPixel((self.currentConfig["lenPipe"]["value"]*100, 0)))
+        
+        xPosition, yPosition = self.cmToPixel((self.currentConfig["distOriginX"]["value"], self.currentConfig["distOriginY"]["value"]))
+        
         path.append((xPosition, yPosition))
         photos.append(True)
-        path.append((xPosition, yPosition + length*self.ratioY))
+        path.append((xPosition, yPosition + length))
         photos.append(False)
 
-        for x in range(self.currentConfig["nbPipe"]["value"]-1):
-            xPosition += self.currentConfig["gaps"]["value"][x]*self.ratioX
+        for i in range(self.currentConfig["nbPipe"]["value"]-1):
+            gap = distance.euclidean(self.cmToPixel((0, 0)), self.cmToPixel((self.currentConfig["gaps"]["value"][i], 0)))
+            if self.currentConfig["horizontal"]["value"]:
+                gap = distance.euclidean(self.cmToPixel((0, 0)), self.cmToPixel((0, self.currentConfig["gaps"]["value"][i])))
+            xPosition += gap
             path.append((xPosition, yPosition))
             photos.append(True)
-            path.append((xPosition, yPosition + length*self.ratioY))
+            path.append((xPosition, yPosition + length))
             photos.append(False)
 
         if self.currentConfig["horizontal"]["value"]:
@@ -107,3 +113,46 @@ class Config():
             self.currentConfig["actionNodes"]["value"] = [False for i in range(len(photos))]
 
         return (path, photos, [False for i in range(len(photos))])
+
+    def unravelPath(self, path, pictures, actionNodes):
+        cmValues = []
+        photos = []
+
+        for i in range(len(path)):
+            curent = self.pixelToCM(path[i])
+            cmValues.append((curent[1], curent[0]))
+
+        lookAhead = 1
+
+        for i in range(len(path)):
+            photos.append(actionNodes[i])
+            if pictures[i]:
+                middles = lineToPictures(cmValues[i+lookAhead-1], cmValues[(i+lookAhead) % len(cmValues)], self.currentConfig["photoPipe"]["value"])
+                cmValues[i+lookAhead:i+lookAhead] = middles
+                lookAhead += len(middles)
+                photos.extend([True for i in range(len(middles))])      
+
+        return (cmValues, photos)
+
+    def pathStats(self, isFree, speed):
+        path = self.currentConfig["trace"]["value"]
+        pictures = self.currentConfig["photos"]["value"]
+        actionNodes = self.currentConfig["actionNodes"]["value"]
+        if not isFree:
+            path, pictures, actionNodes = self.generatePathFromPipe()
+
+        realPath = self.unravelPath(path, pictures, actionNodes)
+
+        dist = 0
+        time = 0
+
+        for i in range(len(realPath[0])):
+            nextI = (i+1) % len(realPath[0])
+            dist += distance.euclidean(realPath[0][i], realPath[0][nextI])
+            time += max(abs(realPath[0][i][0]-realPath[0][nextI][0]), abs(realPath[0][i][1]-realPath[0][nextI][1]))/float(speed)
+
+        secBetweenPhoto = self.currentConfig["photoPipe"]["value"]/float(speed)
+
+        nbPhotos = np.sum(realPath[1])
+
+        return ('%.2f'%(time), '%.2f'%(dist), '%.2f'%(secBetweenPhoto), nbPhotos)

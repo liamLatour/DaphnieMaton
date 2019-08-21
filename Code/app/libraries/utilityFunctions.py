@@ -2,6 +2,14 @@ import math
 from scipy.spatial import distance
 import requests
 import os
+import sys
+
+sys.argv = sys.argv if __name__ == '__main__' else [sys.argv[0]]
+
+from .localization import _
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+import webbrowser
 
 
 def lineToPictures(b, a, c):
@@ -18,7 +26,7 @@ def lineToPictures(b, a, c):
     if c == 0:
         return []
 
-    thisDist = max(distance.euclidean(a, b), 0.0001)
+    thisDist = round(max(distance.euclidean(a, b), 0.0001)*10)/10
     newPoints = []
 
     nb = math.floor(thisDist/float(c))
@@ -27,8 +35,8 @@ def lineToPictures(b, a, c):
     ax = top * (a[0] - b[0])
     ay = top * (a[1] - b[1])
     for p in range(nb+1):
-        newPoints.append((round((b[0] + ax + ((float(c)/thisDist)*(a[0] - b[0]))*p)*100)/100,
-                          round((b[1] + ay + ((float(c)/thisDist)*(a[1] - b[1]))*p)*100)/100))
+        newPoints.append((round((b[0] + ax + ((float(c)/thisDist)*(a[0] - b[0]))*p)*1000)/1000,
+                          round((b[1] + ay + ((float(c)/thisDist)*(a[1] - b[1]))*p)*1000)/1000))
 
     return newPoints
 
@@ -50,7 +58,6 @@ def urlOpen(instance, url):
 
     url string: the website to go to.
     """
-    import webbrowser
     webbrowser.open(url, new=2)
 
 
@@ -75,23 +82,19 @@ def hitLine(lineA, lineB, point, lineWidth):
     return False
 
 
-def checkUpdates(versionFile):
-    """Checks if a new version exists and updates the current one.
-
-    versionFile string: User's file holding current version
-
-    returns: the new version tag if one exists
-    """
+def checkUpdates(version, popup):
     url = 'https://raw.githubusercontent.com/liamLatour/DaphnieMaton/master/version'
     req = requests.get(url).text.strip()
 
-    if os.path.isfile(versionFile):
-        # Store configuration file values
-        f = open(versionFile, "r")
-        contents = f.read().strip()
-        f.close()
-        if req != contents:
-            return req
-    else:
-        return req
-    return False
+    if req == version:
+        return
+
+    textPopup = "[u]A new version is available ![/u]\n\n \
+                    You can download it [ref=https://github.com/liamLatour/DaphnieMaton/releases][color=0083ff][u]here[/u][/color][/ref]"
+
+    popbox = BoxLayout()
+    poplb = Label(text=textPopup, markup=True)
+    poplb.bind(on_ref_press=urlOpen)
+    popbox.add_widget(poplb)
+
+    popup(_('New Version ' + req), popbox)

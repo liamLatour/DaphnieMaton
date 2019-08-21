@@ -1,13 +1,19 @@
-[
-    {
-       "type":"title",
-       "title": "Actions"
-    },
-    {
-       "type":"string",
-       "title":"Actions",
-       "desc":"Saved actions in the form of a json string",
-       "section":"hidden",
-       "key":"action"
-    }
+[{
+      "type": "title",
+      "title": "Hidden"
+   },
+   {
+      "type": "string",
+      "title": "Actions",
+      "desc": "Saved actions in the form of a json string",
+      "section": "hidden",
+      "key": "action"
+   },
+   {
+      "type": "string",
+      "title": "version",
+      "desc": "The current version",
+      "section": "hidden",
+      "key": "version"
+   }
 ]

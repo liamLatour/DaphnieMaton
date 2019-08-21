@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="css/style.css">
+    <title>DaphnieMaton</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+
+    <!-- Side navigation -->
+    <!--https://www.w3schools.com/bootstrap/bootstrap_scrollspy.asp-->
+    <!--https://www.w3schools.com/howto/howto_js_sidenav.asp-->
+
+    <div class="sidenav noselect">
+        <ul>
+            <a href="#overview" class="current">Aperçu</a>
+            <li><span class="caret">Mise en place</span>
+                <ul class="nested">
+                    <a href="#tools">Outils</a>
+                    <li><span class="caret">Mécanique</span>
+                        <ul class="nested">
+                            <a href="#theHs">Renforts et pieds (H)</a>
+                            <li><span class="caret">Rails et courroies</span>
+                                <ul class="nested">
+                                    <a href="#axeX">Axe X</a>
+                                    <a href="#axeY">Axe Y et courroies</a>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li><span class="caret">Electronique</span>
+                        <ul class="nested">
+                            <li><span class="caret">Rallonge</span>
+                                <ul class="nested">
+                                    <a href="#ralInt">Interrupteur</a>
+                                    <a href="#ralMot">Moteur</a>
+                                </ul>
+                            </li>
+                            <a href="#conArd">Connexion Arduino</a>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <a href="#start">Mise en route</a>
+            <a href="#maint">Maintenance</a>
+            <a href="#rang">Rangement</a>
+            <a href="#ref">Référence des pièces</a>
+            <a href="#auth">Autheurs</a>
+        </ul>
+    </div>
+
+    <div id="main">
+        <div class="sections container" data-section-title="overview">
+            <h1 id="mainTitle">DaphnieMaton</h1>
+            <div id="container"></div>
+        </div>
+        <div class="sections tools" data-section-title="tools">
+            <h2>Les Outils</h2>
+            <ul>
+                <li><span>1.</span>
+                    <p>2 * clé à molette de 10 pouces</p>
+                </li>
+                <li><span>2.</span>
+                    <p>Tournevis PH2</p>
+                </li>
+                <li><span>3.</span>
+                    <p>Cable usb type B</p>
+                </li>
+                <li><span>4.</span>
+                    <p>Cable jack de puissance (12V 5A)</p>
+                </li>
+            </ul>
+        </div>
+        <div class="sections theHs" data-section-title="theHs">
+            <h2>Construction des 'H's</h2>
+            <ul>
+                <li><span>1.</span>
+                    <p>Prendre les pieds A et D</p>
+                </li>
+                <li><span>2.</span>
+                    <p>Visser avec les boulons classiques un support marqué S
+                        sur le bas des pieds de façon à ce que les équerres pointent vers le haut</p>
+                </li>
+                <li><span>3.</span>
+                    <p>Visser avec les boulons classiques un support marqué P
+                        sur le haut des pieds de façon à ce que les équerres pointent vers le <u><b>bas</b></u></p>
+                </li>
+                <li><span>4.</span>
+                    <p>Prendre les pieds B et C</p>
+                </li>
+                <li><span>5.</span>
+                    <p>Visser avec les boulons classiques un support marqué S
+                        sur le bas des pieds de façon à ce que les équerres pointent vers le haut</p>
+                </li>
+                <li><span>6.</span>
+                    <p>Visser avec les boulons classiques un support marqué P
+                        sur le haut des pieds de façon à ce que les équerres pointent vers le haut</p>
+                </li>
+            </ul>
+        </div>
+        <div class="sections axeX" data-section-title="axeX">
+            <h2>Axe X</h2>
+            <ul>
+                <li><span>1.</span>
+                    <p>Prendre le rail avec le moteur et sans l'Arduino</p>
+                </li>
+                <li><span>2.</span>
+                    <p>Le visser avec les boulons classiques sur le pieds C et D sous le moteur</p>
+                </li>
+                <li><span>3.</span>
+                    <p>Visser un support à équerre noir entre C et D</p>
+                </li>
+                <li><span>4.</span>
+                    <p>Faire de même avec le rail comportant l'Arduino sur les pieds A et B</p>
+                </li>
+            </ul>
+        </div>
+        <div class="sections axeY" data-section-title="axeY">
+            <h2>Axe Y et courroies</h2>
+            <ul>
+                <li><span>1.</span>
+                    <p>Dévisser les moteurs et leurs supports (sur les deux rails déjà placés)<p>
+                </li>
+                <li><span>2.</span>
+                    <p>Glisser le troisième rail sur les deux autres<p>
+                </li>
+                <li><span>3.</span>
+                    <p>Remmettre les supports de moteurs et les moteurs<p>
+                </li>
+                <li><span>4.</span>
+                    <p>Passer les couroies dans les poulies et autours des moteurs puis les mettre dans
+                        les 'pinces' sur le rail du milieu<p>
+                </li>
+            </ul>
+        </div>
+        <div class="sections ralInt" data-section-title="ralInt">
+            <h2>Rallonges pour interrupteurs</h2>
+            <table class="correspondance">
+                <tr>
+                    <th>Position de l'Interrupteur</th>
+                    <th>Couleurs</th>
+                    <th>Taille</th>
+                </tr>
+                <tr>
+                    <td>Pied C</td>
+                    <td class="cable3" gaine="#1c1c1c" boutUn="#ef0000" boutDeux="#000000" boutTrois="#0fc40f"></td>
+                    <td>Très long</td>
+                </tr>
+                <tr>
+                    <td>Côté opposé Arduino axe mobile</td>
+                    <td class="cable3" gaine="#c40000" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17"></td>
+                    <td>Très long</td>
+                </tr>
+                <tr>
+                    <td>Pied B</td>
+                    <td class="cable3" gaine="#001dff" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17"></td>
+                    <td>Long</td>
+                </tr>
+                <tr>
+                    <td>Côté Arduino axe mobile</td>
+                    <td class="cable3" gaine="#c40000" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17"></td>
+                    <td>Long</td>
+                </tr>
+                <tr>
+                    <td>Pied A</td>
+                    <td>/</td>
+                    <td>Sans rallonge</td>
+                </tr>
+                <tr>
+                    <td>Pied D</td>
+                    <td class="cable3" gaine="#1c1c1c" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17"></td>
+                    <td>Moyen et flexible</td>
+                </tr>
+            </table>
+        </div>
+        <div class="sections ralMot" data-section-title="ralMot">
+            <h2>Rallonges pour moteurs</h2>
+            <table class="correspondance">
+                <tr>
+                    <th>Position du moteur</th>
+                    <th>Couleurs</th>
+                </tr>
+                <tr>
+                    <td>Pied D</td>
+                    <td class="cable4" gaine="#c40000" boutUn="#000000" boutDeux="#0fc40f" boutTrois="#ef0000"
+                        boutQuatre="#e7ea17"></td>
+                </tr>
+                <tr>
+                    <td>Axe mobile</td>
+                    <td class="cable4" gaine="#001dff" boutUn="#000000" boutDeux="#0fc40f" boutTrois="#ef0000"
+                        boutQuatre="#e7ea17"></td>
+                </tr>
+                <tr>
+                    <td>Pied A</td>
+                    <td>Sans rallonge</td>
+                </tr>
+            </table>
+        </div>
+        <div class="sections conArd" data-section-title="conArd">
+            <h2>Connexion sur l'Arduino</h2>
+            <img src="..\ramps.svg" alt="ramps 1.4" height="70%" width="100%" />
+        </div>
+        <div class="sections start" data-section-title="start">
+            <h2>Mise en route</h2>
+            <ul>
+                <li><span>1.</span>
+                    <p>Connecter, à l'aide du câble usb B, le système à l'ordinateur</p>
+                </li>
+                <li><span>2.</span>
+                    <p>Démarrer l'application dédié et suivre les instructions données</p>
+                </li>
+                <li><span>3.</span>
+                    <p>Brancher l'adaptateur jack de puissance et lancer le programme d'acquisition (ne pas oublier le
+                        bouton de démarrage)</p>
+                </li>
+            </ul>
+        </div>
+        <div class="sections maint" data-section-title="maint">
+            <h2>Maintenance</h2>
+            <ul>
+                <li><span>1.</span>
+                    <p>Vérifier que les câbles soient libres de leurs mouvements</p>
+                </li>
+                <li><span>2.</span>
+                    <p>Si les rails ou le système ont été salies, les nettoyer à l'aide d'un chiffon légèrement
+                        humidifié</p>
+                </li>
+                <li><span>3.</span>
+                    <p>Vérifier l'état des élastiques et les changer si besoin</p>
+                </li>
+                <li><span>4.</span>
+                    <p>Si vous soupçonner le système d'être défaillant, tester le en utilisant le mode 'Libre' du
+                        logiciel associé</p>
+                </li>
+            </ul>
+        </div>
+        <div class="sections rang" data-section-title="rang">
+            <h2>Rangement</h2>
+            <ul>
+                <li><span>1.</span>
+                    <p>Retirer les courroies, les interrupteurs et les moteurs ainsi que leurs socles sur les pieds A et
+                        D</p>
+                </li>
+                <li><span>2.</span>
+                    <p>Faite glisser le rail d'axe Y vers l'Arduino et le retirer après avoir débrancher le moteur et
+                        les interrupteurs</p>
+                </li>
+                <li><span>3.</span>
+                    <p>Revisser les moteurs et les interrupteurs
+                        en place afin de ne pas les perdre</p>
+                </li>
+                <li><span>4.</span>
+                    <p>Devisser et mettre de côté les renforts à équerres noirs</p>
+                </li>
+                <li><span>5.</span>
+                    <p>Dévisser les rails d'axe X, débrancher les interrupteurs ainsi que les moteurs et metter les de
+                        coté</p>
+                </li>
+                <li><span>6.</span>
+                    <p>Si le système prends encore trop de place, dévisser les renforts des H</p>
+                </li>
+            </ul>
+        </div>
+        <div class="sections ref" data-section-title="ref">
+            <h2>Référence des pièces</h2>
+            <ul>
+                <li><span>Idées 1</span>
+                    <p>Nom commun / nom réel / lien</p>
+                </li>
+                <li><span>Idées fix</span>
+                    <p>Montrer où c'est sur le modèle 3d</p>
+                </li>
+            </ul>
+        </div>
+        <div class="footer auth" data-section-title="auth">
+            <p>
+                Auteurs: LATOUR Liam, QUAIRE--MERLIN Louis <br>
+                Github: <a href="https://github.com/liamLatour/DaphnieMaton">DaphnieMaton</a>
+                <p>
+        </div>
+    </div>
+
+
+    <script src='javascript/jquery-3.4.1.min.js'></script>
+    <script src='javascript/scrollify.js'></script>
+    <script src='javascript/three.min.js'></script>
+    <script src='javascript/fbx.js'></script>
+    <script src='javascript/inflate.min.js'></script>
+    <script src='javascript/OrbitControls.js'></script>
+    <script src='javascript/main.js'></script>
+
+</body>
+
+</html>

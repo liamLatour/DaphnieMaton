@@ -11,8 +11,7 @@ from kivy.uix.settings import SettingsWithSidebar
 from libraries.localization import (change_language_to,
                                     translation_to_language_code)
 import libraries.daphnieMaton as daphnieMaton
-from libraries.classes import (SettingButtons, SettingColorPicker,
-                               SettingShortcut)
+import libraries.classes as SpecialSettings
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Config.set('kivy', 'window_icon', 'assets/logoDark.ico')
@@ -103,12 +102,13 @@ class DaphnieMatonApp(App):
             'pathColor': "#72f7ff",
             'pathHighlight': "#82d883"})
         config.setdefaults('hidden', {
-            'action': '{}'})
+            'action': '{}',
+            'version': '0.2-beta'})
 
     def build_settings(self, settings):
-        settings.register_type('buttons', SettingButtons)
-        settings.register_type('color', SettingColorPicker)
-        settings.register_type('shortcut', SettingShortcut)
+        settings.register_type('buttons', SpecialSettings.SettingButtons)
+        settings.register_type('color', SpecialSettings.SettingColorPicker)
+        settings.register_type('shortcut', SpecialSettings.SettingShortcut)
 
         for files in self.configFiles:
             if self.configFiles[files] == "hidden":

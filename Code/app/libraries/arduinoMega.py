@@ -58,7 +58,7 @@ class Arduino:
                 self.checkKeyHolding, 0.2)
 
     def readFromSerial(self, *args):
-        self.sendSerial(bytes([7]), "it's me mario")
+        self.sendSerial(bytes([7]))
         try:
             received = json.loads(
                 self.board.readline().decode("utf-8").rstrip())
