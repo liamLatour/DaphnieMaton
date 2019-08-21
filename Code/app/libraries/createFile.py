@@ -18,9 +18,9 @@ def generateFile(waypoints, photos, ratio, action):
     const int MA = 19;\n \
     const int MD = 14;\n \
     \n \
-    const int waypointNb = "+str(round(len(waypoints)/2))+";\n \
+    const int waypointNb = "+str(len(waypoints))+";\n \
     int currentWaypoint = 0;\n \
-    const int waypoints[][2] = "+str(waypoints).replace("[", "{").replace("]", "}").replace(".0", "")+";\n \
+    const int waypoints["+str(len(waypoints))+"][2] = "+str(waypoints).replace("[", "{").replace("]", "}").replace(".0", "")+";\n \
     const bool photo[] = "+str(photos).replace("[", "{").replace("]", "}").replace("F", "f").replace("T", "t")+";\n \
     \n \
     bool hasStarted = false;\n\n"  # Min, Max
@@ -77,7 +77,6 @@ def generateFile(waypoints, photos, ratio, action):
                         action();\n \
                     }\n \
                     currentWaypoint = (currentWaypoint+1)%waypointNb;\n \
-                    delay(500);\n \
                 }\n \
             }\n \
             else{\n \

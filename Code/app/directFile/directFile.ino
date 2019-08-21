@@ -90,7 +90,7 @@ void loop()
       calibrate();
     }
   }
-  if (runningX == 1 && ((Xaxis.speed() > 0 && digitalRead(MD)) || (Xaxis.speed() < 0 && digitalRead(MA))))
+  if (runningX == 1 &&  ((Xaxis.speed() > 0 && digitalRead(MD)) || (Xaxis.speed() < 0 && digitalRead(MA))))
   {
     Xaxis.runSpeed();
   }

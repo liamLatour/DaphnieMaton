@@ -34,6 +34,8 @@ share/python-wheels/
 MANIFEST
 wily.cfg
 wily-report.html
+setup.iss
+*.exe
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

@@ -4,7 +4,6 @@ import math
 import os
 import re
 import threading
-from functools import partial
 from os.path import join as osJoinPath
 
 import keyboard
@@ -29,8 +28,7 @@ from .createFile import generateFile
 from .helpMsg import helpMsg
 from .localization import _
 from .undoRedo import UndoRedo
-from .utilityFunctions import (
-    checkUpdates, getPorts, hitLine, urlOpen)
+from .utilityFunctions import checkUpdates, getPorts, hitLine, urlOpen
 
 
 class Parametrage(BoxLayout):
@@ -76,7 +74,7 @@ class Parametrage(BoxLayout):
         self.switchDiameter = 30.
 
         Clock.schedule_once(self.binding)
-        Clock.schedule_interval(partial(self.save, -1, -1), int(self.settings.get('general', 'autoSave'))*60)
+        Clock.schedule_interval(lambda a: self.save(-1, -1), int(self.settings.get('general', 'autoSave')*60))
 
         keyboard.on_release_key('shift', self.update_rect)
 
@@ -254,8 +252,10 @@ class Parametrage(BoxLayout):
 
         unraveld = self.config.unravelPath(trace, pictures, actionNodes)
 
+        print(unraveld)
+
         genFile = generateFile(unraveld[0], unraveld[1], float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename)))
-        f = open(".\\assets\\currentFile\\currentFile.ino", "w+")
+        f = open(".\\currentFile\\currentFile.ino", "w+")
         f.write(genFile)
         f.close()
 
@@ -267,6 +267,7 @@ class Parametrage(BoxLayout):
         self.arduino.stopReading()
 
         if self.mode == "Direct" and self.arduino.port != -1:
+            print("changedTab")
             self.arduino.checkItHasDirectProgram()
 
         self.update_rect()
@@ -443,15 +444,16 @@ class Parametrage(BoxLayout):
             buttons = {_("Origin"): {"value": [0, 8], "position": [0, 0]},
                        u'\u23E9': {"value": [1, 5], "position": [1, 0]},
                        u'\u23EA': {"value": [2, 5], "position": [-1, 0]},
-                       u'\u23EB': {"value": [3, 6], "position": [0, 1]},
-                       u'\u23EC': {"value": [4, 6], "position": [0, -1]}}
+                       u'\u23EC': {"value": [4, 6], "position": [0, -1]},
+                       u'\u23EB': {"value": [3, 6], "position": [0, 1]}
+                       }
 
             for button in buttons:
                 but = Button(text=button, font_size=fontSize, font_name=self.font,
                              pos=(middle[0]-buttonSize/2+(buttonSize+5)*buttons[button]["position"][0], middle[1]-buttonSize/2+(buttonSize+5)*buttons[button]["position"][1]),
                              size=(buttonSize, buttonSize))
-                but.bind(on_press=partial(self.arduino.sendSerial, bytes([buttons[button]["value"][0]])))
-                but.bind(on_release=partial(self.arduino.sendSerial, bytes([buttons[button]["value"][1]])))
+                but.bind(on_press=lambda a, b=bytes([buttons[button]["value"][0]]): self.arduino.sendSerial(b))
+                but.bind(on_release=lambda a, d=bytes([buttons[button]["value"][1]]): self.arduino.sendSerial(d))
                 self.ids.directDrawing.add_widget(but)
 
             self.ids.directBack.canvas.before.clear()

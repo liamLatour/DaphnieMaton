@@ -1,63 +1,68 @@
-var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(80, $('#container').width() / $('#container').height(), 28, 300)
-camera.position.set(-50, 100, 80);
-camera.lookAt(new THREE.Vector3(0, 0, 0));
-
-var renderer = new THREE.WebGLRenderer({
-  antialias: true,
-  alpha: true
-});
-
-renderer.gammaInput = true;
-renderer.gammaOutput = true;
-
-$('#container').append(renderer.domElement);
-
-window.addEventListener('resize', () => {
-  renderer.setSize($('#container').width(), $('#container').height());
-  camera.aspect = $('#container').width() / $('#container').height();
-  camera.updateProjectionMatrix();
-})
-
-var hemisphereLight = new THREE.HemisphereLight(0xd3fff0, 0x000000, 1);
-scene.add(hemisphereLight);
-
-threeDmodel = new THREE.FBXLoader();
-threeDmodel.load('3D model.fbx', function (object) {
-  scene.add(object);
-  object.position.set(-70, 0, -70);
-}, undefined, function (error) {
-  console.error(error);
-});
-
-var render = function () {
-  requestAnimationFrame(render);
-  renderer.render(scene, camera);
-}
-
-render();
-
-document.addEventListener('mousemove', onDocumentMouseMove, false);
-var lastCall = Date.now();
-
-function onDocumentMouseMove(event) {
-  if (Date.now() - lastCall < 40) {
-    return
-  }
-  lastCall = Date.now();
-  event.preventDefault();
-
-  newX = -50 + ((event.clientX / window.innerWidth) - 0.5) * 30;
-  newY = 100 + ((event.clientY / window.innerWidth) - 0.5) * 30;
-
-  camera.position.x = newX;
-  camera.position.y = newY;
+/*
+try {
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(80, $('#container').width() / $('#container').height(), 28, 300)
+  camera.position.set(-50, 100, 80);
   camera.lookAt(new THREE.Vector3(0, 0, 0));
-  camera.updateMatrix();
+
+  var renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true
+  });
+
+  renderer.gammaInput = true;
+  renderer.gammaOutput = true;
+
+  $('#container').append(renderer.domElement);
+
+  window.addEventListener('resize', () => {
+    renderer.setSize($('#container').width(), $('#container').height());
+    camera.aspect = $('#container').width() / $('#container').height();
+    camera.updateProjectionMatrix();
+  })
+
+  var hemisphereLight = new THREE.HemisphereLight(0xd3fff0, 0x000000, 1);
+  scene.add(hemisphereLight);
+
+  threeDmodel = new THREE.FBXLoader();
+  threeDmodel.load('3D model.fbx', function (object) {
+    scene.add(object);
+    object.position.set(-70, 0, -70);
+  }, undefined, function (error) {
+    console.error(error);
+  });
+
+  var render = function () {
+    requestAnimationFrame(render);
+    renderer.render(scene, camera);
+  }
 
   render();
-}
 
+  document.addEventListener('mousemove', onDocumentMouseMove, false);
+  var lastCall = Date.now();
+
+  function onDocumentMouseMove(event) {
+    if (Date.now() - lastCall < 40) {
+      return
+    }
+    lastCall = Date.now();
+    event.preventDefault();
+
+    newX = -50 + ((event.clientX / window.innerWidth) - 0.5) * 30;
+    newY = 100 + ((event.clientY / window.innerWidth) - 0.5) * 30;
+
+    camera.position.x = newX;
+    camera.position.y = newY;
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    camera.updateMatrix();
+
+    render();
+  }
+} catch (error) {
+  console.error(error);
+}
+*/
 var toggler = document.getElementsByClassName("caret");
 var i;
 
@@ -97,11 +102,10 @@ $(function () {
         $("#3dmodel").addClass("animateImage");
 
         document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)";
-        document.addEventListener('mousemove', onDocumentMouseMove, false);
-
+        //document.addEventListener('mousemove', onDocumentMouseMove, false);
       } else {
         document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, 1% 0%, 1% 100%, 0% 100%)";
-        document.removeEventListener('mousemove', onDocumentMouseMove, false);
+        //document.removeEventListener('mousemove', onDocumentMouseMove, false);
         $("#3dmodel").removeClass("animateImage");
         $("#3dmodel").addClass("hideImage");
 
@@ -141,7 +145,11 @@ function getScrollifySectionIndex(anchor) {
 $(document).ready(function () {
   document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)";
 
-  renderer.setSize($('#container').width(), $('#container').height());
-  camera.aspect = $('#container').width() / $('#container').height();
-  camera.updateProjectionMatrix();
+  try {
+    renderer.setSize($('#container').width(), $('#container').height());
+    camera.aspect = $('#container').width() / $('#container').height();
+    camera.updateProjectionMatrix();
+  } catch (error) {
+    console.error(error);
+  }
 });

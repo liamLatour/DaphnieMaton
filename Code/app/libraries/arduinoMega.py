@@ -49,8 +49,8 @@ class Arduino:
                 time.sleep(2)
                 self.board.write(direction)
             except:
-                self.easyPopup(_('Disconnected'), _(
-                    'The system has been disconnected'))
+                print("sendSerial")
+                return False
 
         if shortcut:
             self.stopCheckKey()
@@ -73,6 +73,7 @@ class Arduino:
             self.refresh()
         except:
             self.stopReading()
+            print("readFromSerial")
             self.easyPopup(_('Disconnected'), _(
                 'The system has been disconnected'))
 
@@ -82,7 +83,7 @@ class Arduino:
             self.readingClock = -1
 
     def checkItHasDirectProgram(self):
-        if not self.sendSerial(bytes([9]), urgent=True):
+        if self.sendSerial(bytes([9]), urgent=True) != False:
             self.hasDirectProgram = False
             try:
                 response = self.board.readline().decode("utf-8").rstrip()
@@ -93,6 +94,7 @@ class Arduino:
                     self.readingClock = Clock.schedule_interval(
                         self.readFromSerial, 0.2)
             except:
+                print("checkItHasDirectProgram")
                 self.easyPopup(_('Disconnected'), _(
                     'The system has been disconnected'))
 
@@ -115,6 +117,7 @@ class Arduino:
     def getCalibrationAsync(self, *args):
         if self.port == -1:
             self.calibrateClock.cancel()
+            print("getCalibrationAsync top")
             self.easyPopup(_('Disconnected'), _(
                 'The system has been disconnected'))
             return
@@ -145,6 +148,7 @@ class Arduino:
                 print("Speed is: " + str(speed) + "m.s^-1")
             except Exception as e:
                 print(e)
+                print("getCalibrationAsync")
                 self.easyPopup(_('Disconnected'), _(
                     'The system has been disconnected'))
 

@@ -1,0 +1,9 @@
+This version is NOT finished, it can be used but some functionalities are not ready yet.
+
+This is a non-exhaustive list of the various problems:
+    - "Loop" option is shown but has no effect (it is always considered looping)
+    - The stats shown are not to be considered accurate
+    - The top down view of the system sometimes goes dark
+    - The represented path does not correspond perfectly to the real one, it is recommended to use 'Direct' mode to be sure of node's position
+    - Translation is not working
+    - Sometimes a popup saying 'The system has been disconnected' even though it is false
