@@ -15,43 +15,8 @@ html {
 
 .current {
   background-color: #2da37c;
-  color: #181818 !important;
+  color: #ffffff !important;
   font-weight: bold;
-}
-
-.hideImage {
-  right: -1000px;
-}
-
-.animateImage {
-  position: absolute;
-  right: 0px;
-  -webkit-animation-name: imgAnim;
-          animation-name: imgAnim;
-  -webkit-animation-duration: 1s;
-          animation-duration: 1s;
-}
-
-@-webkit-keyframes imgAnim {
-  0% {
-    right: -500px;
-    opacity: 0.2;
-  }
-  100% {
-    right: 0px;
-    opacity: 1;
-  }
-}
-
-@keyframes imgAnim {
-  0% {
-    right: -500px;
-    opacity: 0.2;
-  }
-  100% {
-    right: 0px;
-    opacity: 1;
-  }
 }
 
 #main {
@@ -142,9 +107,9 @@ html {
 }
 
 #main > div img {
-  float: right;
-  margin-top: 150px;
-  margin-right: 20px;
+  margin: 40px;
+  margin-top: 80px;
+  width: calc(100% - 80px);
 }
 
 #main > div div {
@@ -241,7 +206,7 @@ html {
   display: block;
 }
 
-.correspondance {
+table {
   border-collapse: collapse;
   width: 90%;
   margin-left: 5%;
@@ -249,30 +214,56 @@ html {
   font-size: 25px;
 }
 
-.correspondance td {
-  text-align: left;
-  padding: 8px;
-}
-
-.correspondance th {
+table th {
   /*background-color: rgb(245, 56, 220);*/
   color: white;
   text-align: center;
   padding: 8px;
 }
 
-.correspondance tr:first-child {
+table tr:first-child {
   background-size: 400%;
   background: -webkit-gradient(linear, left top, right top, from(#cc09c2), to(#0e0bd8));
   background: linear-gradient(to right, #cc09c2, #0e0bd8);
 }
 
-.correspondance tr:nth-child(even) {
+table tr:nth-child(even) {
   background-color: #383654;
 }
 
-.correspondance tr:nth-child(odd) {
+table tr:nth-child(odd) {
   background-color: #2b2a3c;
+}
+
+table tr td:first-child {
+  text-align: left;
+  padding: 8px;
+  padding-left: 50px;
+}
+
+table tr td:not(:first-child):not(:last-child) {
+  text-align: center;
+  padding: 8px;
+}
+
+table tr td:last-child {
+  text-align: right;
+  padding: 8px;
+  padding-right: 50px;
+}
+
+table tr td:last-child a {
+  text-decoration: none;
+  color: #3becb1;
+  font-weight: 600;
+}
+
+table tr td:last-child a:visited {
+  color: #37b188;
+}
+
+table tr td:last-child a:hover {
+  color: #37d6a1;
 }
 
 .footer {

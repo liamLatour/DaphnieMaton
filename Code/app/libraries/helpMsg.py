@@ -39,5 +39,6 @@ helpMsg = {
     (testing for temperature), it can be used for all sorts of\n \
     autonomous systemes and can also be mounted with something\n \
     else than a camera.\n \
+    [ref=doc][color=0083ff][u]Documentation[/u][/color][/ref]\n \
     Code available in [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]github[/u][/color][/ref] to report a bug or help to translate"
 }

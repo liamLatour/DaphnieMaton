@@ -3,6 +3,9 @@ from scipy.spatial import distance
 import requests
 import os
 import sys
+import http.server
+import socketserver
+import threading
 
 sys.argv = sys.argv if __name__ == '__main__' else [sys.argv[0]]
 
@@ -58,8 +61,21 @@ def urlOpen(instance, url):
 
     url string: the website to go to.
     """
-    webbrowser.open(url, new=2)
+    if url == "doc":
+        threading.Thread(target=myServer, daemon=True).start()
+        webbrowser.open("http://localhost:8080/overview.html", new=2)
+    else:
+        webbrowser.open(url, new=2)
 
+
+def myServer():
+    os.chdir(os.path.join(os.path.dirname(__file__), '..\\Documentation'))
+    PORT = 8080
+    handler = http.server.SimpleHTTPRequestHandler
+
+    with socketserver.TCPServer(("", PORT), handler) as httpd:
+        print("serving at port", PORT)
+        httpd.serve_forever()
 
 def hitLine(lineA, lineB, point, lineWidth):
     """Checks whether the point is in line or out.

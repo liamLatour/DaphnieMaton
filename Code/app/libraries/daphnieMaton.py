@@ -22,7 +22,7 @@ from scipy.spatial import distance
 
 from .arduinoMega import Arduino
 from .classes import (
-    ActionChoosing, Input, LoadDialog, MenuDropDown, MyLabel, SaveDialog)
+    ActionChoosing, Input, LoadDialog, MenuDropDown, SaveDialog)
 from .config import Config
 from .createFile import generateFile
 from .helpMsg import helpMsg
@@ -126,13 +126,7 @@ class Parametrage(BoxLayout):
                 return
 
     def help(self, *args):
-        popbox = BoxLayout()
-
-        poplb = MyLabel(text=helpMsg[self.mode])
-        poplb.bind(on_ref_press=urlOpen)
-        popbox.add_widget(poplb)
-
-        self.easyPopup(_('Help'), popbox)
+        self.easyPopup(_('Help'), helpMsg[self.mode])
 
     def newFile(self, refresh, *args):
         self.filePath = -1
@@ -143,12 +137,7 @@ class Parametrage(BoxLayout):
             self.tuyeauGap()
 
     def about_panel(self):
-        popbox = BoxLayout()
-        poplb = MyLabel(text=helpMsg["About"])
-        poplb.bind(on_ref_press=urlOpen)
-        popbox.add_widget(poplb)
-
-        self.easyPopup(_('About'), popbox)
+        self.easyPopup(_('About'), helpMsg["About"])
 
     def show_file(self):
         self.fileDropDown.open(self.ids.fileButton)
@@ -732,7 +721,8 @@ class Parametrage(BoxLayout):
 
     def easyPopup(self, title, content, auto_dismiss=True):
         if isinstance(content, str):
-            content = Label(text=content)
+            content = Label(text=content, markup=True)
+            content.bind(on_ref_press=urlOpen)
 
         if self.popup != -1:
             self.popup.dismiss()

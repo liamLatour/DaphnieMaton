@@ -1,8 +1,9 @@
-/*
 try {
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera(80, $('#container').width() / $('#container').height(), 28, 300)
-  camera.position.set(-50, 100, 80);
+  camera.position.x = -50;
+  camera.position.y = 100;
+  camera.position.z = (1920 - $('#container').width()) / 10 + 50;
   camera.lookAt(new THREE.Vector3(0, 0, 0));
 
   var renderer = new THREE.WebGLRenderer({
@@ -19,6 +20,7 @@ try {
     renderer.setSize($('#container').width(), $('#container').height());
     camera.aspect = $('#container').width() / $('#container').height();
     camera.updateProjectionMatrix();
+    renderer.render(scene, camera);
   })
 
   var hemisphereLight = new THREE.HemisphereLight(0xd3fff0, 0x000000, 1);
@@ -32,12 +34,7 @@ try {
     console.error(error);
   });
 
-  var render = function () {
-    requestAnimationFrame(render);
-    renderer.render(scene, camera);
-  }
-
-  render();
+  renderer.render(scene, camera);
 
   document.addEventListener('mousemove', onDocumentMouseMove, false);
   var lastCall = Date.now();
@@ -57,12 +54,12 @@ try {
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     camera.updateMatrix();
 
-    render();
+    renderer.render(scene, camera);
   }
 } catch (error) {
   console.error(error);
 }
-*/
+
 var toggler = document.getElementsByClassName("caret");
 var i;
 
@@ -88,7 +85,6 @@ $(function () {
     scrollSpeed: 1100,
     interstitialSection: ".header,.footer",
     before: function (i, panels) {
-      //var ref = panels[i].attr("data-section-name");
       var ref = panels[i].attr("data-section-title");
 
 
@@ -102,10 +98,10 @@ $(function () {
         $("#3dmodel").addClass("animateImage");
 
         document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)";
-        //document.addEventListener('mousemove', onDocumentMouseMove, false);
+        document.addEventListener('mousemove', onDocumentMouseMove, false);
       } else {
         document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, 1% 0%, 1% 100%, 0% 100%)";
-        //document.removeEventListener('mousemove', onDocumentMouseMove, false);
+        document.removeEventListener('mousemove', onDocumentMouseMove, false);
         $("#3dmodel").removeClass("animateImage");
         $("#3dmodel").addClass("hideImage");
 

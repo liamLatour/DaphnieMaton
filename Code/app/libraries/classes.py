@@ -224,20 +224,7 @@ class SettingColorPicker(SettingItem):
         btnlayout.add_widget(btn)
         content.add_widget(btnlayout)
 
-        # all done, open the popup !
         popup.open()
-
-
-class MyLabel(Image):
-    text = StringProperty('')
-
-    def on_text(self, *_):
-        l = Label(text=self.text, valign='middle',
-                  halign='justify', padding=(15, 35), markup=True)
-        l.font_size = '50'
-        l.texture_update()
-        self.texture = l.texture
-
 
 class Input(BoxLayout):
     """Custom input to handle parameters.
