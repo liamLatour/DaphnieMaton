@@ -17,17 +17,17 @@
 
     <div class="sidenav noselect">
         <ul>
-            <a href="#overview" class="current">Aperçu</a>
+            <a href="#1" class="current">Aperçu</a>
             <li><span class="caret">Mise en place</span>
                 <ul class="nested">
-                    <a href="#tools">Outils</a>
+                    <a href="#2">Outils</a>
                     <li><span class="caret">Mécanique</span>
                         <ul class="nested">
-                            <a href="#theHs">Renforts et pieds (H)</a>
+                            <a href="#3">Renforts et pieds (H)</a>
                             <li><span class="caret">Rails et courroies</span>
                                 <ul class="nested">
-                                    <a href="#axeX">Axe X</a>
-                                    <a href="#axeY">Axe Y et courroies</a>
+                                    <a href="#4">Axe X</a>
+                                    <a href="#5">Axe Y et courroies</a>
                                 </ul>
                             </li>
                         </ul>
@@ -36,29 +36,29 @@
                         <ul class="nested">
                             <li><span class="caret">Rallonge</span>
                                 <ul class="nested">
-                                    <a href="#ralInt">Interrupteur</a>
-                                    <a href="#ralMot">Moteur</a>
+                                    <a href="#6">Interrupteur</a>
+                                    <a href="#7">Moteur</a>
                                 </ul>
                             </li>
-                            <a href="#conArd">Connexion Arduino</a>
+                            <a href="#8">Connexion Arduino</a>
                         </ul>
                     </li>
                 </ul>
             </li>
-            <a href="#start">Mise en route</a>
-            <a href="#maint">Maintenance</a>
-            <a href="#rang">Rangement</a>
-            <a href="#ref">Référence des pièces</a>
-            <a href="#auth">Autheurs</a>
+            <a href="#9">Mise en route</a>
+            <a href="#10">Maintenance</a>
+            <a href="#11">Rangement</a>
+            <a href="#12">Référence des pièces</a>
+            <a href="#13">Autheurs</a>
         </ul>
     </div>
 
     <div id="main">
-        <div class="sections container" data-section-title="overview">
+        <div class="sections container" data-section-title="1">
             <h1 id="mainTitle">DaphnieMaton</h1>
             <div id="container"></div>
         </div>
-        <div class="sections tools" data-section-title="tools">
+        <div class="sections" data-section-title="2">
             <h2>Les Outils</h2>
             <ul>
                 <li><span>1.</span>
@@ -75,7 +75,7 @@
                 </li>
             </ul>
         </div>
-        <div class="sections theHs" data-section-title="theHs">
+        <div class="sections" data-section-title="3">
             <h2>Construction des 'H's</h2>
             <ul>
                 <li><span>1.</span>
@@ -102,7 +102,7 @@
                 </li>
             </ul>
         </div>
-        <div class="sections axeX" data-section-title="axeX">
+        <div class="sections" data-section-title="4">
             <h2>Axe X</h2>
             <ul>
                 <li><span>1.</span>
@@ -119,7 +119,7 @@
                 </li>
             </ul>
         </div>
-        <div class="sections axeY" data-section-title="axeY">
+        <div class="sections" data-section-title="5">
             <h2>Axe Y et courroies</h2>
             <ul>
                 <li><span>1.</span>
@@ -137,74 +137,107 @@
                 </li>
             </ul>
         </div>
-        <div class="sections ralInt" data-section-title="ralInt">
+        <div class="sections" data-section-title="6">
             <h2>Rallonges pour interrupteurs</h2>
-            <table class="correspondance">
-                <tr>
-                    <th>Position de l'Interrupteur</th>
-                    <th>Couleurs</th>
-                    <th>Taille</th>
-                </tr>
-                <tr>
-                    <td>Pied C</td>
-                    <td class="cable3" gaine="#1c1c1c" boutUn="#ef0000" boutDeux="#000000" boutTrois="#0fc40f"></td>
-                    <td>Très long</td>
-                </tr>
-                <tr>
-                    <td>Côté opposé Arduino axe mobile</td>
-                    <td class="cable3" gaine="#c40000" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17"></td>
-                    <td>Très long</td>
-                </tr>
-                <tr>
-                    <td>Pied B</td>
-                    <td class="cable3" gaine="#001dff" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17"></td>
-                    <td>Long</td>
-                </tr>
-                <tr>
-                    <td>Côté Arduino axe mobile</td>
-                    <td class="cable3" gaine="#c40000" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17"></td>
-                    <td>Long</td>
-                </tr>
-                <tr>
-                    <td>Pied A</td>
-                    <td>/</td>
-                    <td>Sans rallonge</td>
-                </tr>
-                <tr>
-                    <td>Pied D</td>
-                    <td class="cable3" gaine="#1c1c1c" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17"></td>
-                    <td>Moyen et flexible</td>
-                </tr>
+            <div class="hint"><span>i</span>
+                <p>Pour garder les câbles en place il est conseillé d’enrouler les câbles autour des supports en bois
+                </p>
+            </div>
+            <table style="width: 70vw; margin-left: 5vw;">
+                <thead>
+                    <tr>
+                        <th>Position de l'Interrupteur</th>
+                        <th>Couleurs</th>
+                        <th>Taille</th>
+                    </tr>
+                </thead>
             </table>
+            <div class="correspondance" style="height: auto !important; overflow: hidden;">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Pied C</td>
+                            <td class="cable3" gaine="#1c1c1c" boutUn="#ef0000" boutDeux="#000000" boutTrois="#0fc40f">
+                            </td>
+                            <td>Très long</td>
+                        </tr>
+                        <tr>
+                            <td>Côté opposé Arduino axe mobile</td>
+                            <td class="cable3" gaine="#c40000" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17">
+                            </td>
+                            <td>Très long</td>
+                        </tr>
+                        <tr>
+                            <td>Pied B</td>
+                            <td class="cable3" gaine="#001dff" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17">
+                            </td>
+                            <td>Long</td>
+                        </tr>
+                        <tr>
+                            <td>Côté Arduino axe mobile</td>
+                            <td class="cable3" gaine="#c40000" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17">
+                            </td>
+                            <td>Long</td>
+                        </tr>
+                        <tr>
+                            <td>Pied A</td>
+                            <td>/</td>
+                            <td>Sans rallonge</td>
+                        </tr>
+                        <tr>
+                            <td>Pied D</td>
+                            <td class="cable3" gaine="#1c1c1c" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17">
+                            </td>
+                            <td>Moyen et flexible</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="sections ralMot" data-section-title="ralMot">
+        <div class="sections" data-section-title="7">
             <h2>Rallonges pour moteurs</h2>
-            <table class="correspondance">
-                <tr>
-                    <th>Position du moteur</th>
-                    <th>Couleurs</th>
-                </tr>
-                <tr>
-                    <td>Pied D</td>
-                    <td class="cable4" gaine="#c40000" boutUn="#000000" boutDeux="#0fc40f" boutTrois="#ef0000"
-                        boutQuatre="#e7ea17"></td>
-                </tr>
-                <tr>
-                    <td>Axe mobile</td>
-                    <td class="cable4" gaine="#001dff" boutUn="#000000" boutDeux="#0fc40f" boutTrois="#ef0000"
-                        boutQuatre="#e7ea17"></td>
-                </tr>
-                <tr>
-                    <td>Pied A</td>
-                    <td>Sans rallonge</td>
-                </tr>
+            <div class="hint"><span>i</span>
+                <p>Pour garder les câbles en place il est conseillé d’enrouler les câbles autour des supports en bois
+                </p>
+            </div>
+            <table style="width: 70vw; margin-left: 5vw;">
+                <thead>
+                    <tr>
+                        <th>Position du moteur</th>
+                        <th>Couleurs</th>
+                    </tr>
+                </thead>
             </table>
+            <div class="correspondance" style="height: auto !important; overflow: hidden;">
+                <table>
+                    <tbody>
+                        <tr>
+                            <th>Position du moteur</th>
+                            <th>Couleurs</th>
+                        </tr>
+                        <tr>
+                            <td>Pied D</td>
+                            <td class="cable4" gaine="#c40000" boutUn="#000000" boutDeux="#0fc40f" boutTrois="#ef0000"
+                                boutQuatre="#e7ea17"></td>
+                        </tr>
+                        <tr>
+                            <td>Axe mobile</td>
+                            <td class="cable4" gaine="#001dff" boutUn="#000000" boutDeux="#0fc40f" boutTrois="#ef0000"
+                                boutQuatre="#e7ea17"></td>
+                        </tr>
+                        <tr>
+                            <td>Pied A</td>
+                            <td>Sans rallonge</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="sections conArd" data-section-title="conArd">
+        <div class="sections" data-section-title="8">
             <h2>Connexion sur l'Arduino</h2>
             <img src="ramps.svg" alt="ramps 1.4" height="70%" width="100%" />
         </div>
-        <div class="sections start" data-section-title="start">
+        <div class="sections" data-section-title="9">
             <h2>Mise en route</h2>
             <ul>
                 <li><span>1.</span>
@@ -219,7 +252,7 @@
                 </li>
             </ul>
         </div>
-        <div class="sections maint" data-section-title="maint">
+        <div class="sections" data-section-title="10">
             <h2>Maintenance</h2>
             <ul>
                 <li><span>1.</span>
@@ -238,7 +271,7 @@
                 </li>
             </ul>
         </div>
-        <div class="sections rang" data-section-title="rang">
+        <div class="sections" data-section-title="11">
             <h2>Rangement</h2>
             <ul>
                 <li><span>1.</span>
@@ -265,37 +298,174 @@
                 </li>
             </ul>
         </div>
-        <div class="sections ref" data-section-title="ref">
+        <div class="sections" data-section-title="12">
             <h2>Référence des pièces</h2>
-            <table class="correspondance">
-                <tr>
-                    <th>Pièce</th>
-                    <th>Nombre</th>
-                    <th>Lien</th>
-                </tr>
-                <tr>
-                    <td>Moteur</td>
-                    <td>3</td>
-                    <td><a href="https://www.amazon.fr/dp/B06XRCNBMY/?coliid=I2GVV6KUL2K3T8&colid=M0TOW5WVJIBO&psc=1&ref_=lv_ov_lig_dp_it">Amazon</a></td>
-                </tr>
-                <tr>
-                    <td>Interrupteur</td>
-                    <td>6</td>
-                    <td><a href="https://www.amazon.fr/Kuman-Interrupteur-m%C3%A9canique-limprimante-Arduino/dp/B06XS7FVTZ/ref=sr_1_1?__mk_fr_FR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&keywords=interrupteur+but%C3%A9e&qid=1566461563&s=gateway&smid=A88IN2Y8YWCG3&sr=8-1">Amazon</a></td>
-                </tr>
-                <tr>
-                    <td>Rail</td>
-                    <td>3</td>
-                    <td><a href="https://www.amazon.fr/dp/B07JR6C3ZH/?coliid=I39JPQ45CHRBFJ&colid=M0TOW5WVJIBO&psc=1&ref_=lv_ov_lig_dp_it">Amazon</a></td>
-                </tr>
-                <tr>
-                    <td>Interrupteur</td>
-                    <td>6</td>
-                    <td><a href="">Amazon</a></td>
-                </tr>
+            <table style="width: 70vw; margin-left: 5vw;">
+                <thead>
+                    <tr>
+                        <th>Pièce</th>
+                        <th>Quantité</th>
+                        <th>Lien</th>
+                    </tr>
+                </thead>
             </table>
+            <div class="correspondance">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Moteur</td>
+                            <td>3</td>
+                            <td><a
+                                    href="https://www.amazon.fr/dp/B06XRCNBMY/?coliid=I2GVV6KUL2K3T8&colid=M0TOW5WVJIBO&psc=1&ref_=lv_ov_lig_dp_it">Amazon</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Interrupteur</td>
+                            <td>6</td>
+                            <td><a
+                                    href="https://www.amazon.fr/Kuman-Interrupteur-m%C3%A9canique-limprimante-Arduino/dp/B06XS7FVTZ/ref=sr_1_1?__mk_fr_FR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&keywords=interrupteur+but%C3%A9e&qid=1566461563&s=gateway&smid=A88IN2Y8YWCG3&sr=8-1">Amazon</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Rail</td>
+                            <td>3</td>
+                            <td><a
+                                    href="https://www.amazon.fr/dp/B07JR6C3ZH/?coliid=I39JPQ45CHRBFJ&colid=M0TOW5WVJIBO&psc=1&ref_=lv_ov_lig_dp_it">Amazon</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Poulie moteur</td>
+                            <td>3</td>
+                            <td><a
+                                    href="https://www.amazon.fr/dp/B01LT7TILY/?coliid=IQNYBW4RGRIZT&colid=M0TOW5WVJIBO&psc=1&ref_=lv_ov_lig_dp_it">Amazon</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Poulie opposée</td>
+                            <td>3</td>
+                            <td><a
+                                    href="https://www.amazon.fr/dp/B06VSL9W9L/?coliid=I1DT1XKX7F0CDY&colid=M0TOW5WVJIBO&psc=1&ref_=lv_ov_lig_dp_it">Amazon</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Tasseau bois</td>
+                            <td>7m</td>
+                            <td><a
+                                    href="https://www.leroymerlin.fr/v3/p/produits/tasseau-sapin-petits-noeuds-brut-25-x-25-mm-l-2-4-m-e57152">Leroy
+                                    Merlin</a></td>
+                        </tr>
+                        <tr>
+                            <td>Tube carré</td>
+                            <td>2.5*2.5*200 cm</td>
+                            <td><a
+                                    href="https://www.amazon.fr/Aluminium-carr%C3%A9s-AW-6060-finition-25x25x2/dp/B01MSWRNKF/ref=sr_1_3?__mk_fr_FR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=3J3CLFO16OQDV&keywords=tube+carr%C3%A9+25x25&qid=1566570166&s=hi&sprefix=tube+carr%C3%A9+25%2Cdiy%2C181&sr=1-3">Amazon</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>bouchons pour tube</td>
+                            <td>4</td>
+                            <td><a
+                                    href="https://www.amazon.fr/bouchons-noirs-carr%C3%A9s-dimensions-ext%C3%A9rieures/dp/B06W572G7Z/ref=sr_1_1_sspa?__mk_fr_FR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=3J3CLFO16OQDV&keywords=tube+carr%C3%A9+25x25&qid=1566570166&s=hi&sprefix=tube+carr%C3%A9+25%2Cdiy%2C181&sr=1-1-spons&psc=1&spLa=ZW5jcnlwdGVkUXVhbGlmaWVyPUEyNVcwRFM5WUNZVFhVJmVuY3J5cHRlZElkPUEwODk1MjEwMllGWDQyTVhCMVI3QyZlbmNyeXB0ZWRBZElkPUEwMzYyOTU3MjExWUM2RUNVVDBJNSZ3aWRnZXROYW1lPXNwX2F0ZiZhY3Rpb249Y2xpY2tSZWRpcmVjdCZkb05vdExvZ0NsaWNrPXRydWU=">Amazon</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Rallonge Moteur</td>
+                            <td>X</td>
+                            <td><a href="">Amazon</a></td>
+                        </tr>
+                        <tr>
+                            <td>Rallonge Interrupteur</td>
+                            <td>X</td>
+                            <td><a href="">Amazon</a></td>
+                        </tr>
+                        <tr>
+                            <td>Grosse équerre</td>
+                            <td>6</td>
+                            <td><a
+                                    href="https://www.brico.be/fr/atelier-mat%C3%A9riaux/quincaillerie/charni%C3%A8res-et-accessoires-pour-meubles/connecteur-d'angle-suki-acier-'magnodur'-acier-50-x-90-x-2-mm/5118918">Brico</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>équerre noire</td>
+                            <td>20</td>
+                            <td><a
+                                    href="https://www.amazon.fr/dp/B07HHVPNQK/?coliid=I32DG77404B6PW&colid=M0TOW5WVJIBO&psc=1&ref_=lv_ov_lig_dp_it">Amazon</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>équerre AE48</td>
+                            <td>1</td>
+                            <td><a
+                                    href="https://www.amazon.fr/dp/B000U3KG1A/?coliid=I2EOY72R4PM269&colid=M0TOW5WVJIBO&psc=1&ref_=lv_ov_lig_dp_it">Amazon</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>équerre sur renforts</td>
+                            <td>6</td>
+                            <td><a
+                                    href="https://www.amazon.fr/Hyber-Cara-Entretoises-Inoxydable-60mmx60mm/dp/B07QQJ4WLD/ref=sr_1_16?__mk_fr_FR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=2XXCA0GMHBBNP&keywords=equerre+60x60&qid=1566572731&s=gateway&sprefix=equerre+60%2Caps%2C172&sr=8-16">Amazon</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Gros boulons</td>
+                            <td>85</td>
+                            <td><a
+                                    href="https://www.leroymerlin.fr/v3/p/produits/lot-de-6-boulons-tete-6-pans-inox-l-50-0-x-diam-6-mm-standers-e125372">Leroy
+                                    Merlin</a></td>
+                        </tr>
+                        <tr>
+                            <td>écrous gros boulons</td>
+                            <td>73</td>
+                            <td><a
+                                    href="https://www.leroymerlin.fr/v3/p/produits/lot-de-6-boulons-tete-6-pans-inox-l-50-0-x-diam-6-mm-standers-e125372">Leroy
+                                    Merlin</a></td>
+                        </tr>
+                        <tr>
+                            <td>Boulons moyen</td>
+                            <td>3</td>
+                            <td><a href="">/</a></td>
+                        </tr>
+                        <tr>
+                            <td>Petit boulons</td>
+                            <td>12</td>
+                            <td><a href="">/</a></td>
+                        </tr>
+                        <tr>
+                            <td>Boulons pour Arduino</td>
+                            <td>3</td>
+                            <td><a href="">/</a></td>
+                        </tr>
+                        <tr>
+                            <td>Vis pour renforts</td>
+                            <td>8</td>
+                            <td><a href="">/</a></td>
+                        </tr>
+                        <tr>
+                            <td>élastiques</td>
+                            <td>6</td>
+                            <td><a
+                                    href="https://www.amazon.fr/%C3%A9lastiques-coiffage-cheveux-enfants-dreadlocks/dp/B07F2ZGDXG/ref=sr_1_15?__mk_fr_FR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&keywords=elastique+petit&qid=1566572542&s=gateway&sr=8-15">Amazon</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Plaque en acier</td>
+                            <td>1</td>
+                            <td><a
+                                    href="https://www.leroymerlin.fr/v3/p/produits/platine-multitrous-galvanise-gah-alberts-200x100-mm-e77668">Leroy
+                                    Merlin</a></td>
+                        </tr>
+                        <tr>
+                            <td>courroies</td>
+                            <td>10m</td>
+                            <td><a
+                                    href="https://www.amazon.fr/dp/B06Y5Q43SY/?coliid=I2QI13QM7W4YOS&colid=M0TOW5WVJIBO&psc=1&ref_=lv_ov_lig_dp_it">Amazon</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="footer auth" data-section-title="auth">
+        <div class="footer" data-section-title="13">
             <p>
                 Auteurs: LATOUR Liam, QUAIRE--MERLIN Louis <br>
                 Github: <a href="https://github.com/liamLatour/DaphnieMaton">DaphnieMaton</a>
@@ -307,9 +477,7 @@
     <script src='javascript/jquery-3.4.1.min.js'></script>
     <script src='javascript/scrollify.js'></script>
     <script src='javascript/three.min.js'></script>
-    <script src='javascript/fbx.js'></script>
-    <script src='javascript/inflate.min.js'></script>
-    <script src='javascript/OrbitControls.js'></script>
+    <script src='javascript/gltf.js'></script>
     <script src='javascript/main.js'></script>
 
 </body>

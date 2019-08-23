@@ -1,63 +1,87 @@
-try {
-  var scene = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera(80, $('#container').width() / $('#container').height(), 28, 300)
-  camera.position.x = -50;
-  camera.position.y = 100;
-  camera.position.z = (1920 - $('#container').width()) / 10 + 50;
-  camera.lookAt(new THREE.Vector3(0, 0, 0));
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(80, $('#container').width() / $('#container').height(), 0.1, 3)
+const clock = new THREE.Clock();
+var mixer = 0;
+camera.position.x = -0.5;
+camera.position.y = 1;
+camera.position.z = ((1920 - $('#container').width()) / 10 + 50) / 100;
+camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-  var renderer = new THREE.WebGLRenderer({
-    antialias: true,
-    alpha: true
-  });
+var renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: true
+});
 
-  renderer.gammaInput = true;
-  renderer.gammaOutput = true;
+renderer.gammaFactor = 2.2;
+renderer.physicallyCorrectLights = true;
+renderer.gammaInput = true;
+renderer.gammaOutput = true;
 
-  $('#container').append(renderer.domElement);
+$('#container').append(renderer.domElement);
 
-  window.addEventListener('resize', () => {
-    renderer.setSize($('#container').width(), $('#container').height());
-    camera.aspect = $('#container').width() / $('#container').height();
-    camera.updateProjectionMatrix();
-    renderer.render(scene, camera);
-  })
-
-  var hemisphereLight = new THREE.HemisphereLight(0xd3fff0, 0x000000, 1);
-  scene.add(hemisphereLight);
-
-  threeDmodel = new THREE.FBXLoader();
-  threeDmodel.load('3D model.fbx', function (object) {
-    scene.add(object);
-    object.position.set(-70, 0, -70);
-  }, undefined, function (error) {
-    console.error(error);
-  });
-
+window.addEventListener('resize', () => {
+  renderer.setSize($('#container').width(), $('#container').height());
+  camera.aspect = $('#container').width() / $('#container').height();
+  camera.updateProjectionMatrix();
   renderer.render(scene, camera);
+})
 
-  document.addEventListener('mousemove', onDocumentMouseMove, false);
-  var lastCall = Date.now();
+var directionalLight = new THREE.DirectionalLight( 0xffffff, 6);
+directionalLight.position.set(-3, 1, 2);
+var hemisphereLight = new THREE.HemisphereLight(0xafffff, 0x664343, 3);
+scene.add(hemisphereLight);
+scene.add(directionalLight);
 
-  function onDocumentMouseMove(event) {
-    if (Date.now() - lastCall < 40) {
-      return
-    }
-    lastCall = Date.now();
-    event.preventDefault();
+threeDmodel = new THREE.GLTFLoader();
+threeDmodel.load('3D model.glb', function (gltf) {
 
-    newX = -50 + ((event.clientX / window.innerWidth) - 0.5) * 30;
-    newY = 100 + ((event.clientY / window.innerWidth) - 0.5) * 30;
+  const model = gltf.scene;
 
-    camera.position.x = newX;
-    camera.position.y = newY;
-    camera.lookAt(new THREE.Vector3(0, 0, 0));
-    camera.updateMatrix();
+  mixer = new THREE.AnimationMixer(model);
 
-    renderer.render(scene, camera);
+  mixer.clipAction(gltf.animations[0]).play();
+  mixer.clipAction(gltf.animations[1]).play();
+
+  model.position.set(-0.7, 0, -0.7);
+  scene.add(model);
+
+}, function (xhr) {
+  if ( xhr.lengthComputable ) {
+    var percentComplete = xhr.loaded / xhr.total * 100;
+    console.log( Math.round( percentComplete, 2 ) + '% downloaded' );
+    document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, "+Math.round( percentComplete, 2 )+"% 0%, "+Math.round( percentComplete, 2 )+"% 100%, 0% 100%)";
   }
-} catch (error) {
+}, function (error) {
   console.error(error);
+});
+
+function update() {
+  if (mixer == 0) {
+    return
+  }
+  const delta = clock.getDelta();
+  mixer.update(delta);
+}
+
+renderer.setAnimationLoop(() => {
+  update();
+  renderer.render(scene, camera);
+});
+
+document.addEventListener('mousemove', onDocumentMouseMove, false);
+var lastCall = Date.now();
+
+function onDocumentMouseMove(event) {
+  lastCall = Date.now();
+  event.preventDefault();
+
+  newX = -50 + ((event.clientX / window.innerWidth) - 0.5) * 30;
+  newY = 100 + ((event.clientY / window.innerWidth) - 0.5) * 30;
+
+  camera.position.x = newX / 100;
+  camera.position.y = newY / 100;
+  camera.lookAt(new THREE.Vector3(0, 0, 0));
+  camera.updateMatrix();
 }
 
 var toggler = document.getElementsByClassName("caret");
@@ -83,7 +107,9 @@ $(function () {
     scrollbars: false,
     easing: "easeOutExpo",
     scrollSpeed: 1100,
+    setHeights: true,
     interstitialSection: ".header,.footer",
+    standardScrollElements: ".correspondance",
     before: function (i, panels) {
       var ref = panels[i].attr("data-section-title");
 
@@ -93,17 +119,13 @@ $(function () {
       $(".sidenav").find("a[href=\"#" + ref + "\"]").parents().addClass("active");
       $(".sidenav").find("a[href=\"#" + ref + "\"]").parents().children(0).addClass("caret-down");
 
-      if (ref == "overview") { //when going to overview
-        $("#3dmodel").removeClass("hideImage");
-        $("#3dmodel").addClass("animateImage");
+      if (ref == "1") { //when going to overview
 
         document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)";
         document.addEventListener('mousemove', onDocumentMouseMove, false);
       } else {
         document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, 1% 0%, 1% 100%, 0% 100%)";
         document.removeEventListener('mousemove', onDocumentMouseMove, false);
-        $("#3dmodel").removeClass("animateImage");
-        $("#3dmodel").addClass("hideImage");
 
         $target = panels[i];
       }
@@ -139,13 +161,7 @@ function getScrollifySectionIndex(anchor) {
 };
 
 $(document).ready(function () {
-  document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)";
-
-  try {
-    renderer.setSize($('#container').width(), $('#container').height());
-    camera.aspect = $('#container').width() / $('#container').height();
-    camera.updateProjectionMatrix();
-  } catch (error) {
-    console.error(error);
-  }
+  renderer.setSize($('#container').width(), $('#container').height());
+  camera.aspect = $('#container').width() / $('#container').height();
+  camera.updateProjectionMatrix();
 });

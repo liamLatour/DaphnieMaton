@@ -13,6 +13,10 @@ html {
   background-color: #555555;
 }
 
+::-webkit-scrollbar {
+  display: none;
+}
+
 .current {
   background-color: #2da37c;
   color: #ffffff !important;
@@ -68,6 +72,7 @@ html {
   background-color: #2da37c;
   padding: 20px;
   margin: 0;
+  margin-bottom: 90px;
   font-size: 40px;
   text-transform: capitalize;
   width: 60%;
@@ -108,7 +113,7 @@ html {
 
 #main > div img {
   margin: 40px;
-  margin-top: 80px;
+  margin-top: 0px;
   width: calc(100% - 80px);
 }
 
@@ -116,6 +121,56 @@ html {
   background: transparent;
   width: 100%;
   height: 100%;
+}
+
+#main > div .hint {
+  height: auto;
+  width: auto;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-top: 80px;
+  margin-bottom: 10px;
+  border-radius: 31px;
+  padding: 10px;
+  background-color: #92148c00;
+  -webkit-transition: margin-bottom .5s, background-color 1s;
+  transition: margin-bottom .5s, background-color 1s;
+}
+
+#main > div .hint p {
+  display: inline;
+  text-align: justify;
+  font-size: 25px;
+  margin-left: 20px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  -webkit-clip-path: polygon(0% 0%, 0% 100%, 0% 100%, 0% 0%);
+          clip-path: polygon(0% 0%, 0% 100%, 0% 100%, 0% 0%);
+  -webkit-transition: -webkit-clip-path 1s;
+  transition: -webkit-clip-path 1s;
+  transition: clip-path 1s;
+  transition: clip-path 1s, -webkit-clip-path 1s;
+}
+
+#main > div .hint span {
+  display: inline-block;
+  background: #2826b3;
+  font-size: 30px;
+  border-radius: 30px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+#main > div .hint:hover {
+  background-color: #92148c;
+  margin-bottom: 50px;
+}
+
+#main > div .hint:hover p {
+  -webkit-clip-path: polygon(0% 0%, 0% 200%, 200% 200%, 200% 0%);
+          clip-path: polygon(0% 0%, 0% 200%, 200% 200%, 200% 0%);
 }
 
 .sidenav {
@@ -154,7 +209,10 @@ html {
 }
 
 .sidenav ul span {
+  display: block;
   cursor: pointer;
+  padding: 6px 8px 6px 16px;
+  width: auto;
   -webkit-user-select: none;
      -moz-user-select: none;
       -ms-user-select: none;
@@ -206,64 +264,93 @@ html {
   display: block;
 }
 
+.correspondance {
+  display: block;
+  height: calc(100vh - 300px) !important;
+  overflow-y: scroll;
+  overflow-y: -moz-scrollbars-none;
+  width: 70vw !important;
+  margin-left: 5vw;
+}
+
 table {
   border-collapse: collapse;
-  width: 90%;
-  margin-left: 5%;
-  margin-top: 100px;
+  width: 100%;
   font-size: 25px;
 }
 
 table th {
-  /*background-color: rgb(245, 56, 220);*/
   color: white;
   text-align: center;
   padding: 8px;
 }
 
-table tr:first-child {
-  background-size: 400%;
-  background: -webkit-gradient(linear, left top, right top, from(#cc09c2), to(#0e0bd8));
-  background: linear-gradient(to right, #cc09c2, #0e0bd8);
+table th:first-child {
+  width: 60%;
 }
 
-table tr:nth-child(even) {
+table th:not(:first-child):not(:last-child) {
+  width: 20%;
+}
+
+table th:last-child {
+  width: 20%;
+}
+
+table tbody {
+  overflow: auto;
+  height: 200px;
+}
+
+table tbody tr {
   background-color: #383654;
 }
 
-table tr:nth-child(odd) {
+table tbody tr:nth-child(odd) {
   background-color: #2b2a3c;
 }
 
-table tr td:first-child {
+table tbody tr td {
+  text-transform: capitalize;
+}
+
+table tbody tr td:first-child {
   text-align: left;
   padding: 8px;
   padding-left: 50px;
+  width: 60%;
 }
 
-table tr td:not(:first-child):not(:last-child) {
+table tbody tr td:not(:first-child):not(:last-child) {
   text-align: center;
   padding: 8px;
+  width: 20%;
 }
 
-table tr td:last-child {
+table tbody tr td:last-child {
   text-align: right;
   padding: 8px;
   padding-right: 50px;
 }
 
-table tr td:last-child a {
+table tbody tr td:last-child a {
   text-decoration: none;
   color: #3becb1;
   font-weight: 600;
 }
 
-table tr td:last-child a:visited {
+table tbody tr td:last-child a:visited {
   color: #37b188;
 }
 
-table tr td:last-child a:hover {
+table tbody tr td:last-child a:hover {
   color: #37d6a1;
+}
+
+table thead tr {
+  background-size: 400%;
+  background: -webkit-gradient(linear, left top, right top, from(#cc09c2), to(#0e0bd8));
+  background: linear-gradient(to right, #cc09c2, #0e0bd8);
 }
 
 .footer {

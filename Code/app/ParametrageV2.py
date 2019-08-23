@@ -103,7 +103,7 @@ class DaphnieMatonApp(App):
             'pathHighlight': "#82d883"})
         config.setdefaults('hidden', {
             'action': '{}',
-            'version': '0.2-beta'})
+            'version': '1.0'})
 
     def build_settings(self, settings):
         settings.register_type('buttons', SpecialSettings.SettingButtons)

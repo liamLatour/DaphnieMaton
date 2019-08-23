@@ -30,6 +30,10 @@ html {
     background-color: rgb(85, 85, 85);
 }
 
+::-webkit-scrollbar {
+    display: none;
+}
+
 .current {
     background-color: $mainColor;
     color: #ffffff !important;
@@ -79,6 +83,7 @@ html {
             background-color: $mainColor;
             padding: 20px;
             margin: 0;
+            margin-bottom: 90px;
             font-size: 40px;
             text-transform: capitalize;
             width: 60%;
@@ -118,7 +123,7 @@ html {
 
         img {
             margin: 40px;
-            margin-top: 80px;
+            margin-top: 0px;
             width: calc(100% - 80px);
         }
 
@@ -126,6 +131,63 @@ html {
             background: transparent;
             width: 100%;
             height: 100%;
+        }
+
+        .hint {
+            height: auto;
+            width: auto;
+
+            margin: {
+                left: 10px;
+                right: 10px;
+                top: 80px;
+                bottom: 10px;
+            }
+
+            border-radius: 31px;
+            padding: 10px;
+
+            background-color: #92148c00;
+            transition: margin-bottom .5s,
+            background-color 1s;
+
+            p {
+                display: inline;
+                text-align: justify;
+                font-size: 25px;
+
+                margin: {
+                    left: 20px;
+                    top: 0px;
+                    bottom: 0px;
+                }
+
+                clip-path: polygon(0% 0%, 0% 100%, 0% 100%, 0% 0%);
+                transition: clip-path 1s;
+            }
+
+            span {
+                display: inline-block;
+                background: #2826b3;
+                font-size: 30px;
+                border-radius: 30px;
+
+                padding: {
+                    left: 20px;
+                    right: 20px;
+                    top: 5px;
+                    bottom: 5px;
+                }
+            }
+
+            &:hover {
+                background-color: #92148c;
+                margin-bottom: 50px;
+
+                p {
+                    clip-path: polygon(0% 0%, 0% 200%, 200% 200%, 200% 0%);
+                }
+            }
         }
     }
 }
@@ -165,7 +227,10 @@ html {
         }
 
         span {
+            display: block;
             cursor: pointer;
+            padding: 6px 8px 6px 16px;
+            width: auto;
             user-select: none;
             font-weight: normal;
 
@@ -217,68 +282,96 @@ html {
     display: block;
 }
 
+.correspondance {
+    display: block;
+    height: calc(100vh - 300px) !important;
+    overflow-y: scroll;
+    overflow-y: -moz-scrollbars-none;
+    width: 70vw !important;
+    margin-left: 5vw;
+}
+
 table {
     border-collapse: collapse;
-    width: 90%;
-    margin-left: 5%;
-    margin-top: 100px;
+    width: 100%;
     font-size: 25px;
 
     th {
-        /*background-color: rgb(245, 56, 220);*/
         color: white;
         text-align: center;
         padding: 8px;
+
+        &:first-child {
+            width: 60%;
+        }
+
+        &:not(:first-child):not(:last-child) {
+            width: 20%;
+        }
+
+        &:last-child {
+            width: 20%;
+        }
     }
 
-    tr {
-        &:first-child {
-            background-size: 400%;
-            background: linear-gradient(to right, $gradientStart, $gradientEnd);
-        }
+    tbody {
+        tr {
+            background-color: hsl(244, 22%, 27%);
 
-        &:nth-child(even) {
-            background-color: hsl(244, 22%, 27%)
-        }
-
-        &:nth-child(odd) {
-            background-color: hsl(243, 17%, 20%)
-        }
-
-        td {
-            &:first-child {
-                text-align: left;
-                padding: 8px;
-                padding-left: 50px;
+            &:nth-child(odd) {
+                background-color: hsl(243, 17%, 20%);
             }
 
-            &:not(:first-child):not(:last-child) {
-                text-align: center;
-                padding: 8px;
-            }
+            td {
+                text-transform: capitalize;
 
-            &:last-child {
-                text-align: right;
-                padding: 8px;
-                padding-right: 50px;
+                &:first-child {
+                    text-align: left;
+                    padding: 8px;
+                    padding-left: 50px;
+                    width: 60%;
+                }
 
-                a {
-                    text-decoration: none;
-                    color: rgb(59, 236, 177);
-                    font-weight: 600;
+                &:not(:first-child):not(:last-child) {
+                    text-align: center;
+                    padding: 8px;
+                    width: 20%;
+                }
 
-                    &:visited {
-                        color: rgb(55, 177, 136);
-                    }
+                &:last-child {
+                    text-align: right;
+                    padding: 8px;
+                    padding-right: 50px;
 
-                    &:hover {
-                        color: rgb(55, 214, 161);
+                    a {
+                        text-decoration: none;
+                        color: rgb(59, 236, 177);
+                        font-weight: 600;
+
+                        &:visited {
+                            color: rgb(55, 177, 136);
+                        }
+
+                        &:hover {
+                            color: rgb(55, 214, 161);
+                        }
                     }
                 }
             }
         }
+
+        overflow: auto;
+        height: 200px;
+    }
+
+    thead {
+        tr {
+            background-size: 400%;
+            background: linear-gradient(to right, $gradientStart, $gradientEnd);
+        }
     }
 }
+
 
 .footer {
     padding: 0;
