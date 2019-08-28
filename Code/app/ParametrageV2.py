@@ -1,17 +1,19 @@
+import configparser
 import ctypes
+import os
 import traceback
 from io import open as openFile
-import os
+
 import keyboard
 from kivy.app import App
 from kivy.config import Config
 from kivy.lang import Builder
 from kivy.uix.settings import SettingsWithSidebar
 
+import libraries.classes as SpecialSettings
+import libraries.daphnieMaton as daphnieMaton
 from libraries.localization import (change_language_to,
                                     translation_to_language_code)
-import libraries.daphnieMaton as daphnieMaton
-import libraries.classes as SpecialSettings
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 Config.set('kivy', 'window_icon', 'assets/logoDark.ico')
@@ -52,7 +54,7 @@ class DaphnieMatonApp(App):
             ".\\settings\\config.json": 'General',
             ".\\settings\\shortcuts.json": 'Shortcuts',
             ".\\settings\\colors.json": 'Aspect',
-            ".\\settings\\hidden.json": 'hidden',
+            ".\\settings\\hidden.json": 'Hidden',
         }
 
         for short in self.shortcuts:
@@ -75,7 +77,8 @@ class DaphnieMatonApp(App):
             'yDist': 100,
             'speed': 7,
             'autoSave': 5,
-            'language': "English"})
+            'language': "English",
+            'hidden': False})
         config.setdefaults('shortcuts', {
             'save': 'ctrl+s',
             'saveas': 'ctrl+shift+s',
@@ -86,6 +89,8 @@ class DaphnieMatonApp(App):
             'redo': 'ctrl+y',
             'clear': 'ctrl+x',
             'suppr': 'suppr',
+            'corner': 'shift',
+            'angle': 'ctrl',
 
             'copy': 'ctrl+c',
             'moveLeft': 'left',
@@ -96,22 +101,40 @@ class DaphnieMatonApp(App):
             'background': '#373737ff',
             'pipeColor': '#72f7ff',
             'imagePath': ".\\assets\\topDownView.png",
+            'lineWidth': 5,
+            'nodeDiam': 20,
             'nodeColor': "#e0e028",
             'nodeHighlight': "#d32828",
             'actionNode': "#59ff00",
             'pathColor': "#72f7ff",
-            'pathHighlight': "#82d883"})
+            'pathHighlight': "#82d883",
+            'switchDiam': 30})
         config.setdefaults('hidden', {
             'action': '{}',
-            'version': '1.0'})
+            'version': '1.1',
+            'starting': 'Pipe',
+            'imWidth': 1.38,
+            'imHeight': 1.4,
+            'acWidth': 1.144,
+            'acHeight': 1.1,
+            'origin': '(17, 17.2)'})
 
     def build_settings(self, settings):
         settings.register_type('buttons', SpecialSettings.SettingButtons)
         settings.register_type('color', SpecialSettings.SettingColorPicker)
         settings.register_type('shortcut', SpecialSettings.SettingShortcut)
 
+        show = False
+        if os.path.exists('daphniematon.ini'):
+            config = configparser.ConfigParser()
+            config.read('daphniematon.ini')
+            try:
+                show = bool(int(config['general']['hidden']))
+            except:
+                show = config['general']['hidden'] == True
+        
         for files in self.configFiles:
-            if self.configFiles[files] == "hidden":
+            if self.configFiles[files] == "Hidden" and not show:
                 continue
             f = openFile(files, "r", encoding='utf8')
             if f.mode == 'r':

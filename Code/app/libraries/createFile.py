@@ -1,12 +1,13 @@
 import numpy as np
 
 
-def generateFile(waypoints, photos, ratio, action):
+def generateFile(waypoints, photos, ratio, loop, action):
     waypoints = list(np.rint(np.multiply(waypoints, ratio)).tolist())
 
     top = "#include <AccelStepper.h>\n \
     #include <"+str(action)+">\n \
     #define LED_PIN 13\n \
+    #define LOOP "+str(loop).replace("F", "f")+"\n \
     AccelStepper Xaxis(AccelStepper::DRIVER, 60, 61);\n \
     AccelStepper Y1axis(AccelStepper::DRIVER, 54, 55);\n \
     AccelStepper Y2axis(AccelStepper::DRIVER, 46, 48);\n \
@@ -23,7 +24,9 @@ def generateFile(waypoints, photos, ratio, action):
     const int waypoints["+str(len(waypoints))+"][2] = "+str(waypoints).replace("[", "{").replace("]", "}").replace(".0", "")+";\n \
     const bool photo[] = "+str(photos).replace("[", "{").replace("]", "}").replace("F", "f").replace("T", "t")+";\n \
     \n \
-    bool hasStarted = false;\n\n"  # Min, Max
+    bool hasStarted = false;\n \
+    int increment = 1;\n\n"
+
 
     setup = "void setup(){\n \
         Xaxis.setEnablePin(38);\n \
@@ -76,7 +79,10 @@ def generateFile(waypoints, photos, ratio, action):
                         //Gotta take them\n \
                         action();\n \
                     }\n \
-                    currentWaypoint = (currentWaypoint+1)%waypointNb;\n \
+                    if(LOOP && (currentWaypoint+increment+1)%(waypointNb+1) == 0){\n \
+                        increment = -increment;\n \
+                    }\n \
+                    currentWaypoint = (currentWaypoint+increment)%waypointNb;\n \
                 }\n \
             }\n \
             else{\n \

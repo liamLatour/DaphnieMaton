@@ -1,40 +1,10 @@
 [
    {
-      "type":"title",
-      "title": "General"
-   },
-   {
-      "type":"options",
-      "title":"Language",
-      "desc":"Choose the app language",
-      "section":"general",
-      "key":"language",
-      "disabled": "True",
-      "options":[
-         "Français",
-         "English"
-      ]
-   },
-   {
       "type":"numeric",
       "title":"Y's distance",
       "desc":"Distance in cm between the two switchs of the Y axis",
       "section":"general",
       "key":"yDist"
-   },
-   {
-      "type":"numeric",
-      "title":"Speed of motors",
-      "desc":"The average speed of motors in m/s",
-      "section":"general",
-      "key":"speed"
-   },
-   {
-      "type":"numeric",
-      "title":"Step to cm",
-      "desc":"Number of steps in one cm",
-      "section":"general",
-      "key":"stepToCm"
    },
    {
       "type":"numeric",
@@ -68,5 +38,30 @@
          "title":"Calibrate",
          "id":"cal"
       }]
+   },
+   {
+      "type": "title",
+      "title": "Advanced settings"
+   },
+   {
+      "type":"numeric",
+      "title":"Speed of motors",
+      "desc":"The average speed of motors in m/s",
+      "section":"general",
+      "key":"speed"
+   },
+   {
+      "type":"numeric",
+      "title":"Step to cm",
+      "desc":"Number of steps in one cm",
+      "section":"general",
+      "key":"stepToCm"
+   },
+   {
+       "type": "bool",
+       "title": "Show hidden",
+       "desc": "If true shows the 'hidden' settings",
+       "section": "general",
+       "key": "hidden"
    }
 ]

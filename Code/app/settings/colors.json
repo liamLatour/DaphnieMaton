@@ -34,6 +34,20 @@
       "title": "Free Path"
    },
    {
+      "type":"numeric",
+      "title":"Line width",
+      "desc":"Width of the path lines",
+      "section":"colors",
+      "key":"lineWidth"
+   },
+   {
+      "type":"numeric",
+      "title":"Node diametre",
+      "desc":"Diametre of the path nodes",
+      "section":"colors",
+      "key":"nodeDiam"
+   },
+   {
       "type":"color",
       "title":"Node color",
       "desc":"Color of the nodes",
@@ -67,5 +81,16 @@
       "desc":"Color of the highlighted lines",
       "section":"colors",
       "key":"pathHighlight"
+   },
+   {
+      "type":"title",
+      "title": "Direct mode"
+   },
+   {
+      "type":"numeric",
+      "title":"Switch diametre",
+      "desc":"Diametre of the switches",
+      "section":"colors",
+      "key":"switchDiam"
    }
 ]

@@ -1,7 +1,4 @@
-[{
-      "type": "title",
-      "title": "Hidden"
-   },
+[
    {
       "type": "string",
       "title": "Actions",
@@ -11,9 +8,51 @@
    },
    {
       "type": "string",
-      "title": "version",
+      "title": "Version",
       "desc": "The current version",
       "section": "hidden",
       "key": "version"
+   },
+   {
+      "type": "string",
+      "title": "Starting mode",
+      "desc": "States which mode it opens on",
+      "section": "hidden",
+      "key": "starting"
+   },
+   {
+      "type":"numeric",
+      "title":"Image width",
+      "desc":"Actual width of the image in meters",
+      "section":"hidden",
+      "key":"imWidth"
+   },
+   {
+      "type":"numeric",
+      "title":"Image height",
+      "desc":"Actual height of the image in meters",
+      "section":"hidden",
+      "key":"imHeight"
+   },
+   {
+      "type":"numeric",
+      "title":"Actual width",
+      "desc":"Width of the system in meters",
+      "section":"hidden",
+      "key":"acWidth"
+   },
+   {
+      "type":"numeric",
+      "title":"Actual height",
+      "desc":"Height of the system in meters",
+      "section":"hidden",
+      "key":"acHeight"
+   },
+   {
+      "type": "string",
+      "title": "Image origin",
+      "desc": "Tuple indicating the origin of the image",
+      "section": "hidden",
+      "key": "origin"
    }
 ]

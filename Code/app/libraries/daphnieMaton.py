@@ -4,6 +4,7 @@ import math
 import os
 import re
 import threading
+from ast import literal_eval as make_tuple
 from os.path import join as osJoinPath
 
 import keyboard
@@ -21,8 +22,8 @@ from kivy.uix.popup import Popup
 from scipy.spatial import distance
 
 from .arduinoMega import Arduino
-from .classes import (
-    ActionChoosing, Input, LoadDialog, MenuDropDown, SaveDialog)
+from .classes import (ActionChoosing, Input, LoadDialog, MenuDropDown,
+                      SaveDialog)
 from .config import Config
 from .createFile import generateFile
 from .helpMsg import helpMsg
@@ -36,7 +37,7 @@ class Parametrage(BoxLayout):
         super(Parametrage, self).__init__(*args, **kwargs)
         self.settings = App.get_running_app().config
         self.font = ".\\assets\\seguisym.ttf"
-        self.mode = "Pipe"  # Stores the current mode
+        self.mode = self.settings.get('hidden', 'starting')  # Stores the current mode
         self.portDropDown = MenuDropDown()
         self.fileDropDown = MenuDropDown()
         self.undoRedo = UndoRedo()
@@ -46,11 +47,11 @@ class Parametrage(BoxLayout):
             "Current":
             {"isDirectProgram": False, "path": ".\\currentFile\\currentFile.ino"}})
 
-        self.imageWidth = 1.4  # in meter
-        self.imageHeight = 1.4  # in meter
-        self.actualWidth = 1.144  # in meter
-        self.actualHeight = 1.1  # in meter
-        self.imageOrigin = (17, 17.2)  # in cm
+        self.imageWidth = float(self.settings.get('hidden', 'imWidth'))  # in meter
+        self.imageHeight = float(self.settings.get('hidden', 'imHeight'))  # in meter
+        self.actualWidth = float(self.settings.get('hidden', 'acWidth'))  # in meter
+        self.actualHeight = float(self.settings.get('hidden', 'acHeight'))  # in meter
+        self.imageOrigin = make_tuple(self.settings.get('hidden', 'origin'))  # in cm
         self.popup = -1
 
         # Search for arduino installation
@@ -62,8 +63,8 @@ class Parametrage(BoxLayout):
         self.gaps = []
 
         # Specific to the mode 'Free'
-        self.lineWidth = 5
-        self.diametre = 20
+        self.lineWidth = float(self.settings.get('colors', 'lineWidth'))
+        self.diametre = float(self.settings.get('colors', 'nodeDiam'))
         self.isDragging = -1
         self.lastTouched = -1
         self.zoomFactor = 1
@@ -71,12 +72,12 @@ class Parametrage(BoxLayout):
         self.corners = [(88, 82), (88, -72), (-75, 82), (-75, -72)]  # Right-Top, Right-Down, Left-Top, Left-Down
 
         # Specific to the mode 'direct'
-        self.switchDiameter = 30.
+        self.switchDiameter = float(self.settings.get('colors', 'switchDiam'))
 
         Clock.schedule_once(self.binding)
         Clock.schedule_interval(lambda a: self.save(-1, -1), int(self.settings.get('general', 'autoSave')*60))
 
-        keyboard.on_release_key('shift', self.update_rect)
+        keyboard.on_release_key(self.settings.get('shortcuts', 'corner'), self.update_rect)
 
     def binding(self, *args):
         self.ids.pipeDrawing.bind(size=self.update_rect, pos=self.update_rect)
@@ -101,6 +102,13 @@ class Parametrage(BoxLayout):
             self.pixelToCM
         )
         self.updateColors(refresh=False)
+
+        self.freePic = Rectangle(source=self.settings.get('colors', 'imagePath'), pos=(0, 0), size=(100, 100))
+        self.ids.libreDrawing.canvas.before.add(self.freePic)
+
+        self.pipePic = Rectangle(source=self.settings.get('colors', 'imagePath'), pos=(0, 0), size=(100, 100))
+        self.ids.pipeDrawing.canvas.before.add(self.pipePic)
+
         self.newFile(True)
 
         checkUpdates(self.settings.get('hidden', 'version'), self.easyPopup)
@@ -235,15 +243,15 @@ class Parametrage(BoxLayout):
         trace = self.config.currentConfig["trace"]["value"]
         pictures = self.config.currentConfig["photos"]["value"]
         actionNodes = self.config.currentConfig["actionNodes"]["value"]
+        loop = self.config.currentConfig["loop"]["value"]
 
         if self.mode == "Pipe":
             trace, pictures, actionNodes = self.config.generatePathFromPipe()
+            loop = True
 
         unraveld = self.config.unravelPath(trace, pictures, actionNodes)
 
-        print(unraveld)
-
-        genFile = generateFile(unraveld[0], unraveld[1], float(self.settings.get('general', 'stepToCm')), str(osJoinPath(path, filename)))
+        genFile = generateFile(unraveld[0], unraveld[1], float(self.settings.get('general', 'stepToCm')), loop, str(osJoinPath(path, filename)))
         f = open(".\\currentFile\\currentFile.ino", "w+")
         f.write(genFile)
         f.close()
@@ -266,7 +274,7 @@ class Parametrage(BoxLayout):
 
         if self.mode == "Pipe":
             middle = (self.ids.pipeDrawing.center_x, self.ids.pipeDrawing.center_y)
-            self.ids.pipeDrawing.canvas.before.clear()
+            self.ids.pipeDrawing.canvas.clear()
             self.ids.pipeBack.canvas.before.clear()
 
             self.config.read(self.gaps)
@@ -282,12 +290,12 @@ class Parametrage(BoxLayout):
                 Color(self.background[0], self.background[1], self.background[2], self.background[3])
                 Rectangle(pos=self.pos, size=(self.size[0], self.ids.pipeSplitter.size[1]))
 
-            with self.ids.pipeDrawing.canvas.before:
-                width = min(self.ids.pipeSplitter.size[0]-50, self.ids.pipeSplitter.size[1]-50)
-                height = self.config.currentConfig["lenPipe"]["value"]/self.imageHeight*width
+            width = min(self.ids.pipeSplitter.size[0]-50, self.ids.pipeSplitter.size[1]-50)
+            self.pipePic.pos = (middle[0]-width/2, middle[1]-width/2)
+            self.pipePic.size = (width, width)
 
-                Color(1, 1, 1, 1)
-                Rectangle(source=self.settings.get('colors', 'imagePath'), pos=(middle[0]-width/2, middle[1]-width/2), size=(width, width))
+            with self.ids.pipeDrawing.canvas:
+                height = self.config.currentConfig["lenPipe"]["value"]/self.imageHeight*width
 
                 time, dist, every, number = self.config.pathStats(False, self.settings.get('general', 'speed'))
                 text = _("Total time") + ": " + str(time) + " sec" + \
@@ -333,7 +341,7 @@ class Parametrage(BoxLayout):
             self.ids.libreSplitter.max_size = self.size[0] - 400
             self.zoomClamp()
             middle = (self.ids.libreDrawing.center_x, self.ids.libreDrawing.center_y)
-            self.ids.libreDrawing.canvas.before.clear()
+            self.ids.libreDrawing.canvas.clear()
 
             self.ids.libreSplitter.min_size = int(round(self.size[0]/2))
             zoomedTrace = np.multiply(self.config.currentConfig["trace"]["value"], self.zoomFactor).tolist()
@@ -346,12 +354,13 @@ class Parametrage(BoxLayout):
                 Color(self.background[0], self.background[1], self.background[2], self.background[3])
                 Rectangle(pos=self.pos, size=(self.size[0], self.ids.libreSplitter.size[1]))
 
-            with self.ids.libreDrawing.canvas.before:
-                width = 200 * self.zoomFactor
-                Rectangle(source=self.settings.get('colors', 'imagePath'), pos=(middle[0]-width/2, middle[1]-width/2), size=(width, width))
-                dist = 0
+            width = 200 * self.zoomFactor
+            self.freePic.pos = (middle[0]-width/2, middle[1]-width/2)
+            self.freePic.size = (width, width)
 
-                if keyboard.is_pressed("shift"):
+            with self.ids.libreDrawing.canvas:
+                dist = 0
+                if keyboard.is_pressed(self.settings.get('shortcuts', 'corner')):
                     for corner in self.corners:
                         Color(0, 1, 0, 0.8)
                         Ellipse(pos=(corner[0]*self.zoomFactor+middle[0]-self.diametre/2, corner[1]*self.zoomFactor+middle[1]-self.diametre/2), size=(self.diametre, self.diametre))
@@ -569,7 +578,7 @@ class Parametrage(BoxLayout):
             thisY = (touch.y-self.ids.libreDrawing.center_y)/self.zoomFactor
             newPosition = (thisX, thisY)
 
-            if keyboard.is_pressed("ctrl") and len(self.config.currentConfig["trace"]["value"]) > 0:  # To clamp relative to last one
+            if keyboard.is_pressed(self.settings.get('shortcuts', 'angle')) and len(self.config.currentConfig["trace"]["value"]) > 0:  # To clamp relative to last one
                 fromWhich = self.isDragging-1 % len(self.config.currentConfig["trace"]["value"])
                 previousPoint = (self.config.currentConfig["trace"]["value"][fromWhich][0], self.config.currentConfig["trace"]["value"][fromWhich][1])
                 dist = distance.euclidean(previousPoint, (thisX, thisY))
@@ -577,7 +586,7 @@ class Parametrage(BoxLayout):
 
                 newPosition = (math.cos(angle)*dist+previousPoint[0], math.sin(angle)*dist + previousPoint[1])
 
-            elif keyboard.is_pressed("shift"):  # To clamp to the corners (origin, top-right, ...)
+            elif keyboard.is_pressed(self.settings.get('shortcuts', 'corner')):  # To clamp to the corners (origin, top-right, ...)
                 dist1 = distance.euclidean(self.corners[0], (thisX, thisY))
                 dist2 = distance.euclidean(self.corners[1], (thisX, thisY))
                 dist3 = distance.euclidean(self.corners[2], (thisX, thisY))
@@ -667,14 +676,12 @@ class Parametrage(BoxLayout):
 
         if len(position) == 2:
             if self.lastTouched == -1:
-                self.config.currentConfig["trace"]["value"].append(float(position[0])*ratioX + self.corners[3][0])
-                self.config.currentConfig["trace"]["value"].append(float(position[1])*ratioY + self.corners[3][1])
+                self.config.currentConfig["trace"]["value"].append((float(position[0])*ratioX + self.corners[3][0], float(position[1])*ratioY + self.corners[3][1]))
                 self.config.currentConfig["photos"]["value"].append(False)
                 self.config.currentConfig["actionNodes"]["value"].append(False)
                 self.lastTouched = len(self.config.currentConfig["photos"]["value"])-1
             else:
-                self.config.currentConfig["trace"]["value"][self.lastTouched*2] = float(position[0])*ratioX + self.corners[3][0]
-                self.config.currentConfig["trace"]["value"][self.lastTouched*2+1] = float(position[1])*ratioY + self.corners[3][1]
+                self.config.currentConfig["trace"]["value"][self.lastTouched] = (float(position[0])*ratioX + self.corners[3][0], float(position[1])*ratioY + self.corners[3][1])
 
             self.update_rect()
 

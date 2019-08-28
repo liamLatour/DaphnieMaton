@@ -64,6 +64,20 @@
       "key":"suppr"
    },
    {
+      "type":"shortcut",
+      "title":"Clip node to corners",
+      "desc":"Moves the dragged node to the nearest corner",
+      "section":"shortcuts",
+      "key":"corner"
+   },
+   {
+      "type":"shortcut",
+      "title":"Clip node angle",
+      "desc":"Makes the dragged node follow a specific angle (90°, 45°)",
+      "section":"shortcuts",
+      "key":"angle"
+   },
+   {
       "type":"title",
       "title": "Direct control"
    },
