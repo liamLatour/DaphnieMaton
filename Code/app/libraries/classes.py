@@ -87,6 +87,10 @@ class MenuDropDown(ActionDropDown):
     pass
 
 
+class MyLabel(Label):
+    pass
+
+
 class SettingButtons(SettingItem):
     def __init__(self, **kwargs):
         self.register_event_type('on_release')

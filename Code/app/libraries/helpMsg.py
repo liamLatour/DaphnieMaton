@@ -6,7 +6,7 @@ helpMsg = {
     4) If the system has been modified go to [b]Option[/b] and click on [b]Calibrate[/b]\n \
     5) You can now click on [b]Upload[/b]\n \
     6) Finally push the [b]start[/b] button on the system to start the acquisition\n\n\n \
-    Code available in [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]github[/u][/color][/ref] to report a bug or help to translate",
+    Code available at [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]github[/u][/color][/ref] to report a bug or help to translate",
 
     "Free": "[u]Usage in Free mode[/u]\n\n \
     1) To edit a path:\n \
@@ -21,7 +21,7 @@ helpMsg = {
     4) If the system has been modified go to [b]Option[/b] and click on [b]Calibrate[/b]\n \
     5) You can now click on [b]Upload[/b]\n \
     6) Finally push the [b]start[/b] button on the system to start the acquisition\n\n\n \
-    Code available in [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]github[/u][/color][/ref] to report a bug or help to translate",
+    Code available at [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]github[/u][/color][/ref] to report a bug or help to translate",
 
     "Direct": "[u]Usage in Direct mode[/u]\n\n \
     1) Connect the system to the [b]computer[/b]\n \
@@ -30,7 +30,7 @@ helpMsg = {
     4) Click on [b]Origin[/b] to position the system at 0 : 0\n \
     5) You can now click on the arrows to move the system\n \
     6) If you want to copy the current coordinates hold ctrl+c\n \
-    Code available in [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]github[/u][/color][/ref] to report a bug or help to translate",
+    Code available at [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]github[/u][/color][/ref] to report a bug or help to translate",
 
     "About": "[u]The DaphnieMaton[/u]\n\n \
     The DaphnieMaton is a two-axis system to film continously\n \
@@ -40,5 +40,5 @@ helpMsg = {
     autonomous systemes and can also be mounted with something\n \
     else than a camera.\n \
     [ref=doc][color=0083ff][u]Documentation[/u][/color][/ref]\n \
-    Code available in [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]github[/u][/color][/ref] to report a bug or help to translate"
+    Code available at [ref=https://github.com/liamLatour/DaphnieMaton][color=0083ff][u]github[/u][/color][/ref] to report a bug or help to translate"
 }

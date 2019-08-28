@@ -105,12 +105,7 @@ def checkUpdates(version, popup):
     if req == version:
         return
 
-    textPopup = "[u]A new version is available ![/u]\n\n \
-                    You can download it [ref=https://github.com/liamLatour/DaphnieMaton/releases][color=0083ff][u]here[/u][/color][/ref]"
+    textPopup = "                   [u]A new version is available ![/u]\n\n \
+                    You can download it [ref=https://github.com/liamLatour/DaphnieMaton/releases/latest][color=0083ff][u]here[/u][/color][/ref]"
 
-    popbox = BoxLayout()
-    poplb = Label(text=textPopup, markup=True)
-    poplb.bind(on_ref_press=urlOpen)
-    popbox.add_widget(poplb)
-
-    popup(_('New Version ' + req), popbox)
+    popup(_('New Version ' + req), textPopup)

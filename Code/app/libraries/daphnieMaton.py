@@ -23,7 +23,7 @@ from scipy.spatial import distance
 
 from .arduinoMega import Arduino
 from .classes import (ActionChoosing, Input, LoadDialog, MenuDropDown,
-                      SaveDialog)
+                      SaveDialog, MyLabel)
 from .config import Config
 from .createFile import generateFile
 from .helpMsg import helpMsg
@@ -728,7 +728,7 @@ class Parametrage(BoxLayout):
 
     def easyPopup(self, title, content, auto_dismiss=True):
         if isinstance(content, str):
-            content = Label(text=content, markup=True)
+            content = MyLabel(text=content)
             content.bind(on_ref_press=urlOpen)
 
         if self.popup != -1:
@@ -737,6 +737,5 @@ class Parametrage(BoxLayout):
         self.popup = Popup(title=title,
                            content=content,
                            size_hint=(0.7, 0.7),
-                           size=(400, 300),
                            auto_dismiss=auto_dismiss)
         self.popup.open()
