@@ -40,8 +40,24 @@ html {
     font-weight: bold;
 }
 
+.openbtn {
+    position: fixed;
+    top: 0;
+    left: 10px;
+    font-size: 42px;
+    margin-left: 0px;
+    text-decoration: none;
+    color: #afafaf;
+    transition: 0.2s;
+
+    &:hover {
+        color: #f6f6f6;
+    }
+}
+
 #main {
     margin-left: 350px;
+    transition: margin-left 0.5s;
     color: rgb(255, 255, 255);
 
     >div {
@@ -129,7 +145,6 @@ html {
 
         div {
             background: transparent;
-            width: 100%;
             height: 100%;
         }
 
@@ -140,7 +155,7 @@ html {
             margin: {
                 left: 10px;
                 right: 10px;
-                top: 80px;
+                top: 10px;
                 bottom: 10px;
             }
 
@@ -202,7 +217,8 @@ html {
     left: 0;
     background-color: #111;
     overflow-x: hidden;
-    padding-top: 20px;
+    transition: 0.5s;
+    padding-top: 60px;
     font-size: 25px;
     color: #afafaf;
 
@@ -210,6 +226,21 @@ html {
         margin: 0;
         padding: 0;
         font-size: 20px;
+    }
+
+    .closebtn {
+        position: absolute;
+        top: 0;
+        right: 25px;
+        font-size: 42px;
+        margin-left: 50px;
+        text-decoration: none;
+        color: #afafaf;
+        transition: 0.2s;
+
+        &:hover {
+            color: #f6f6f6;
+        }
     }
 
     ul {
@@ -220,9 +251,10 @@ html {
             text-decoration: none;
             display: block;
             color: #afafaf;
+            transition: 0.2s;
 
             &:hover {
-                color: #f1f1f1;
+                color: #f6f6f6;
             }
         }
 
@@ -233,6 +265,7 @@ html {
             width: auto;
             user-select: none;
             font-weight: normal;
+            transition: 0.2s;
 
             &::before {
                 content: "\25B6";
@@ -241,7 +274,7 @@ html {
             }
 
             &:hover {
-                color: #f1f1f1;
+                color: #f6f6f6;
             }
         }
     }
@@ -257,7 +290,7 @@ html {
 }
 
 /* On smaller screens, where height is less than 450px, change the style of the sidebar (less padding and a smaller font size) */
-@media screen and (max-height: 450px) {
+@media screen and (max-height: 730px) {
     .sidenav {
         padding-top: 15px;
     }
@@ -287,8 +320,11 @@ html {
     height: calc(100vh - 300px) !important;
     overflow-y: scroll;
     overflow-y: -moz-scrollbars-none;
-    width: 70vw !important;
-    margin-left: 5vw;
+}
+
+.tableContainer{
+    width: 70vw;
+    margin-left: 15vw;
 }
 
 table {

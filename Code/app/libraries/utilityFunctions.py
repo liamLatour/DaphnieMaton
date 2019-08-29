@@ -6,6 +6,7 @@ import sys
 import http.server
 import socketserver
 import threading
+import serial.tools.list_ports as ports
 
 sys.argv = sys.argv if __name__ == '__main__' else [sys.argv[0]]
 
@@ -49,11 +50,10 @@ def getPorts():
 
     returns: list of found devices on COM ports.
     """
-    arduinoPorts = os.popen(
-        "python -m serial.tools.list_ports").read().strip().replace(' ', '').split('\n')
-    if arduinoPorts == ['']:
-        return []
-    return arduinoPorts
+    ardPorts = []
+    for port in ports.comports():
+        ardPorts.append(port.device)
+    return ardPorts
 
 
 def urlOpen(instance, url):
@@ -99,8 +99,10 @@ def hitLine(lineA, lineB, point, lineWidth):
 
 
 def checkUpdates(version, popup):
-    url = 'https://raw.githubusercontent.com/liamLatour/DaphnieMaton/master/version'
-    req = requests.get(url).text.strip()
+    try:
+        req = requests.get('https://raw.githubusercontent.com/liamLatour/DaphnieMaton/master/version').text.strip()
+    except:
+        return
 
     if req == version:
         return

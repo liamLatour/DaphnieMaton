@@ -164,7 +164,7 @@ class Parametrage(BoxLayout):
         self.portDropDown.add_widget(Button(text=_("No port"), height=48, size_hint_y=None, on_release=lambda a: self.change_port(-1)))
         arduinoPorts = getPorts()
         for port in arduinoPorts:
-            self.portDropDown.add_widget(Button(text=port, height=48, size_hint_y=None, on_release=lambda a: self.change_port(port)))
+            self.portDropDown.add_widget(Button(text=port, height=48, size_hint_y=None, on_release=lambda a, port=port: self.change_port(port)))
 
     def change_port(self, port):
         self.arduino.port = port

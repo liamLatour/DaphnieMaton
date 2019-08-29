@@ -15,7 +15,10 @@
     <!--https://www.w3schools.com/bootstrap/bootstrap_scrollspy.asp-->
     <!--https://www.w3schools.com/howto/howto_js_sidenav.asp-->
 
-    <div class="sidenav noselect">
+    <a href="javascript:void(0)" class="openbtn" onclick="openNav()">&#9776;</a>
+
+    <div id="mySidenav" class="sidenav noselect">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()" id="closeNav">&times;</a>
         <ul>
             <a href="#1" class="current">Aperçu</a>
             <li><span class="caret">Mise en place</span>
@@ -55,8 +58,9 @@
 
     <div id="main">
         <div class="sections container" data-section-title="1">
-            <h1 id="mainTitle">DaphnieMaton</h1>
-            <div id="container"></div>
+            <div id="container">
+                <h1 id="mainTitle">DaphnieMaton</h1>
+            </div>
         </div>
         <div class="sections" data-section-title="2">
             <h2>Les Outils</h2>
@@ -143,55 +147,62 @@
                 <p>Pour garder les câbles en place il est conseillé d’enrouler les câbles autour des supports en bois
                 </p>
             </div>
-            <table style="width: 70vw; margin-left: 5vw;">
-                <thead>
-                    <tr>
-                        <th>Position de l'Interrupteur</th>
-                        <th>Couleurs</th>
-                        <th>Taille</th>
-                    </tr>
-                </thead>
-            </table>
-            <div class="correspondance" style="height: auto !important; overflow: hidden;">
+            <div class="tableContainer">
                 <table>
-                    <tbody>
+                    <thead>
                         <tr>
-                            <td>Pied C</td>
-                            <td class="cable3" gaine="#1c1c1c" boutUn="#ef0000" boutDeux="#000000" boutTrois="#0fc40f">
-                            </td>
-                            <td>Très long</td>
+                            <th>Position de l'Interrupteur</th>
+                            <th>Couleurs</th>
+                            <th>Taille</th>
                         </tr>
-                        <tr>
-                            <td>Côté opposé Arduino axe mobile</td>
-                            <td class="cable3" gaine="#c40000" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17">
-                            </td>
-                            <td>Très long</td>
-                        </tr>
-                        <tr>
-                            <td>Pied B</td>
-                            <td class="cable3" gaine="#001dff" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17">
-                            </td>
-                            <td>Long</td>
-                        </tr>
-                        <tr>
-                            <td>Côté Arduino axe mobile</td>
-                            <td class="cable3" gaine="#c40000" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17">
-                            </td>
-                            <td>Long</td>
-                        </tr>
-                        <tr>
-                            <td>Pied A</td>
-                            <td>/</td>
-                            <td>Sans rallonge</td>
-                        </tr>
-                        <tr>
-                            <td>Pied D</td>
-                            <td class="cable3" gaine="#1c1c1c" boutUn="#ef0000" boutDeux="#000000" boutTrois="#e7ea17">
-                            </td>
-                            <td>Moyen et flexible</td>
-                        </tr>
-                    </tbody>
+                    </thead>
                 </table>
+                <div class="correspondance" style="height: auto !important; overflow: hidden;">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>Pied C</td>
+                                <td class="cable3" gaine="#1c1c1c" boutUn="#ef0000" boutDeux="#000000"
+                                    boutTrois="#0fc40f">
+                                </td>
+                                <td>Très long</td>
+                            </tr>
+                            <tr>
+                                <td>Côté opposé Arduino axe mobile</td>
+                                <td class="cable3" gaine="#c40000" boutUn="#ef0000" boutDeux="#000000"
+                                    boutTrois="#e7ea17">
+                                </td>
+                                <td>Très long</td>
+                            </tr>
+                            <tr>
+                                <td>Pied B</td>
+                                <td class="cable3" gaine="#001dff" boutUn="#ef0000" boutDeux="#000000"
+                                    boutTrois="#e7ea17">
+                                </td>
+                                <td>Long</td>
+                            </tr>
+                            <tr>
+                                <td>Côté Arduino axe mobile</td>
+                                <td class="cable3" gaine="#c40000" boutUn="#ef0000" boutDeux="#000000"
+                                    boutTrois="#e7ea17">
+                                </td>
+                                <td>Long</td>
+                            </tr>
+                            <tr>
+                                <td>Pied A</td>
+                                <td>/</td>
+                                <td>Sans rallonge</td>
+                            </tr>
+                            <tr>
+                                <td>Pied D</td>
+                                <td class="cable3" gaine="#1c1c1c" boutUn="#ef0000" boutDeux="#000000"
+                                    boutTrois="#e7ea17">
+                                </td>
+                                <td>Moyen et flexible</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         <div class="sections" data-section-title="7">
@@ -200,37 +211,35 @@
                 <p>Pour garder les câbles en place il est conseillé d’enrouler les câbles autour des supports en bois
                 </p>
             </div>
-            <table style="width: 70vw; margin-left: 5vw;">
-                <thead>
-                    <tr>
-                        <th>Position du moteur</th>
-                        <th>Couleurs</th>
-                    </tr>
-                </thead>
-            </table>
-            <div class="correspondance" style="height: auto !important; overflow: hidden;">
+            <div class="tableContainer">
                 <table>
-                    <tbody>
+                    <thead>
                         <tr>
                             <th>Position du moteur</th>
                             <th>Couleurs</th>
                         </tr>
-                        <tr>
-                            <td>Pied D</td>
-                            <td class="cable4" gaine="#c40000" boutUn="#000000" boutDeux="#0fc40f" boutTrois="#ef0000"
-                                boutQuatre="#e7ea17"></td>
-                        </tr>
-                        <tr>
-                            <td>Axe mobile</td>
-                            <td class="cable4" gaine="#001dff" boutUn="#000000" boutDeux="#0fc40f" boutTrois="#ef0000"
-                                boutQuatre="#e7ea17"></td>
-                        </tr>
-                        <tr>
-                            <td>Pied A</td>
-                            <td>Sans rallonge</td>
-                        </tr>
-                    </tbody>
+                    </thead>
                 </table>
+                <div class="correspondance" style="height: auto !important; overflow: hidden;">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>Pied D</td>
+                                <td class="cable4" gaine="#c40000" boutUn="#000000" boutDeux="#0fc40f"
+                                    boutTrois="#ef0000" boutQuatre="#e7ea17"></td>
+                            </tr>
+                            <tr>
+                                <td>Axe mobile</td>
+                                <td class="cable4" gaine="#001dff" boutUn="#000000" boutDeux="#0fc40f"
+                                    boutTrois="#ef0000" boutQuatre="#e7ea17"></td>
+                            </tr>
+                            <tr>
+                                <td>Pied A</td>
+                                <td>Sans rallonge</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         <div class="sections" data-section-title="8">

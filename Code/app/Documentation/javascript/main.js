@@ -19,14 +19,7 @@ renderer.gammaOutput = true;
 
 $('#container').append(renderer.domElement);
 
-window.addEventListener('resize', () => {
-  renderer.setSize($('#container').width(), $('#container').height());
-  camera.aspect = $('#container').width() / $('#container').height();
-  camera.updateProjectionMatrix();
-  renderer.render(scene, camera);
-})
-
-var directionalLight = new THREE.DirectionalLight( 0xffffff, 6);
+var directionalLight = new THREE.DirectionalLight(0xffffff, 6);
 directionalLight.position.set(-3, 1, 2);
 var hemisphereLight = new THREE.HemisphereLight(0xafffff, 0x664343, 3);
 scene.add(hemisphereLight);
@@ -46,10 +39,10 @@ threeDmodel.load('3D model.glb', function (gltf) {
   scene.add(model);
 
 }, function (xhr) {
-  if ( xhr.lengthComputable ) {
+  if (xhr.lengthComputable) {
     var percentComplete = xhr.loaded / xhr.total * 100;
-    console.log( Math.round( percentComplete, 2 ) + '% downloaded' );
-    document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, "+Math.round( percentComplete, 2 )+"% 0%, "+Math.round( percentComplete, 2 )+"% 100%, 0% 100%)";
+    console.log(Math.round(percentComplete, 2) + '% downloaded');
+    document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, " + Math.round(percentComplete, 2) + "% 0%, " + Math.round(percentComplete, 2) + "% 100%, 0% 100%)";
   }
 }, function (error) {
   console.error(error);
@@ -97,6 +90,44 @@ for (i = 0; i < toggler.length; i++) {
 $(".sidenav a").on("click", function () {
   $.scrollify.move(getScrollifySectionIndex($(this).attr("href")));
 });
+
+window.addEventListener('resize', () => {
+  adjustNav();
+  renderer.setSize($('#container').width(), $('#container').height());
+  camera.aspect = $('#container').width() / $('#container').height();
+  camera.updateProjectionMatrix();
+  renderer.render(scene, camera);
+  camera.position.z = ((1920 - $('#container').width()) / 10 + 50) / 100;
+
+})
+
+function adjustNav() {
+  if (window.innerWidth > 1300) {
+    document.getElementById("mySidenav").style.width = "350px";
+    document.getElementById("main").style.marginLeft = "350px";
+    document.getElementById("mainTitle").style.left = "calc((100vw + 350px)/2)";
+    document.getElementById("closeNav").style.display = "none";
+    $(".tableContainer").css({"width": "80%", "margin-left": "10%" });
+  } else {
+    document.getElementById("mySidenav").style.width = "0px";
+    document.getElementById("main").style.marginLeft = "0px";
+    document.getElementById("mainTitle").style.left = "50vw";
+    document.getElementById("closeNav").style.display = "block";
+    $(".tableContainer").css({"width": "90vw", "margin-left": "5vw" });
+  }
+}
+adjustNav();
+
+function openNav() {
+  document.getElementById("mySidenav").style.width = "250px";
+  document.getElementById("main").style.marginLeft = "250px";
+  document.getElementById("mainTitle").style.left = "calc((100vw + 250px)/2)";
+}
+
+function closeNav() {
+  document.getElementById("mySidenav").style.width = "0";
+  document.getElementById("main").style.marginLeft = "0";
+}
 
 
 //https://projects.lukehaas.me/scrollify/#home
