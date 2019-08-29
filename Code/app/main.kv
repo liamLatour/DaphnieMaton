@@ -28,7 +28,16 @@
     size_hint_y: None
     size_hint_max_x: 200
     height: self.width
-    on_release: root.chose(path=root.path, filename=root.filename)
+    Button:
+        text: root.text
+        on_release: root.chose(path=root.path, filename=root.filename)
+    FloatLayout:
+        Button:
+            on_release: root.suppress(filename=root.filename)
+            pos: (root.width-self.width+10, root.height-self.height+10)
+            size_hint: (.2, .2)
+            background_color: (1.5, 0, 0, 1)
+            text: "X"
 
 <LoadDialog>:
     BoxLayout:
@@ -87,7 +96,6 @@
     text_size: self.size
     halign: 'left'
     valign: 'middle'
-
 
 <Parametrage>:
     id: parametrage

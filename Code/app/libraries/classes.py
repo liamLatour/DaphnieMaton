@@ -16,6 +16,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.colorpicker import ColorPicker
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.image import Image
 from kivy.uix.label import Label
@@ -46,6 +47,7 @@ class ActionChoosing(FloatLayout):
     newAction = ObjectProperty(None)
     cancel = ObjectProperty(None)
     chose = ObjectProperty(None)
+    suppress = ObjectProperty(None)
     actions = StringProperty("{}")
 
     def __init__(self, **kwargs):
@@ -67,16 +69,22 @@ class ActionChoosing(FloatLayout):
         actions = json.loads(self.actions)
         for action in actions:
             button = GridButton(text=str(action.replace(actions[action] + "\\", "").replace(
-                ".ino", "")), path=actions[action], filename=action, chose=self.chose)
+                ".ino", "")), path=actions[action], filename=action, chose=self.chose, suppress=self.supNupdate)
             grid.add_widget(button)
         self.scrollView.add_widget(grid)
         self.ids.box.add_widget(self.scrollView, index=1)
+    
+    def supNupdate(self, filename):
+        self.actions = json.dumps(self.suppress(filename))
+        self.updateGrid()
 
 
-class GridButton(Button):
+class GridButton(AnchorLayout):
+    text = StringProperty("")
     path = StringProperty("")
     filename = StringProperty("")
     chose = ObjectProperty(None)
+    suppress = ObjectProperty(None)
 
 
 class CustomGrid(GridLayout):

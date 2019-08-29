@@ -47,14 +47,12 @@ class DaphnieMatonApp(App):
             'moveUp': [lambda: self.app.arduino.sendSerial(bytes([3]), shortcut=True)],
             'moveDown': [lambda: self.app.arduino.sendSerial(bytes([4]), shortcut=True)]
         }
-
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
-
+        
         self.configFiles = {
-            ".\\settings\\config.json": 'General',
-            ".\\settings\\shortcuts.json": 'Shortcuts',
-            ".\\settings\\colors.json": 'Aspect',
-            ".\\settings\\hidden.json": 'Hidden',
+            "settings\\config.json": 'General',
+            "settings\\shortcuts.json": 'Shortcuts',
+            "settings\\colors.json": 'Aspect',
+            "settings\\hidden.json": 'Hidden',
         }
 
         for short in self.shortcuts:
@@ -125,18 +123,19 @@ class DaphnieMatonApp(App):
         settings.register_type('shortcut', SpecialSettings.SettingShortcut)
 
         show = False
-        if os.path.exists('daphniematon.ini'):
+        
+        if os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'daphniematon.ini')):
             config = configparser.ConfigParser()
-            config.read('daphniematon.ini')
+            config.read(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'daphniematon.ini'))
             try:
                 show = bool(int(config['general']['hidden']))
             except:
                 show = config['general']['hidden'] == True
-        
+
         for files in self.configFiles:
             if self.configFiles[files] == "Hidden" and not show:
                 continue
-            f = openFile(files, "r", encoding='utf8')
+            f = openFile(os.path.join(os.path.dirname(os.path.realpath(__file__)), files), "r", encoding='utf8')
             if f.mode == 'r':
                 contents = f.read()
                 settings.add_json_panel(

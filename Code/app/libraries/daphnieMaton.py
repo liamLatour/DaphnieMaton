@@ -43,9 +43,9 @@ class Parametrage(BoxLayout):
         self.undoRedo = UndoRedo()
         self.arduino = Arduino(self.settings, self.easyPopup, self.update_rect, programs={
             "Direct":
-            {"isDirectProgram": True, "path": ".\\directFile\\directFile.ino"},
+            {"isDirectProgram": True, "path": osJoinPath(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + os.sep + os.pardir), "directFile\\directFile.ino")},
             "Current":
-            {"isDirectProgram": False, "path": ".\\currentFile\\currentFile.ino"}})
+            {"isDirectProgram": False, "path": osJoinPath(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + os.sep + os.pardir), "currentFile\\currentFile.ino")}})
 
         self.imageWidth = float(self.settings.get('hidden', 'imWidth'))  # in meter
         self.imageHeight = float(self.settings.get('hidden', 'imHeight'))  # in meter
@@ -215,9 +215,17 @@ class Parametrage(BoxLayout):
     def chooseAction(self):
         content = ActionChoosing(newAction=self.newAction,
                                  chose=lambda path, filename: threading.Thread(target=lambda: self.uploadPath(path=path, filename=filename)).start(),
+                                 suppress=self.suppressAction,
                                  actions=self.settings.get('hidden', 'action'),
                                  cancel=lambda: self.easyPopup(_('Upload aborted'), _('Upload has been aborted')))
         self.easyPopup(_("Action program"), content)
+
+    def suppressAction(self, filename):
+        current = json.loads(self.settings.get('hidden', 'action'))
+        del current[str(filename)]
+        self.settings.set('hidden', 'action', str(json.dumps(current)))
+        self.settings.write()
+        return current
 
     def newAction(self):
         content = LoadDialog(load=lambda path, filename: self.addAction(path, filename))
@@ -252,7 +260,7 @@ class Parametrage(BoxLayout):
         unraveld = self.config.unravelPath(trace, pictures, actionNodes)
 
         genFile = generateFile(unraveld[0], unraveld[1], float(self.settings.get('general', 'stepToCm')), loop, str(osJoinPath(path, filename)))
-        f = open(".\\currentFile\\currentFile.ino", "w+")
+        f = open(osJoinPath(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + os.sep + os.pardir), "currentFile\\currentFile.ino"), "w+")
         f.write(genFile)
         f.close()
 

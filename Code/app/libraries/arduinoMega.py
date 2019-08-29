@@ -175,7 +175,7 @@ class Arduino:
                 self.board = -1
 
             self.hasDirectProgram = self.programs[program]["isDirectProgram"]
-            osSystem(self.settings.get('general', 'arduinoPath') + "\\arduino_debug --verbose --board arduino:avr:mega:cpu=atmega2560 --port " +
+            osSystem("\""+self.settings.get('general', 'arduinoPath') + "\\arduino_debug\" --verbose --board arduino:avr:mega:cpu=atmega2560 --port " +
                      str(self.port)+" --upload "+self.programs[program]["path"])
 
             print("\r\nDONE !")
