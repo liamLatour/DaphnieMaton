@@ -54,10 +54,6 @@ class Parametrage(BoxLayout):
         self.imageOrigin = make_tuple(self.settings.get('hidden', 'origin'))  # in cm
         self.popup = -1
 
-        # Search for arduino installation
-        if not os.path.isfile(self.settings.get('general', 'arduinoPath') + '/arduino_debug.exe'):
-            threading.Thread(target=lambda: self.findArduinoDir("arduino.exe", "C:\\")).start()
-
         # Specific to the mode 'Pipe'
         self.pipePanel = self.ids.tuyeauInputs
         self.gaps = []
@@ -124,14 +120,6 @@ class Parametrage(BoxLayout):
 
         if refresh:
             self.update_rect()
-
-    def findArduinoDir(self, name, path):
-        for currentPath in os.walk(path):
-            if name in currentPath[2]:
-                print("Found arduino path: " + currentPath[0])
-                self.settings.set("general", "arduinoPath", str(currentPath[0]))
-                self.settings.write()
-                return
 
     def help(self, *args):
         self.easyPopup(_('Help'), helpMsg[self.mode])

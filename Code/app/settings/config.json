@@ -15,13 +15,6 @@
    },
    {
       "type":"path",
-      "title":"Arduino.exe path",
-      "desc":"Path to the folder containing the 'arduino.exe' file",
-      "section":"general",
-      "key":"arduinoPath"
-   },
-   {
-      "type":"path",
       "title":"Default save path",
       "desc":"Path where you most often save",
       "section":"general",

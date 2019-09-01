@@ -42,7 +42,7 @@ threeDmodel.load('3D model.glb', function (gltf) {
   if (xhr.lengthComputable) {
     var percentComplete = xhr.loaded / xhr.total * 100;
     console.log(Math.round(percentComplete, 2) + '% downloaded');
-    document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, " + Math.round(percentComplete, 2) + "% 0%, " + Math.round(percentComplete, 2) + "% 100%, 0% 100%)";
+    $("#mainTitle").css("clipPath", "polygon(0% 0%, " + Math.round(percentComplete, 2) + "% 0%, " + Math.round(percentComplete, 2) + "% 100%, 0% 100%)");
   }
 }, function (error) {
   console.error(error);
@@ -98,35 +98,41 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.render(scene, camera);
   camera.position.z = ((1920 - $('#container').width()) / 10 + 50) / 100;
-
 })
 
 function adjustNav() {
-  if (window.innerWidth > 1300) {
-    document.getElementById("mySidenav").style.width = "350px";
-    document.getElementById("main").style.marginLeft = "350px";
-    document.getElementById("mainTitle").style.left = "calc((100vw + 350px)/2)";
-    document.getElementById("closeNav").style.display = "none";
+  if (window.innerWidth > 1400) {
+    $("#mySidenav").css("width", "350px");
+    $("#main").css("marginLeft", "350px");
+    $("#mainTitle").css("left", "calc((100vw + 350px)/2)");
+    $("#closeNav").css("display", "none");
     $(".tableContainer").css({"width": "80%", "margin-left": "10%" });
   } else {
-    document.getElementById("mySidenav").style.width = "0px";
-    document.getElementById("main").style.marginLeft = "0px";
-    document.getElementById("mainTitle").style.left = "50vw";
-    document.getElementById("closeNav").style.display = "block";
+    $("#mySidenav").css("width", "0px");
+    $("#main").css("marginLeft", "0px");
+    $("#mainTitle").css("left", "50vw");
+    $("#closeNav").css("display", "block");
     $(".tableContainer").css({"width": "90vw", "margin-left": "5vw" });
+  }
+
+  if(window.innerHeight > 800){
+    $("h2").css("margin-bottom", "90px");
+  }
+  else{
+    $("h2").css("margin-bottom", "30px");
   }
 }
 adjustNav();
 
 function openNav() {
-  document.getElementById("mySidenav").style.width = "250px";
-  document.getElementById("main").style.marginLeft = "250px";
-  document.getElementById("mainTitle").style.left = "calc((100vw + 250px)/2)";
+  $("#mySidenav").css("width", "250px");
+  $("#main").css("marginLeft", "250px");
+  $("#mainTitle").css("left", "calc((100vw + 250px)/2)");
 }
 
 function closeNav() {
-  document.getElementById("mySidenav").style.width = "0";
-  document.getElementById("main").style.marginLeft = "0";
+  $("#mySidenav").css("width", "0");
+  $("#main").css("marginLeft", "0");
 }
 
 
@@ -140,7 +146,7 @@ $(function () {
     scrollSpeed: 1100,
     setHeights: true,
     interstitialSection: ".header,.footer",
-    standardScrollElements: ".correspondance",
+    standardScrollElements: ".correspondance table",
     before: function (i, panels) {
       var ref = panels[i].attr("data-section-title");
 
@@ -151,11 +157,10 @@ $(function () {
       $(".sidenav").find("a[href=\"#" + ref + "\"]").parents().children(0).addClass("caret-down");
 
       if (ref == "1") { //when going to overview
-
-        document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)";
+        $("#mainTitle").css("clipPath", "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)");
         document.addEventListener('mousemove', onDocumentMouseMove, false);
       } else {
-        document.getElementById("mainTitle").style.clipPath = "polygon(0% 0%, 1% 0%, 1% 100%, 0% 100%)";
+        $("#mainTitle").css("clipPath", "polygon(0% 0%, 1% 0%, 1% 100%, 0% 100%)");
         document.removeEventListener('mousemove', onDocumentMouseMove, false);
 
         $target = panels[i];

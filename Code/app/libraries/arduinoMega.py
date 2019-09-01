@@ -153,11 +153,7 @@ class Arduino:
                     'The system has been disconnected'))
 
     def uploadProgram(self, program):
-        if not os.path.isfile(self.settings.get('general', 'arduinoPath') + '/arduino_debug.exe'):
-            self.easyPopup(_('Arduino dir missing'), _(
-                'The specified arduino path is not correct \n (under Option -> Arduino.exe path)'))
-            return
-        elif self.port == -1:
+        if self.port == -1:
             self.easyPopup(_('No port detected'), _(
                 'No serial port was specified'))
             return
@@ -174,12 +170,16 @@ class Arduino:
                 self.board.close()
                 self.board = -1
 
-            self.hasDirectProgram = self.programs[program]["isDirectProgram"]
-            osSystem("\""+self.settings.get('general', 'arduinoPath') + "\\arduino_debug\" --verbose --board arduino:avr:mega:cpu=atmega2560 --port " +
+            result = osSystem("\""+os.path.join(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + os.sep + os.pardir) + "\\arduino\\arduino_debug")+"\" --verbose --board arduino:avr:mega:cpu=atmega2560 --port " +
                      str(self.port)+" --upload "+self.programs[program]["path"])
 
-            print("\r\nDONE !")
-            self.easyPopup(_('Success !'), _('Upload finished successfully !'))
+            if result == 0:
+                self.hasDirectProgram = self.programs[program]["isDirectProgram"]
+                print("\r\nDONE !")
+                self.easyPopup(_('Success !'), _('Upload finished successfully !'))
+            else:
+                self.easyPopup(_('Oopsie...'), _(
+                'Something went wrong, try again or report a bug') + "\nError code " + str(result))
         except Exception as e:
             self.easyPopup(_('Oopsie...'), _(
                 'Something went wrong, try again or report a bug') + "\n" + str(e))

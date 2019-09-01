@@ -2,4 +2,3 @@ This is a non-exhaustive list of the various bugs:
     - The stats shown are not to be considered accurate
     - The represented path does not correspond perfectly to the real one, it is recommended to use 'Direct' mode to be sure of node's position
     - Sometimes a popup saying 'The system has been disconnected' even though it is false
-    - Even though the programm might seem uploaded it is possible 

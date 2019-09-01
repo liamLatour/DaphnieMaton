@@ -99,8 +99,9 @@ html {
 
 #main > div ul {
   font-size: 25px;
-  margin-top: 100px;
   list-style-type: none;
+  height: calc(100vh - 200px) !important;
+  overflow: auto;
 }
 
 #main > div ul li {
@@ -306,7 +307,7 @@ html {
 .correspondance {
   display: block;
   height: calc(100vh - 300px) !important;
-  overflow-y: scroll;
+  overflow-y: auto;
   overflow-y: -moz-scrollbars-none;
 }
 
@@ -324,7 +325,6 @@ table {
 table th {
   color: white;
   text-align: center;
-  padding: 8px;
 }
 
 table th:first-child {
