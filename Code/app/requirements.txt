@@ -2,7 +2,7 @@ pyperclip==1.7.0
 kivy.deps.sdl2==0.1.18
 keyboard==0.13.3
 requests==2.21.0
-scipy==1.2.0
+scipy==1.10.0
 numpy==1.22.0
 kivy==1.11.1
 pyserial==3.4
